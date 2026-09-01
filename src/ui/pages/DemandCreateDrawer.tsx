@@ -75,9 +75,10 @@ export type DemandCreateDrawerProps = {
   onCapture: (capture: NewLocalDemandCapture) => void
   journalists: Journalist[]
   journalistsLoading?: boolean
+  initialJournalistId?: string
 }
 
-export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists, journalistsLoading = false }: DemandCreateDrawerProps) {
+export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists, journalistsLoading = false, initialJournalistId }: DemandCreateDrawerProps) {
   const [values, setValues] = useState<FormValues>(initialValues)
   const [errors, setErrors] = useState<FormErrors>({})
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false)
@@ -85,11 +86,11 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
 
   const resetFlow = useCallback(() => {
-    setValues(initialValues)
+    setValues(initialJournalistId ? { ...initialValues, journalistId: initialJournalistId } : initialValues)
     setErrors({})
     setJournalistQuery('')
     setCurrentStepIndex(0)
-  }, [])
+  }, [initialJournalistId])
 
   useEffect(() => {
     if (open) resetFlow()

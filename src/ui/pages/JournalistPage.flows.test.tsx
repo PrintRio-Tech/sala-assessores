@@ -5,11 +5,14 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useJournalist } from '@/application/modules/Journalist/hooks/use-journalist'
+import { useJournalists } from '@/application/modules/Journalist/hooks/use-journalists'
 import { useRegisterRelationshipEvaluation } from '@/application/modules/Journalist/hooks/use-register-relationship-evaluation'
 import { useUpdateJournalist } from '@/application/modules/Journalist/hooks/use-update-journalist'
+import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
 import { JournalistPage } from './JournalistPage'
 
 vi.mock('@/application/modules/Journalist/hooks/use-journalist', () => ({ useJournalist: vi.fn() }))
+vi.mock('@/application/modules/Journalist/hooks/use-journalists', () => ({ useJournalists: vi.fn() }))
 vi.mock('@/application/modules/Journalist/hooks/use-update-journalist', () => ({ useUpdateJournalist: vi.fn() }))
 vi.mock('@/application/modules/Journalist/hooks/use-register-relationship-evaluation', () => ({ useRegisterRelationshipEvaluation: vi.fn() }))
 
@@ -41,9 +44,17 @@ function renderPage() {
 
 describe('fluxos do perfil do jornalista', () => {
   beforeEach(() => {
+    useLocalDemandStore.getState().reset()
     update.mockReset()
     register.mockReset()
     vi.mocked(useJournalist).mockReturnValue({ data: journalist, isLoading: false, error: null, reload: vi.fn() })
+    vi.mocked(useJournalists).mockReturnValue({
+      data: [journalist],
+      filterOptions: { outletNames: [], desks: [], roleTitles: [], topics: [] },
+      isLoading: false,
+      error: null,
+      reload: vi.fn(),
+    })
     vi.mocked(useUpdateJournalist).mockImplementation((_id, options = {}) => ({
       update: (input) => { update(input); options.onSuccess?.({ ...journalist, ...input }) },
       isPending: false, error: null, reset: vi.fn(),
@@ -137,5 +148,36 @@ describe('fluxos do perfil do jornalista', () => {
     expect(within(dialog).getByText('Informe o autor do registro.')).toBeVisible()
     expect(within(dialog).getByText('Informe a data do registro.')).toBeVisible()
     expect(register).not.toHaveBeenCalled()
+  })
+
+  it('cria nova demanda a partir do perfil com journalistId já vinculado', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    
+    await user.click(screen.getByRole('button', { name: 'Nova demanda' }))
+    
+    const dialog = await screen.findByRole('dialog', { name: /Nova demanda/ })
+    expect(dialog).toBeVisible()
+    
+    const journalistField = within(dialog).getByRole('combobox', { name: 'Quem entrou em contato?' })
+    expect(journalistField).toHaveValue('j-maria')
+    
+    await user.click(within(dialog).getByRole('combobox', { name: 'Canal de entrada' }))
+    await user.click(await screen.findByRole('option', { name: 'E-mail' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Continuar' }))
+    
+    await user.type(within(dialog).getByRole('textbox', { name: 'Assunto' }), 'Novo caso de teste')
+    await user.type(within(dialog).getByRole('textbox', { name: 'O que aconteceu?' }), 'Contexto do caso')
+    await user.click(within(dialog).getByRole('button', { name: 'Continuar' }))
+    
+    await user.type(within(dialog).getByRole('textbox', { name: 'O que foi pedido pela imprensa?' }), 'Posicionamento solicitado')
+    await user.type(within(dialog).getByRole('textbox', { name: 'Prazo solicitado' }), '01092026')
+    await user.click(within(dialog).getByRole('button', { name: 'Concluir captura' }))
+    
+    const localDemands = useLocalDemandStore.getState().records
+    expect(localDemands).toHaveLength(1)
+    expect(localDemands[0].journalistId).toBe('j-maria')
+    expect(localDemands[0].journalistName).toBe('Maria Clara')
+    expect(localDemands[0].outletName).toBe('TechNews')
   })
 })

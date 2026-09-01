@@ -87,4 +87,30 @@ describe('ReportsPage', () => {
     expect(screen.getByText('35')).toBeInTheDocument()
     expect(screen.getByText('12')).toBeInTheDocument()
   })
+
+  it('renderiza painel de jornalistas mais acionados', () => {
+    render(
+      <BrowserRouter>
+        <ReportsPage />
+      </BrowserRouter>,
+    )
+
+    expect(screen.getByText(/jornalistas mais acionados/i)).toBeInTheDocument()
+    expect(screen.getByText(/ana silva/i)).toBeInTheDocument()
+    expect(screen.getByText(/o globo/i)).toBeInTheDocument()
+  })
+
+  it('renderiza painel de demandas por status', () => {
+    render(
+      <BrowserRouter>
+        <ReportsPage />
+      </BrowserRouter>,
+    )
+
+    expect(screen.getByRole('heading', { name: /demandas por status/i })).toBeInTheDocument()
+    expect(screen.getByText(/aberta/i)).toBeInTheDocument()
+    expect(screen.getByText(/em andamento/i)).toBeInTheDocument()
+    expect(screen.getByText(/enviada/i)).toBeInTheDocument()
+    expect(screen.getByText(/encerrada/i)).toBeInTheDocument()
+  })
 })

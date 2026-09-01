@@ -42,6 +42,18 @@ export function ReportsPage() {
         [1, 1, 2, 1, 1, 1, 2, 1, 1, 2, 1, 1],
       ],
     },
+    topJournalists: [
+      { name: 'Ana Silva', outlet: 'O Globo', demands: 14 },
+      { name: 'Carlos Mendes', outlet: 'Folha', demands: 11 },
+      { name: 'Beatriz Santos', outlet: 'Estado', demands: 9 },
+      { name: 'Pedro Costa', outlet: 'Valor', demands: 7 },
+    ],
+    demandsByStatus: [
+      { status: 'Aberta', value: 12 },
+      { status: 'Em andamento', value: 18 },
+      { status: 'Enviada', value: 28 },
+      { status: 'Encerrada', value: 15 },
+    ],
   }
 
   const sparklinePoints = '0,20 10,15 20,18 30,8 40,12 50,5 60,10 70,3'
@@ -247,6 +259,55 @@ export function ReportsPage() {
                       className={pageStyles.barFill}
                       data-type={item.color}
                       style={{ width: `${(item.value / maxValue) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        <Card padding="none" className={pageStyles.chartCard}>
+          <div className={pageStyles.chartHeader}>
+            <h2 className={pageStyles.chartTitle}>Jornalistas mais acionados</h2>
+          </div>
+          <div className={pageStyles.compactWrapper}>
+            <div className={pageStyles.journalistsList}>
+              {mockKpis.topJournalists.map((journalist) => (
+                <div key={journalist.name} className={pageStyles.journalistItem}>
+                  <div className={pageStyles.journalistInfo}>
+                    <Text variant="labelMd" className={pageStyles.journalistName}>
+                      {journalist.name}
+                    </Text>
+                    <Text variant="labelSm" tone="muted" className={pageStyles.journalistOutlet}>
+                      {journalist.outlet}
+                    </Text>
+                  </div>
+                  <Text variant="labelMd" className={pageStyles.journalistCount}>
+                    {journalist.demands}
+                  </Text>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        <Card padding="none" className={pageStyles.chartCard}>
+          <div className={pageStyles.chartHeader}>
+            <h2 className={pageStyles.chartTitle}>Demandas por status</h2>
+          </div>
+          <div className={pageStyles.compactWrapper}>
+            <div className={pageStyles.statusList}>
+              {mockKpis.demandsByStatus.map((item) => (
+                <div key={item.status} className={pageStyles.statusItem}>
+                  <div className={pageStyles.statusHeader}>
+                    <span className={pageStyles.statusLabel}>{item.status}</span>
+                    <span className={pageStyles.statusValue}>{item.value}</span>
+                  </div>
+                  <div className={pageStyles.statusBar}>
+                    <div
+                      className={pageStyles.statusBarFill}
+                      style={{ width: `${(item.value / 73) * 100}%` }}
                     />
                   </div>
                 </div>

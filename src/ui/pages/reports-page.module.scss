@@ -338,6 +338,8 @@ $gold: $accent-gold;
   border-radius: inherit;
   transition: width 0.4s ease;
 }
+
+.emptyState {
   padding: $space-5 $space-3;
   border: 1px dashed $line;
   border-radius: $radius-md;

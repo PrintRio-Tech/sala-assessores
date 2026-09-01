@@ -1,0 +1,273 @@
+@use '@print/ui/tokens' as *;
+
+$ink: $on-surface;
+$muted: $on-surface-variant;
+$line: $outline-variant;
+$cream: $surface;
+$paper: $surface-bright;
+$forest: $primary;
+$sage: $surface-container-high;
+
+.homePage {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 52px 40px 64px;
+}
+
+.greeting {
+  margin-bottom: 32px;
+}
+
+.greetingTitle {
+  margin: 0 0 6px;
+  color: $ink;
+  font-size: 38px;
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+}
+
+.greetingSubtitle {
+  margin: 0;
+  font-size: 17px;
+  font-style: italic;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 42px;
+}
+
+.metricCard {
+  background: $paper;
+  border: 1px solid $line;
+  border-radius: 16px;
+  box-shadow: 0 2px 5px rgba(20, 32, 27, 0.03);
+}
+
+.continueSection {
+  margin-bottom: 48px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.sectionHeader h2 {
+  margin: 0;
+}
+
+.emptyRow {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: $paper;
+  border: 1px dashed $line;
+  border-radius: 14px;
+}
+
+.demandsList {
+  background: $paper;
+  border: 1px solid $line;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.demandItem {
+  width: 100%;
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: 110px 1fr auto;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 24px;
+  border: 0;
+  border-bottom: 1px solid $line;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.demandItem:last-child {
+  border-bottom: 0;
+}
+
+.demandItem:hover {
+  background: #fafaf7;
+}
+
+.demandItem:active {
+  background: #f4f4f0;
+}
+
+.demandCode {
+  color: $muted;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.demandTitle {
+  color: $ink;
+  font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.demandResponsible {
+  color: $muted;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.quickActions {
+  margin-bottom: 24px;
+}
+
+.actionsHeading {
+  margin: 0 0 18px;
+}
+
+.actionsGrid {
+  display: grid;
+  grid-template-columns: 1.3fr repeat(2, 1fr);
+  gap: 20px;
+}
+
+.actionTilePrimary,
+.actionTile {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 180px;
+}
+
+.actionTile {
+  background: $paper;
+  border: 1px solid $line;
+  border-radius: 18px;
+  box-shadow: 0 2px 5px rgba(20, 32, 27, 0.03);
+}
+
+.actionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.actionIcon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: $sage;
+  color: $forest;
+}
+
+.actionTilePrimary .actionIcon {
+  background: rgba(255, 255, 255, 0.18);
+  color: white;
+}
+
+.actionCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.actionLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.actionTilePrimary .actionLabel {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.actionTitle {
+  font-size: 20px;
+  font-weight: 620;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.actionTilePrimary .actionTitle {
+  color: white;
+}
+
+@media (max-width: 1250px) {
+  .homePage {
+    padding-left: 36px;
+    padding-right: 36px;
+  }
+
+  .metrics {
+    gap: 16px;
+  }
+
+  .actionsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .actionTilePrimary {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .homePage {
+    padding: 32px 20px 64px;
+  }
+
+  .greetingTitle {
+    font-size: 32px;
+  }
+
+  .greetingSubtitle {
+    font-size: 15px;
+  }
+
+  .metrics {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .sectionHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .sectionHeader button {
+    width: 100%;
+  }
+
+  .demandItem {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    min-height: auto;
+  }
+
+  .actionsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actionTilePrimary {
+    grid-column: auto;
+  }
+}

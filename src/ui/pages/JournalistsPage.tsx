@@ -69,6 +69,7 @@ export function JournalistsPage() {
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false)
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const { data: allJournalists } = useJournalists()
   const { data, filterOptions, isLoading, error, reload } = useJournalists(toApplicationFilters(filters))
   const {
     create: createJournalist,
@@ -287,9 +288,16 @@ export function JournalistsPage() {
       </section>
 
       {!isLoading && !error ? (
-        <Text as="p" tone="muted" variant="labelSm" className={styles.journalistResultCount} aria-live="polite">
-          {data.length} {data.length === 1 ? 'jornalista encontrado' : 'jornalistas encontrados'}
-        </Text>
+        <div className={styles.journalistResultSummary}>
+          <Text as="p" tone={hasActiveFilters ? 'default' : 'muted'} variant="labelSm" className={styles.journalistResultCount} aria-live="polite">
+            {data.length === 0 && hasActiveFilters ? 'Nenhum resultado para os filtros aplicados' : `${data.length} ${data.length === 1 ? 'jornalista encontrado' : 'jornalistas encontrados'}`}
+          </Text>
+          {hasActiveFilters && data.length > 0 && allJournalists.length > data.length ? (
+            <Text as="span" tone="muted" variant="labelSm">
+              (filtrado de {allJournalists.length} {allJournalists.length === 1 ? 'cadastro' : 'cadastros'})
+            </Text>
+          ) : null}
+        </div>
       ) : null}
 
       <section className={styles.tableShell} aria-busy={isLoading}>
@@ -309,6 +317,7 @@ export function JournalistsPage() {
             data={pagedData}
             getRowKey={(journalist) => journalist.id}
             emptyState={emptyMessage}
+            onRowClick={(journalist) => navigate(ROUTES.journalist(journalist.id))}
             rowActions={(journalist) => (
               <Button type="button" variant="ghost" size="sm" onClick={() => navigate(ROUTES.journalist(journalist.id))}>
                 Abrir perfil

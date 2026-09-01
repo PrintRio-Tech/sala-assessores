@@ -133,7 +133,7 @@ describe('lista de jornalistas', () => {
     expect(within(carolinaRow!).getByText('142')).toBeVisible()
     expect(within(carolinaRow!).getByText('1 avaliação registrada')).toBeVisible()
     expect(within(table).getAllByText('Sem avaliação registrada').length).toBeGreaterThan(0)
-    expect(screen.getByText('6 jornalistas encontrados')).toHaveAttribute('aria-live', 'polite')
+    expect(screen.getByText(/6 jornalistas encontrados/)).toHaveAttribute('aria-live', 'polite')
   })
 
   it('expõe Novo jornalista como ação primária acessível e responsiva no cabeçalho', () => {
@@ -240,10 +240,10 @@ describe('lista de jornalistas', () => {
     await user.click(await screen.findByRole('option', { name: 'Inativos' }))
     expect(within(screen.getByRole('table')).getByText('João Inativo')).toBeVisible()
     await user.type(screen.getByRole('textbox', { name: 'Buscar jornalistas' }), 'joão')
-    expect(screen.getByText('1 jornalista encontrado')).toBeVisible()
+    expect(screen.getByText(/1 jornalista encontrado/)).toBeVisible()
 
     await user.click(screen.getByRole('button', { name: 'Limpar filtros' }))
-    expect(screen.getByText('6 jornalistas encontrados')).toBeVisible()
+    expect(screen.getByText(/6 jornalistas encontrados/)).toBeVisible()
     expect(screen.getByRole('textbox', { name: 'Buscar jornalistas' })).toHaveValue('')
     expect(screen.getByRole('combobox', { name: 'Status' })).toHaveTextContent('Todos os status')
   })
@@ -262,6 +262,20 @@ describe('lista de jornalistas', () => {
     expect(within(screen.getByRole('table')).getByText('Carolina Montenegro')).toBeVisible()
   })
 
+  it('mostra contador de filtros aplicados quando há resultados filtrados', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    
+    expect(screen.getByText(/6 jornalistas encontrados/)).toBeVisible()
+    expect(screen.queryByText(/filtrado de/)).not.toBeInTheDocument()
+    
+    await user.click(screen.getByRole('combobox', { name: 'Veículo' }))
+    await user.click(await screen.findByRole('option', { name: 'TechNews' }))
+    
+    expect(screen.getByText(/1 jornalista encontrado/)).toBeVisible()
+    expect(screen.getByText(/filtrado de 6 cadastros/)).toBeVisible()
+  })
+
   it('mantém conteúdo e ação nas composições desktop e mobile do DataTable', () => {
     renderPage()
     expect(screen.getAllByText('Carolina Montenegro')).toHaveLength(2)
@@ -278,10 +292,13 @@ describe('lista de jornalistas', () => {
     expect(advancedFilters).toHaveAttribute('data-mobile-safe-area', 'bottom-navigation')
   })
 
-  it('distingue cadastro vazio de busca sem resultado', () => {
+  it('distingue cadastro vazio de busca sem resultado e mostra contador de filtros', () => {
     const view = renderPage()
+    expect(screen.getByText(/6 jornalistas encontrados/)).toBeVisible()
+    
     fireEvent.change(screen.getByRole('textbox', { name: 'Buscar jornalistas' }), { target: { value: 'inexistente' } })
     expect(within(screen.getByRole('table')).getByText('Nenhum jornalista corresponde aos filtros.')).toBeVisible()
+    expect(screen.getByText('Nenhum resultado para os filtros aplicados')).toBeVisible()
 
     mockedUseJournalists.mockReturnValue({ data: [], filterOptions: { outletNames: [], desks: [], roleTitles: [], topics: [] }, isLoading: false, error: null, reload: vi.fn() })
     view.rerender(
@@ -292,9 +309,19 @@ describe('lista de jornalistas', () => {
     expect(within(screen.getByRole('table')).getByText('Nenhum jornalista cadastrado.')).toBeVisible()
   })
 
-  it('leva ao perfil pela ação da linha', async () => {
+  it('leva ao perfil pela ação da linha e clique na linha', async () => {
     renderPage()
     await userEvent.click(screen.getAllByRole('button', { name: 'Abrir perfil' })[0])
+    expect(await screen.findByRole('heading', { name: 'Perfil aberto' })).toBeVisible()
+    
+    // Volta para lista
+    const view = renderPage()
+    const table = screen.getByRole('table')
+    const carolinaRow = within(table).getByText('Carolina Montenegro').closest('tr')
+    expect(carolinaRow).not.toBeNull()
+    
+    // Clica na linha para navegar
+    await userEvent.click(carolinaRow!)
     expect(await screen.findByRole('heading', { name: 'Perfil aberto' })).toBeVisible()
   })
 

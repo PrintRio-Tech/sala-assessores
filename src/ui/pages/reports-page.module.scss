@@ -1,0 +1,175 @@
+@use '@print/ui/tokens' as *;
+
+$ink: $on-surface;
+$muted: $on-surface-variant;
+$line: $outline-variant;
+$paper: $surface-bright;
+$forest: $primary;
+$gold: $accent-gold;
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: $space-3;
+  margin-bottom: $space-6;
+}
+
+.kpiCard {
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  margin-bottom: $space-2;
+}
+
+.sectionHeading h2 {
+  margin: 0;
+  color: $ink;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.periodLabel {
+  color: $muted;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.distributionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: $space-4;
+}
+
+.statusItem {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.statusLabel {
+  color: $muted;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.statusValue {
+  color: $ink;
+  font-size: 28px;
+  font-weight: 520;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.journalistsList {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.journalistItem {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding-bottom: $space-3;
+  
+  &:not(:last-child) {
+    border-bottom: 1px solid $line;
+  }
+}
+
+.journalistRank {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: $forest;
+  color: white;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.journalistInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.journalistName {
+  color: $ink;
+  font-size: 14px;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journalistOutlet {
+  color: $muted;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journalistCount {
+  color: $forest;
+  font-size: 22px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.emptyState {
+  padding: $space-4 $space-3;
+  border: 1px dashed $line;
+  border-radius: $radius-md;
+  background: rgba($surface-container-low, 0.3);
+  text-align: center;
+}
+
+.emptyText {
+  color: $muted;
+  font-size: 13px;
+}
+
+.contentGrid {
+  display: grid;
+  gap: $space-4;
+  margin-top: $space-4;
+}
+
+@media (min-width: 900px) {
+  .contentGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .kpiGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .distributionGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: $space-3;
+  }
+
+  .sectionHeading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

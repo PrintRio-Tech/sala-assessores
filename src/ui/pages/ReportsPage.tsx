@@ -2,16 +2,19 @@ import { useState } from 'react'
 import { Button, Card, Heading, Icon as DsIcon, ICONS, Stat, Text } from '@print/ui'
 
 import styles from '@/ui/styles/design.module.scss'
+import pageStyles from './reports-page.module.scss'
 
 type ExportFormat = 'csv' | 'json'
 
 export function ReportsPage() {
   const [isExporting, setIsExporting] = useState(false)
 
+  const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+
   const mockKpis = {
-    totalDemands: 87,
-    averageResponseTime: '2.3h',
-    satisfactionRate: 92,
+    demandsThisMonth: 42,
+    positioningsSent: 18,
+    journalistInteractions: 35,
     topJournalists: [
       { name: 'Ana Silva', outlet: 'O Globo', count: 14 },
       { name: 'Carlos Mendes', outlet: 'Folha', count: 11 },
@@ -31,7 +34,7 @@ export function ReportsPage() {
     setIsExporting(true)
 
     const data = {
-      period: 'Últimos 30 dias',
+      period: currentMonth,
       generated_at: new Date().toISOString(),
       kpis: mockKpis,
     }
@@ -47,9 +50,9 @@ export function ReportsPage() {
     } else {
       const rows = [
         ['Métrica', 'Valor'],
-        ['Total de demandas', mockKpis.totalDemands.toString()],
-        ['Tempo médio de resposta', mockKpis.averageResponseTime],
-        ['Taxa de satisfação (%)', mockKpis.satisfactionRate.toString()],
+        ['Demandas do mês', mockKpis.demandsThisMonth.toString()],
+        ['Posicionamentos enviados', mockKpis.positioningsSent.toString()],
+        ['Interações com jornalistas', mockKpis.journalistInteractions.toString()],
         ['', ''],
         ['Status', 'Quantidade'],
         ['Rascunho', mockKpis.demandsByStatus.draft.toString()],
@@ -78,13 +81,21 @@ export function ReportsPage() {
     setTimeout(() => setIsExporting(false), 500)
   }
 
+  const hasJournalistData = mockKpis.topJournalists.length > 0
+
   return (
     <div className={styles.page}>
       <header className={styles.pageHeading}>
         <div>
-          <Text as="p" variant="labelSm" tone="primary" className={styles.eyebrow}>Analytics e exportações</Text>
-          <Heading level={1} className={styles.pageTitle}>Relatórios</Heading>
-          <Text tone="muted">Indicadores de desempenho da assessoria de imprensa.</Text>
+          <Text as="p" variant="labelSm" tone="primary" className={styles.eyebrow}>
+            Analytics e exportações
+          </Text>
+          <Heading level={1} className={styles.pageTitle}>
+            Relatórios
+          </Heading>
+          <Text tone="muted">
+            Indicadores de desempenho da assessoria de imprensa — {currentMonth}.
+          </Text>
         </div>
         <div className={styles.headingActions}>
           <Button
@@ -109,79 +120,121 @@ export function ReportsPage() {
       </header>
 
       <section aria-label="KPIs principais">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-          <Stat
-            label="Total de demandas"
-            value={mockKpis.totalDemands}
-            subtitle="Últimos 30 dias"
-          />
-          <Stat
-            label="Tempo médio de resposta"
-            value={mockKpis.averageResponseTime}
-            subtitle="Primeira interação"
-          />
-          <Stat
-            label="Taxa de satisfação"
-            value={`${mockKpis.satisfactionRate}%`}
-            tone="success"
-            trend={{ direction: 'up', label: '+3% vs. mês anterior' }}
-          />
+        <div className={pageStyles.kpiGrid}>
+          <Card padding="lg" className={pageStyles.kpiCard}>
+            <Stat
+              label="Demandas do mês"
+              value={mockKpis.demandsThisMonth}
+              trend={{ direction: 'up', label: '+4 vs. mês anterior' }}
+            />
+          </Card>
+          <Card padding="lg" className={pageStyles.kpiCard}>
+            <Stat
+              label="Posicionamentos enviados"
+              value={mockKpis.positioningsSent}
+            />
+          </Card>
+          <Card padding="lg" className={pageStyles.kpiCard}>
+            <Stat
+              label="Interações com jornalistas"
+              value={mockKpis.journalistInteractions}
+              trend={{ direction: 'up', label: '+7 vs. mês anterior' }}
+            />
+          </Card>
         </div>
       </section>
 
-      <section aria-label="Distribuição por status">
-        <Heading level={2} variant="sm" style={{ marginBottom: '16px' }}>Demandas por status</Heading>
-        <Card padding="lg" style={{ marginBottom: '32px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '24px' }}>
-            <div>
-              <Text variant="labelSm" tone="muted">Rascunho</Text>
-              <Text as="p" variant="headingLg" style={{ marginTop: '8px' }}>{mockKpis.demandsByStatus.draft}</Text>
-            </div>
-            <div>
-              <Text variant="labelSm" tone="muted">Em andamento</Text>
-              <Text as="p" variant="headingLg" style={{ marginTop: '8px' }}>{mockKpis.demandsByStatus.in_progress}</Text>
-            </div>
-            <div>
-              <Text variant="labelSm" tone="muted">Em review</Text>
-              <Text as="p" variant="headingLg" style={{ marginTop: '8px' }}>{mockKpis.demandsByStatus.pending_review}</Text>
-            </div>
-            <div>
-              <Text variant="labelSm" tone="muted">Aprovada</Text>
-              <Text as="p" variant="headingLg" style={{ marginTop: '8px' }}>{mockKpis.demandsByStatus.approved}</Text>
-            </div>
-            <div>
-              <Text variant="labelSm" tone="muted">Enviada</Text>
-              <Text as="p" variant="headingLg" style={{ marginTop: '8px' }}>{mockKpis.demandsByStatus.sent}</Text>
-            </div>
-            <div>
-              <Text variant="labelSm" tone="muted">Encerrada sem envio</Text>
-              <Text as="p" variant="headingLg" style={{ marginTop: '8px' }}>{mockKpis.demandsByStatus.closed_without_send}</Text>
-            </div>
+      <div className={pageStyles.contentGrid}>
+        <section aria-label="Distribuição por status">
+          <div className={pageStyles.sectionHeading}>
+            <Heading level={2} variant="sm">
+              Demandas por status
+            </Heading>
           </div>
-        </Card>
-      </section>
-
-      <section aria-label="Top jornalistas">
-        <Heading level={2} variant="sm" style={{ marginBottom: '16px' }}>Jornalistas mais ativos</Heading>
-        <Card padding="lg">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {mockKpis.topJournalists.map((journalist, idx) => (
-              <div key={journalist.name} style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingBottom: idx < mockKpis.topJournalists.length - 1 ? '16px' : '0', borderBottom: idx < mockKpis.topJournalists.length - 1 ? '1px solid var(--pf-color-outline-variant)' : 'none' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--pf-color-primary)', color: 'white', display: 'grid', placeItems: 'center', fontWeight: 600, fontSize: '14px' }}>
-                  {idx + 1}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <Text variant="labelMd" style={{ fontWeight: 600 }}>{journalist.name}</Text>
-                  <Text variant="labelSm" tone="muted">{journalist.outlet}</Text>
-                </div>
-                <Text variant="headingMd" style={{ fontWeight: 600, color: 'var(--pf-color-primary)' }}>
-                  {journalist.count}
+          <Card padding="lg">
+            <div className={pageStyles.distributionGrid}>
+              <div className={pageStyles.statusItem}>
+                <Text variant="labelSm" tone="muted" className={pageStyles.statusLabel}>
+                  Rascunho
+                </Text>
+                <Text as="p" className={pageStyles.statusValue}>
+                  {mockKpis.demandsByStatus.draft}
                 </Text>
               </div>
-            ))}
+              <div className={pageStyles.statusItem}>
+                <Text variant="labelSm" tone="muted" className={pageStyles.statusLabel}>
+                  Em andamento
+                </Text>
+                <Text as="p" className={pageStyles.statusValue}>
+                  {mockKpis.demandsByStatus.in_progress}
+                </Text>
+              </div>
+              <div className={pageStyles.statusItem}>
+                <Text variant="labelSm" tone="muted" className={pageStyles.statusLabel}>
+                  Em review
+                </Text>
+                <Text as="p" className={pageStyles.statusValue}>
+                  {mockKpis.demandsByStatus.pending_review}
+                </Text>
+              </div>
+              <div className={pageStyles.statusItem}>
+                <Text variant="labelSm" tone="muted" className={pageStyles.statusLabel}>
+                  Aprovada
+                </Text>
+                <Text as="p" className={pageStyles.statusValue}>
+                  {mockKpis.demandsByStatus.approved}
+                </Text>
+              </div>
+              <div className={pageStyles.statusItem}>
+                <Text variant="labelSm" tone="muted" className={pageStyles.statusLabel}>
+                  Enviada
+                </Text>
+                <Text as="p" className={pageStyles.statusValue}>
+                  {mockKpis.demandsByStatus.sent}
+                </Text>
+              </div>
+              <div className={pageStyles.statusItem}>
+                <Text variant="labelSm" tone="muted" className={pageStyles.statusLabel}>
+                  Sem envio
+                </Text>
+                <Text as="p" className={pageStyles.statusValue}>
+                  {mockKpis.demandsByStatus.closed_without_send}
+                </Text>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        <section aria-label="Top jornalistas">
+          <div className={pageStyles.sectionHeading}>
+            <Heading level={2} variant="sm">
+              Jornalistas mais ativos
+            </Heading>
           </div>
-        </Card>
-      </section>
+          <Card padding="lg">
+            {hasJournalistData ? (
+              <div className={pageStyles.journalistsList}>
+                {mockKpis.topJournalists.map((journalist, idx) => (
+                  <div key={journalist.name} className={pageStyles.journalistItem}>
+                    <div className={pageStyles.journalistRank}>{idx + 1}</div>
+                    <div className={pageStyles.journalistInfo}>
+                      <Text className={pageStyles.journalistName}>{journalist.name}</Text>
+                      <Text className={pageStyles.journalistOutlet}>{journalist.outlet}</Text>
+                    </div>
+                    <Text className={pageStyles.journalistCount}>{journalist.count}</Text>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className={pageStyles.emptyState}>
+                <Text className={pageStyles.emptyText}>
+                  Nenhum jornalista ativo neste período.
+                </Text>
+              </div>
+            )}
+          </Card>
+        </section>
+      </div>
     </div>
   )
 }

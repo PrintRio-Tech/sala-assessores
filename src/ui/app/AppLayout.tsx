@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { AppShell, Avatar, Icon, ICONS, Text, type AppNavItem } from '@print/ui'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
+import { mockAuthService } from '@/application/services/mock-auth-service'
 import { ROUTES } from '@/ui/routes/paths'
 import styles from './app-layout.module.scss'
 
@@ -11,9 +12,16 @@ export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  const session = mockAuthService.getSession()
+
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [location.pathname])
+
+  const handleLogout = () => {
+    mockAuthService.logout()
+    navigate(ROUTES.login)
+  }
 
   const navItems: AppNavItem[] = [
     { id: 'home', label: 'Home', icon: <Icon src={ICONS.nav.home} size={20} />, active: location.pathname === '/', onClick: () => navigate(ROUTES.home) },
@@ -29,12 +37,17 @@ export function AppLayout() {
       mobileLogo={<Text as="span" variant="labelMd">Sala de Assessores</Text>}
       navItems={navItems}
       footerSlot={
-        <div className={styles.footerUser}>
-          <Avatar name="Noel Ferreira" size="sm" />
-          <span className={styles.footerIdentity}>
-            <Text as="strong" variant="labelSm">Noel Ferreira</Text>
-            <Text as="small" variant="labelSm">Assessor de imprensa</Text>
-          </span>
+        <div className={styles.footerWrapper}>
+          <div className={styles.footerUser}>
+            <Avatar name={session?.email || 'Usuário'} size="sm" />
+            <span className={styles.footerIdentity}>
+              <Text as="strong" variant="labelSm">{session?.email || 'Usuário'}</Text>
+              <Text as="small" variant="labelSm">Assessor de imprensa</Text>
+            </span>
+          </div>
+          <button type="button" className={styles.logoutButton} onClick={handleLogout} title="Sair">
+            <Icon src={ICONS.actions.logout} size={16} />
+          </button>
         </div>
       }
       collapsed={collapsed}

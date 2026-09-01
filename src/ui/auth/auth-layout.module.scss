@@ -1,0 +1,72 @@
+.authLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+  background: var(--color-neutral-1);
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background: linear-gradient(135deg, #0066CC 0%, #0052A3 100%);
+  color: white;
+}
+
+.heroContent {
+  max-width: 480px;
+}
+
+.brandLogo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.brandMark {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 12px;
+  background: rgba(255,255,255,.1);
+  color: white;
+  font-weight: 700;
+  font-size: 24px;
+}
+
+.heroDescription {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+}
+
+.formArea {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  overflow-y: auto;
+}
+
+.formCard {
+  width: 100%;
+  max-width: 420px;
+}
+
+@media (max-width: 768px) {
+  .authLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    display: none;
+  }
+
+  .formArea {
+    padding: 24px 16px;
+  }
+}

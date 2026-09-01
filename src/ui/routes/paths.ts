@@ -1,5 +1,7 @@
 export const ROUTES = {
   home: '/',
+  login: '/login',
+  verify: '/login/verificar',
   demands: '/demandas',
   journalists: '/jornalistas',
   reports: '/relatorios',

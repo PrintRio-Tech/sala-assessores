@@ -62,6 +62,17 @@ $sage: $surface-container-high;
   margin: 0;
 }
 
+.emptyRow {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: $paper;
+  border: 1px dashed $line;
+  border-radius: 14px;
+}
+
 .demandsList {
   background: $paper;
   border: 1px solid $line;

@@ -1,4 +1,4 @@
-import { Button, Card, EmptyState, Heading, Icon as DsIcon, ICONS, Stat, Text } from '@print/ui'
+import { Button, Card, Heading, Icon as DsIcon, ICONS, Stat, Text } from '@print/ui'
 import { useNavigate } from 'react-router-dom'
 
 import { currentUser } from '@/application/current-user'
@@ -64,12 +64,6 @@ export function HomePage() {
           <Heading level={2} variant="sm">
             Continuar de onde parou
           </Heading>
-          <Button
-            variant="secondary"
-            onClick={() => navigate(ROUTES.demands)}
-          >
-            Nova demanda
-          </Button>
         </div>
 
         {MOCK_DEMANDS_IN_PROGRESS.length > 0 ? (
@@ -88,11 +82,12 @@ export function HomePage() {
             ))}
           </div>
         ) : (
-          <EmptyState
-            variant="empty"
-            title="Nenhuma demanda em andamento para retomar"
-            description="Todas as demandas estão concluídas ou aguardando ação externa."
-          />
+          <div className={styles.emptyRow}>
+            <Text tone="muted">Nenhuma demanda em andamento para retomar.</Text>
+            <Button variant="secondary" onClick={() => navigate(ROUTES.demands)}>
+              Nova demanda
+            </Button>
+          </div>
         )}
       </section>
 

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -55,10 +55,10 @@ describe('HomePage', () => {
     expect(screen.getByRole('heading', { name: /Continuar de onde parou/i, level: 2 })).toBeInTheDocument()
   })
 
-  it('exibe empty state quando não há demandas em andamento', () => {
+  it('exibe faixa compacta quando não há demandas em andamento', () => {
     renderHomePage()
     expect(screen.getByText(/Nenhuma demanda em andamento para retomar/i)).toBeInTheDocument()
-    expect(screen.getByText(/Todas as demandas estão concluídas ou aguardando ação externa/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Nova demanda/i })).toBeInTheDocument()
   })
 
   it('exibe seção "Ações rápidas"', () => {
@@ -68,19 +68,15 @@ describe('HomePage', () => {
 
   it('exibe ações rápidas com labels corretos', () => {
     renderHomePage()
-    expect(screen.getAllByText(/Nova demanda/i).length).toBeGreaterThan(0)
     expect(screen.getByText(/Jornalistas/i)).toBeInTheDocument()
     expect(screen.getByText(/Relatórios/i)).toBeInTheDocument()
   })
 
-  it('navega para demandas ao clicar em Nova demanda no header', async () => {
+  it('navega para demandas ao clicar em Nova demanda na faixa vazia', async () => {
     const user = userEvent.setup()
     renderHomePage()
 
-    const continueSection = screen.getByRole('heading', { name: /Continuar de onde parou/i }).parentElement
-    if (!continueSection) throw new Error('Continue section not found')
-
-    const newDemandButton = within(continueSection).getByRole('button', { name: /Nova demanda/i })
+    const newDemandButton = screen.getByRole('button', { name: /Nova demanda/i })
     await user.click(newDemandButton)
     expect(mockNavigate).toHaveBeenCalledWith('/demandas')
   })

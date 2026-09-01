@@ -33,13 +33,13 @@ export function ReportsPage() {
     ],
     heatmapData: {
       types: ['Pauta', 'Entrevista', 'Posicionamento', 'Follow-up', 'Reunião'],
-      months: ['08/25', '09/25', '10/25', '11/25', '12/25', '01/26', '02/26'],
+      months: ['08/25', '09/25', '10/25', '11/25', '12/25', '01/26', '02/26', '03/26', '04/26', '05/26', '06/26', '07/26'],
       data: [
-        [3, 4, 3, 2, 4, 3, 2],
-        [2, 3, 2, 3, 3, 4, 3],
-        [1, 2, 1, 1, 2, 2, 1],
-        [2, 2, 3, 2, 1, 2, 3],
-        [1, 1, 2, 1, 1, 1, 2],
+        [3, 4, 3, 2, 4, 3, 2, 3, 4, 2, 3, 4],
+        [2, 3, 2, 3, 3, 4, 3, 2, 3, 3, 2, 3],
+        [1, 2, 1, 1, 2, 2, 1, 2, 1, 2, 1, 2],
+        [2, 2, 3, 2, 1, 2, 3, 2, 2, 1, 3, 2],
+        [1, 1, 2, 1, 1, 1, 2, 1, 1, 2, 1, 1],
       ],
     },
   }
@@ -122,7 +122,7 @@ export function ReportsPage() {
       </header>
 
       <section aria-label="Filtros">
-        <div className={pageStyles.filtersBar}>
+        <div className={pageStyles.filtersRow}>
           <SelectField
             label="Escritório"
             labelSize="sm"
@@ -152,7 +152,7 @@ export function ReportsPage() {
           />
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             onClick={() => handleExport('csv')}
             disabled={isExporting}
           >
@@ -199,65 +199,61 @@ export function ReportsPage() {
       </section>
 
       <div className={pageStyles.chartsGrid}>
-        <section aria-label="Mapa de calor" className={pageStyles.chartSection}>
+        <Card padding="none" className={pageStyles.chartCard}>
           <div className={pageStyles.chartHeader}>
             <h2 className={pageStyles.chartTitle}>Mapa de calor: demandas por tipo</h2>
           </div>
-          <Card padding="none" className={pageStyles.chartCard}>
-            <div className={pageStyles.heatmapWrapper}>
-              <div className={pageStyles.heatmap}>
-                <div />
-                {mockKpis.heatmapData.months.map((month) => (
-                  <div key={month} className={pageStyles.heatmapHeader}>
-                    {month}
+          <div className={pageStyles.heatmapWrapper}>
+            <div className={pageStyles.heatmap}>
+              <div />
+              {mockKpis.heatmapData.months.map((month) => (
+                <div key={month} className={pageStyles.heatmapHeader}>
+                  {month}
+                </div>
+              ))}
+              {mockKpis.heatmapData.types.map((type, rowIdx) => (
+                <>
+                  <div key={`label-${type}`} className={pageStyles.heatmapLabel}>
+                    {type}
                   </div>
-                ))}
-                {mockKpis.heatmapData.types.map((type, rowIdx) => (
-                  <>
-                    <div key={`label-${type}`} className={pageStyles.heatmapLabel}>
-                      {type}
-                    </div>
-                    {mockKpis.heatmapData.data[rowIdx].map((intensity, colIdx) => (
-                      <div
-                        key={`${rowIdx}-${colIdx}`}
-                        className={pageStyles.heatmapCell}
-                        data-intensity={intensity}
-                        title={`${type} - ${mockKpis.heatmapData.months[colIdx]}: intensidade ${intensity}`}
-                      />
-                    ))}
-                  </>
-                ))}
-              </div>
+                  {mockKpis.heatmapData.data[rowIdx].map((intensity, colIdx) => (
+                    <div
+                      key={`${rowIdx}-${colIdx}`}
+                      className={pageStyles.heatmapCell}
+                      data-intensity={intensity}
+                      title={`${type} - ${mockKpis.heatmapData.months[colIdx]}: intensidade ${intensity}`}
+                    />
+                  ))}
+                </>
+              ))}
             </div>
-          </Card>
-        </section>
+          </div>
+        </Card>
 
-        <section aria-label="Demandas por tipo" className={pageStyles.chartSection}>
+        <Card padding="none" className={pageStyles.chartCard}>
           <div className={pageStyles.chartHeader}>
             <h2 className={pageStyles.chartTitle}>Demandas por tipo</h2>
           </div>
-          <Card padding="lg" className={pageStyles.chartCard}>
-            <div className={pageStyles.barsWrapper}>
-              <div className={pageStyles.barsList}>
-                {mockKpis.demandsByType.map((item) => (
-                  <div key={item.type} className={pageStyles.barItem}>
-                    <div className={pageStyles.barHeader}>
-                      <span className={pageStyles.barLabel}>{item.type}</span>
-                      <span className={pageStyles.barValue}>{item.value}</span>
-                    </div>
-                    <div className={pageStyles.barTrack}>
-                      <div
-                        className={pageStyles.barFill}
-                        data-type={item.color}
-                        style={{ width: `${(item.value / maxValue) * 100}%` }}
-                      />
-                    </div>
+          <div className={pageStyles.barsWrapper}>
+            <div className={pageStyles.barsList}>
+              {mockKpis.demandsByType.map((item) => (
+                <div key={item.type} className={pageStyles.barItem}>
+                  <div className={pageStyles.barHeader}>
+                    <span className={pageStyles.barLabel}>{item.type}</span>
+                    <span className={pageStyles.barValue}>{item.value}</span>
                   </div>
-                ))}
-              </div>
+                  <div className={pageStyles.barTrack}>
+                    <div
+                      className={pageStyles.barFill}
+                      data-type={item.color}
+                      style={{ width: `${(item.value / maxValue) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
-          </Card>
-        </section>
+          </div>
+        </Card>
       </div>
     </div>
   )

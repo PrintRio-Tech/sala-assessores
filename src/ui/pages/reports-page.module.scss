@@ -24,20 +24,15 @@ $gold: $accent-gold;
   font-weight: 480;
 }
 
-.filtersBar {
+.filtersRow {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(140px, 0.6fr)) auto;
+  grid-template-columns: minmax(200px, 1fr) repeat(2, minmax(130px, 0.55fr)) auto;
   align-items: end;
   gap: $space-2;
-  padding: 22px 24px;
   margin-bottom: $space-4;
-  background: $paper;
-  border: 1px solid $line;
-  border-radius: 16px;
-  box-shadow: 0 2px 5px rgba(20, 32, 27, 0.03);
 }
 
-.filtersBar > button {
+.filtersRow > button {
   min-height: 46px;
   white-space: nowrap;
 }
@@ -58,8 +53,8 @@ $gold: $accent-gold;
 }
 
 .kpiHighlight {
-  background: $sage;
-  border-color: rgba($forest, 0.15);
+  background: $sage !important;
+  border-color: rgba($forest, 0.15) !important;
 }
 
 .sparklineContainer {
@@ -87,42 +82,35 @@ $gold: $accent-gold;
   margin-top: $space-4;
 }
 
-.chartSection {
+.chartCard {
   display: flex;
   flex-direction: column;
+  min-height: 380px;
 }
 
 .chartHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: $space-2;
+  padding: $space-3 $space-4 $space-2;
+  border-bottom: 1px solid $line;
 }
 
 .chartTitle {
   margin: 0;
   color: $ink;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
-}
-
-.chartCard {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
 }
 
 .heatmapWrapper {
   flex: 1;
-  padding: $space-4;
+  padding: $space-3 $space-4 $space-4;
   overflow-x: auto;
 }
 
 .heatmap {
   display: grid;
-  grid-template-columns: 100px repeat(7, 1fr);
-  gap: 6px;
-  min-width: 640px;
+  grid-template-columns: 90px repeat(12, 1fr);
+  gap: 4px;
+  min-width: 600px;
 }
 
 .heatmapLabel {
@@ -131,31 +119,36 @@ $gold: $accent-gold;
   justify-content: flex-end;
   padding-right: $space-2;
   color: $muted;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 9px;
+  font-weight: 650;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .heatmapHeader {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: $space-1 0;
+  padding: 4px 0;
   color: $muted;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   text-align: center;
 }
 
 .heatmapCell {
-  aspect-ratio: 1;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
   background: $sage;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  
+  &:hover {
+    transform: scale(1.08);
+  }
   
   &[data-intensity="0"] {
-    background: rgba($surface-container-low, 0.4);
+    background: rgba($surface-container-low, 0.35);
   }
   
   &[data-intensity="1"] {
@@ -274,7 +267,7 @@ $gold: $accent-gold;
 }
 
 @media (max-width: 760px) {
-  .filtersBar {
+  .filtersRow {
     grid-template-columns: 1fr;
   }
   
@@ -283,6 +276,12 @@ $gold: $accent-gold;
   }
   
   .heatmap {
-    min-width: 560px;
+    min-width: 500px;
+    grid-template-columns: 80px repeat(12, 1fr);
+  }
+  
+  .heatmapCell {
+    width: 24px;
+    height: 24px;
   }
 }

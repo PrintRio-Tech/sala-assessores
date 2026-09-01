@@ -78,6 +78,7 @@ $gold: $accent-gold;
 .chartsGrid {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
+  align-items: start;
   gap: $space-4;
   margin-top: $space-4;
 }
@@ -85,7 +86,6 @@ $gold: $accent-gold;
 .chartCard {
   display: flex;
   flex-direction: column;
-  min-height: 380px;
 }
 
 .chartHeader {
@@ -101,7 +101,6 @@ $gold: $accent-gold;
 }
 
 .heatmapWrapper {
-  flex: 1;
   padding: $space-3 $space-4 $space-4;
   overflow-x: auto;
 }
@@ -122,7 +121,7 @@ $gold: $accent-gold;
   font-size: 9px;
   font-weight: 650;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.02em;
 }
 
 .heatmapHeader {
@@ -169,7 +168,6 @@ $gold: $accent-gold;
 }
 
 .barsWrapper {
-  flex: 1;
   padding: $space-4;
 }
 

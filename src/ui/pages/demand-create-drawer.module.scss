@@ -19,3 +19,24 @@
   gap: $space-3;
   min-width: 0;
 }
+
+.tagsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  margin-bottom: $space-2;
+  min-height: 32px;
+}
+
+.suggestedTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  align-items: center;
+  margin-top: $space-2;
+
+  small {
+    color: var(--color-text-muted);
+    margin-right: $space-1;
+  }
+}

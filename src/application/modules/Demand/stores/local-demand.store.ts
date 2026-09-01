@@ -40,7 +40,9 @@ export type NewLocalDemandCapture = Omit<LocalDemandCapture,
   | 'responsibleId' | 'responsibleName' | 'priority' | 'enrichment'
   | 'reviewRequests' | 'decisions' | 'finalPositioning' | 'closure'
   | 'versions' | 'stateTransitions'
->
+> & {
+  tags?: string[]
+}
 
 type LocalDemandState = {
   records: LocalDemandCapture[]
@@ -75,7 +77,7 @@ export const useLocalDemandStore = create<LocalDemandState>((set, get) => ({
       responsibleId: '',
       responsibleName: 'Ainda não atribuído',
       priority: null,
-      enrichment: { tags: [], topics: [], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null },
+      enrichment: { tags: capture.tags || [], topics: [], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null },
       reviewRequests: [],
       decisions: [],
       finalPositioning: null,

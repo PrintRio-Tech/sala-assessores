@@ -19,6 +19,7 @@ export type LocalDemandCapture = {
   journalistId: string
   journalistName: string
   outletName: string
+  receivedAt?: Date
   createdAt: Date
   updatedAt: Date
   interactions: ExternalInteraction[]
@@ -40,7 +41,10 @@ export type NewLocalDemandCapture = Omit<LocalDemandCapture,
   | 'responsibleId' | 'responsibleName' | 'priority' | 'enrichment'
   | 'reviewRequests' | 'decisions' | 'finalPositioning' | 'closure'
   | 'versions' | 'stateTransitions'
->
+> & {
+  tags?: string[]
+  receivedAt?: Date
+}
 
 type LocalDemandState = {
   records: LocalDemandCapture[]
@@ -68,6 +72,7 @@ export const useLocalDemandStore = create<LocalDemandState>((set, get) => ({
       ...capture,
       id: `local-${now.getTime()}-${sequence}`,
       code: `LOCAL-${String(sequence).padStart(3, '0')}`,
+      receivedAt: capture.receivedAt,
       createdAt: now,
       updatedAt: now,
       interactions: [],
@@ -75,7 +80,7 @@ export const useLocalDemandStore = create<LocalDemandState>((set, get) => ({
       responsibleId: '',
       responsibleName: 'Ainda não atribuído',
       priority: null,
-      enrichment: { tags: [], topics: [], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null },
+      enrichment: { tags: capture.tags || [], topics: [], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null },
       reviewRequests: [],
       decisions: [],
       finalPositioning: null,

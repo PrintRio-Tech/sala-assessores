@@ -1,4 +1,4 @@
-import { Button, Card, Heading, Icon as DsIcon, ICONS, Stat, Text } from '@print/ui'
+import { Button, Card, EmptyState, Heading, Icon as DsIcon, ICONS, Stat, Text } from '@print/ui'
 import { useNavigate } from 'react-router-dom'
 
 import { currentUser } from '@/application/current-user'
@@ -12,10 +12,14 @@ interface MockDemandInProgress {
   responsibleName: string
 }
 
-const MOCK_DEMANDS_IN_PROGRESS: MockDemandInProgress[] = [
-  { id: 'd-ceo', code: 'TEC-889', title: 'Entrevista exclusiva: CEO TechCorp', responsibleName: 'Ana Paula' },
-  { id: 'd-portos', code: 'ECO-442', title: 'Crise Logística: Impacto nos Portos', responsibleName: 'Ricardo M.' },
-]
+// Lista vazia por padrão para mostrar empty state
+const MOCK_DEMANDS_IN_PROGRESS: MockDemandInProgress[] = []
+
+// Fixture comentado para quando houver demandas
+// const MOCK_DEMANDS_IN_PROGRESS: MockDemandInProgress[] = [
+//   { id: 'd-ceo', code: 'TEC-889', title: 'Entrevista exclusiva: CEO TechCorp', responsibleName: 'Ana Paula' },
+//   { id: 'd-portos', code: 'ECO-442', title: 'Crise Logística: Impacto nos Portos', responsibleName: 'Ricardo M.' },
+// ]
 
 export function HomePage() {
   const navigate = useNavigate()
@@ -84,11 +88,11 @@ export function HomePage() {
             ))}
           </div>
         ) : (
-          <Card padding="lg" className={styles.emptyState}>
-            <Text tone="muted" className={styles.emptyText}>
-              Nenhuma demanda em andamento para retomar.
-            </Text>
-          </Card>
+          <EmptyState
+            variant="empty"
+            title="Nenhuma demanda em andamento para retomar"
+            description="Todas as demandas estão concluídas ou aguardando ação externa."
+          />
         )}
       </section>
 

@@ -55,12 +55,10 @@ describe('HomePage', () => {
     expect(screen.getByRole('heading', { name: /Continuar de onde parou/i, level: 2 })).toBeInTheDocument()
   })
 
-  it('exibe lista de demandas em andamento', () => {
+  it('exibe empty state quando não há demandas em andamento', () => {
     renderHomePage()
-    expect(screen.getByText('TEC-889')).toBeInTheDocument()
-    expect(screen.getByText('Entrevista exclusiva: CEO TechCorp')).toBeInTheDocument()
-    expect(screen.getByText('ECO-442')).toBeInTheDocument()
-    expect(screen.getByText('Crise Logística: Impacto nos Portos')).toBeInTheDocument()
+    expect(screen.getByText(/Nenhuma demanda em andamento para retomar/i)).toBeInTheDocument()
+    expect(screen.getByText(/Todas as demandas estão concluídas ou aguardando ação externa/i)).toBeInTheDocument()
   })
 
   it('exibe seção "Ações rápidas"', () => {
@@ -73,17 +71,6 @@ describe('HomePage', () => {
     expect(screen.getAllByText(/Nova demanda/i).length).toBeGreaterThan(0)
     expect(screen.getByText(/Jornalistas/i)).toBeInTheDocument()
     expect(screen.getByText(/Relatórios/i)).toBeInTheDocument()
-  })
-
-  it('navega para demanda ao clicar em item da lista', async () => {
-    const user = userEvent.setup()
-    renderHomePage()
-
-    const demandItem = screen.getByText('Entrevista exclusiva: CEO TechCorp').closest('button')
-    if (!demandItem) throw new Error('Demand item not found')
-
-    await user.click(demandItem)
-    expect(mockNavigate).toHaveBeenCalledWith('/demandas/d-ceo')
   })
 
   it('navega para demandas ao clicar em Nova demanda no header', async () => {

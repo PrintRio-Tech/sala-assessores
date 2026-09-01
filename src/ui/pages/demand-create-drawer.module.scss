@@ -1,0 +1,21 @@
+@use '@print/ui/tokens' as *;
+
+.stepContent {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.contactGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $space-3;
+  align-items: start;
+}
+
+.journalistContext {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  min-width: 0;
+}

@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap');
+
+:root {
+  color-scheme: light;
+  --sa-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  background: var(--pf-o-white);
+  color: var(--pf-on-surface);
+  font-family: var(--pf-font-primary);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--pf-o-white);
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
+  transition: transform 140ms var(--sa-ease);
+}
+
+:focus-visible {
+  outline: 2px solid var(--pf-primary);
+  outline-offset: 2px;
+}

@@ -1,0 +1,160 @@
+@use '@print/ui/tokens' as *;
+@use '@print/ui/mixins' as *;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+}
+
+.section {
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 $space-5;
+  border: 0;
+  border-bottom: $border-subtle;
+}
+
+.section:last-of-type { padding-bottom: 0; border-bottom: 0; }
+.section legend { margin-bottom: $space-3; font-size: $body-md-size; font-weight: $font-weight-semibold; }
+.sectionHint { margin: -$space-2 0 $space-3; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: $space-3; align-items: start; }
+.footerActions { display: flex; justify-content: flex-end; gap: $space-2; width: 100%; }
+.submitError { margin: 0; }
+
+.evaluationNotice {
+  padding: $space-3;
+  border: $border-subtle;
+  border-radius: $radius-md;
+  background: $surface-container-low;
+  color: $on-surface-variant;
+}
+
+.evaluationNotice p { margin: 0; line-height: 1.5; }
+
+.topicField {
+  position: relative;
+  min-width: 0;
+}
+
+.topicControl {
+  @include form-control;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-2 $space-3;
+
+  &:focus-within,
+  &[data-topic-focused='true'] {
+    border-color: $primary;
+    outline: 0;
+    box-shadow: inset 0 0 0 1px $primary;
+  }
+}
+
+.topicChip {
+  display: inline-flex;
+  max-width: 100%;
+  min-height: 1.75rem;
+  align-items: center;
+  gap: $space-1;
+  padding: 0 $space-2;
+  border-radius: $radius-full;
+  background: $surface-container-low;
+  color: $on-surface;
+
+  > span {
+    overflow-wrap: anywhere;
+  }
+}
+
+.topicRemove {
+  display: inline-flex;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: $radius-full;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+
+  &:hover { background: $surface-container; }
+  &:focus-visible { outline: 2px solid $primary; outline-offset: 1px; }
+}
+
+.topicControl > .topicInput {
+  appearance: none;
+  min-width: 10rem;
+  min-height: 1.75rem;
+  flex: 1 1 10rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  box-shadow: none;
+  background: transparent;
+  color: $on-surface;
+  font: inherit;
+
+  &::placeholder { color: $on-surface-variant; }
+
+  &:hover,
+  &:focus,
+  &:focus-visible {
+    border: 0;
+    outline: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+}
+
+.topicSuggestions {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + $space-1);
+  right: 0;
+  left: 0;
+  display: flex;
+  max-height: 12rem;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: $space-1;
+  border: $border-default;
+  border-radius: $radius-md;
+  background: $surface-bright;
+  box-shadow: $shadow-ambient;
+  overscroll-behavior: contain;
+}
+
+.topicSuggestion {
+  width: 100%;
+  padding: $space-2 $space-3;
+  border: 0;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: $on-surface;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+
+  &:hover,
+  &:focus-visible {
+    outline: 0;
+    background: $surface-container-low;
+    color: $primary;
+  }
+}
+
+@include mobile {
+  .grid { grid-template-columns: 1fr; }
+  .footerActions { flex-direction: column; align-items: stretch; }
+  .footerAction { width: 100%; }
+  .topicInput { min-width: 7rem; }
+  .topicSuggestions { position: static; margin-top: $space-1; }
+}

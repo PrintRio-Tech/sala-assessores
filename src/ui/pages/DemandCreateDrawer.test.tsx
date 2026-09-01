@@ -99,6 +99,7 @@ describe('DemandCreateDrawer', () => {
           channel: 'E-mail',
           journalistId: '',
           tags: [],
+          receivedAt: expect.any(Date),
         }),
       )
     })
@@ -212,9 +213,11 @@ describe('DemandCreateDrawer', () => {
     await user.click(screen.getByLabelText('Canal de entrada'))
     await user.click(screen.getByText('E-mail'))
 
+    await user.click(screen.getByText('Receber sem contato cadastrado'))
+
     await user.click(screen.getByText('Continuar'))
 
-    expect(screen.getByText('Informe o contato ou registre-o localmente.')).toBeInTheDocument()
+    expect(screen.queryByText('Informe o contato ou registre-o localmente.')).not.toBeInTheDocument()
   })
 
   it('exibe confirmação ao tentar descartar com alterações', async () => {

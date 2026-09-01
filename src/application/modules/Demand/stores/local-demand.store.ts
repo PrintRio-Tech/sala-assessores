@@ -19,6 +19,7 @@ export type LocalDemandCapture = {
   journalistId: string
   journalistName: string
   outletName: string
+  receivedAt?: Date
   createdAt: Date
   updatedAt: Date
   interactions: ExternalInteraction[]
@@ -42,6 +43,7 @@ export type NewLocalDemandCapture = Omit<LocalDemandCapture,
   | 'versions' | 'stateTransitions'
 > & {
   tags?: string[]
+  receivedAt?: Date
 }
 
 type LocalDemandState = {
@@ -70,6 +72,7 @@ export const useLocalDemandStore = create<LocalDemandState>((set, get) => ({
       ...capture,
       id: `local-${now.getTime()}-${sequence}`,
       code: `LOCAL-${String(sequence).padStart(3, '0')}`,
+      receivedAt: capture.receivedAt,
       createdAt: now,
       updatedAt: now,
       interactions: [],

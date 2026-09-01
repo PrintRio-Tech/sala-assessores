@@ -30,6 +30,7 @@ type FormValues = {
   channel: string
   journalistId: string
   tags: string[]
+  receivedAt: string
 }
 
 type FormErrors = Partial<Record<keyof FormValues, string>>
@@ -45,6 +46,7 @@ const initialValues: FormValues = {
   channel: '',
   journalistId: '',
   tags: [],
+  receivedAt: new Date().toISOString().slice(0, 16),
 }
 
 const channelOptions = [
@@ -69,7 +71,6 @@ const suggestedTags = [
 
 function fieldError(key: keyof FormValues, values: FormValues) {
   if (key === 'channel' && !values.channel) return 'Informe o canal de entrada.'
-  if (key === 'journalistId' && values.contactMode === 'known' && !values.journalistId) return 'Informe o contato ou registre-o localmente.'
   if (key === 'contactName' && values.contactMode === 'local' && !values.contactName.trim()) return 'Informe o nome do contato.'
   if (key === 'contactOutlet' && values.contactMode === 'local' && !values.contactOutlet.trim()) return 'Informe a redação ou veículo.'
   if (key === 'subject' && !values.subject.trim()) return 'Informe o assunto do caso.'
@@ -80,7 +81,7 @@ function fieldError(key: keyof FormValues, values: FormValues) {
 }
 
 const stepFields: Array<Array<keyof FormValues>> = [
-  ['channel', 'journalistId', 'contactName', 'contactOutlet'],
+  ['channel', 'receivedAt', 'journalistId', 'contactName', 'contactOutlet'],
   ['subject', 'factContext'],
   ['pressRequest', 'requestedDeadline', 'tags'],
 ]
@@ -207,6 +208,7 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
       journalistName: contactName,
       outletName: contactOutlet,
       tags: values.tags,
+      receivedAt: values.receivedAt ? new Date(values.receivedAt) : undefined,
     })
     resetFlow()
   }
@@ -218,6 +220,17 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
       isValid: isStepValid(0),
       content: (
         <div className={styles.stepContent}>
+          <div className={styles.receivedAtRow}>
+            <TextInput 
+              type="datetime-local" 
+              label="Data/hora do recebimento" 
+              name="receivedAt" 
+              value={values.receivedAt} 
+              onChange={(event) => update('receivedAt', event.target.value)}
+              description="Momento em que a demanda foi recebida"
+            />
+          </div>
+          <SelectField label="Canal de entrada" name="channel" required value={values.channel} error={errors.channel} options={channelOptions} onValueChange={(value) => update('channel', value)} />
           {values.contactMode === 'known' ? (
             <>
               <SearchableSelectField
@@ -262,7 +275,6 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
               </Button>
             </>
           )}
-          <SelectField label="Canal de entrada" name="channel" required value={values.channel} error={errors.channel} options={channelOptions} onValueChange={(value) => update('channel', value)} />
           {(selectedJournalist || (values.contactMode === 'local' && (values.contactName || values.contactOutlet))) && (
             <Card variant="surface" padding="md" className={styles.journalistContext} role="region" aria-label="Contexto do contato">
               {selectedJournalist ? (

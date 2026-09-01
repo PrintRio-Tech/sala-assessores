@@ -16,14 +16,16 @@ export function AppLayout() {
   }, [location.pathname])
 
   const navItems: AppNavItem[] = [
+    { id: 'home', label: 'Home', icon: <Icon src={ICONS.nav.home} size={20} />, active: location.pathname === '/', onClick: () => navigate(ROUTES.home) },
     { id: 'demandas', label: 'Demandas', icon: <Icon src={ICONS.nav.activities} size={20} />, active: location.pathname.startsWith('/demandas'), onClick: () => navigate(ROUTES.demands) },
     { id: 'jornalistas', label: 'Jornalistas', icon: <Icon src={ICONS.nav.journalists} size={20} />, active: location.pathname.startsWith('/jornalistas'), onClick: () => navigate(ROUTES.journalists) },
+    { id: 'relatorios', label: 'Relatórios', icon: <Icon src={ICONS.nav.reports} size={20} />, active: location.pathname.startsWith('/relatorios'), onClick: () => navigate(ROUTES.reports) },
   ]
 
   return (
     <AppShell
-      logo={<button className={styles.brand} type="button" onClick={() => navigate(ROUTES.demands)}><span className={styles.brandMark}>S</span><span>Sala de Assessores</span></button>}
-      logoCollapsed={<button className={styles.brandCollapsed} type="button" aria-label="Sala de Assessores" onClick={() => navigate(ROUTES.demands)}>S</button>}
+      logo={<button className={styles.brand} type="button" onClick={() => navigate(ROUTES.home)}><span className={styles.brandMark}>S</span><span>Sala de Assessores</span></button>}
+      logoCollapsed={<button className={styles.brandCollapsed} type="button" aria-label="Sala de Assessores" onClick={() => navigate(ROUTES.home)}>S</button>}
       mobileLogo={<Text as="span" variant="labelMd">Sala de Assessores</Text>}
       navItems={navItems}
       footerSlot={

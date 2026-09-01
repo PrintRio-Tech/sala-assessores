@@ -63,6 +63,21 @@ describe('AppLayout lifecycle', () => {
     expect(view.container.querySelector('#main-content')).toBeVisible()
   })
 
+  it('abre a home ao navegar por Home', () => {
+    render(
+      <MemoryRouter initialEntries={['/demandas']}>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="*" element={<LocationProbe />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Home' })[0])
+    expect(screen.getByTestId('location')).toHaveTextContent('/')
+  })
+
   it('abre a listagem ao navegar por Jornalistas', () => {
     render(
       <MemoryRouter initialEntries={['/demandas']}>
@@ -76,6 +91,21 @@ describe('AppLayout lifecycle', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Jornalistas' })[0])
     expect(screen.getByTestId('location')).toHaveTextContent('/jornalistas')
+  })
+
+  it('abre relatórios ao navegar por Relatórios', () => {
+    render(
+      <MemoryRouter initialEntries={['/demandas']}>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="*" element={<LocationProbe />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Relatórios' })[0])
+    expect(screen.getByTestId('location')).toHaveTextContent('/relatorios')
   })
 
   it('apresenta a identidade local que assina os registros, sem autenticação', () => {

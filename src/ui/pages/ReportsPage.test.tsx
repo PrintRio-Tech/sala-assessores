@@ -5,58 +5,112 @@ import { describe, expect, it } from 'vitest'
 import { ReportsPage } from './ReportsPage'
 
 describe('ReportsPage', () => {
-  it('renderiza o título da página', () => {
+  it('renderiza o título da página com palavra em destaque', () => {
     render(
       <BrowserRouter>
         <ReportsPage />
       </BrowserRouter>,
     )
 
-    expect(screen.getByRole('heading', { level: 1, name: /relatórios/i })).toBeInTheDocument()
+    expect(screen.getByText(/visão geral de/i)).toBeInTheDocument()
+    expect(screen.getByText(/cobertura/i)).toBeInTheDocument()
   })
 
-  it('exibe KPIs principais', () => {
+  it('renderiza filtros de período e escritório', () => {
     render(
       <BrowserRouter>
         <ReportsPage />
       </BrowserRouter>,
     )
 
-    expect(screen.getByText(/total de demandas/i)).toBeInTheDocument()
-    expect(screen.getByText(/tempo médio de resposta/i)).toBeInTheDocument()
-    expect(screen.getByText(/taxa de satisfação/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/escritório/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^de$/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^até$/i)).toBeInTheDocument()
   })
 
-  it('exibe distribuição por status', () => {
+  it('exibe 4 KPIs principais', () => {
     render(
       <BrowserRouter>
         <ReportsPage />
       </BrowserRouter>,
     )
 
-    expect(screen.getByText(/demandas por status/i)).toBeInTheDocument()
-    expect(screen.getByText(/rascunho/i)).toBeInTheDocument()
+    expect(screen.getByText(/demandas do mês/i)).toBeInTheDocument()
+    expect(screen.getByText(/posicionamentos enviados/i)).toBeInTheDocument()
+    expect(screen.getByText(/interações com jornalistas/i)).toBeInTheDocument()
+    expect(screen.getByText(/veículos ativos/i)).toBeInTheDocument()
+  })
+
+  it('renderiza mapa de calor de demandas', () => {
+    render(
+      <BrowserRouter>
+        <ReportsPage />
+      </BrowserRouter>,
+    )
+
+    expect(screen.getByText(/mapa de calor: demandas por tipo/i)).toBeInTheDocument()
+  })
+
+  it('renderiza gráfico de barras de demandas por tipo', () => {
+    render(
+      <BrowserRouter>
+        <ReportsPage />
+      </BrowserRouter>,
+    )
+
+    expect(screen.getByRole('heading', { name: /demandas por tipo/i })).toBeInTheDocument()
+    expect(screen.getByText(/pauta/i)).toBeInTheDocument()
+    expect(screen.getByText(/entrevista/i)).toBeInTheDocument()
+    expect(screen.getByText(/posicionamento/i)).toBeInTheDocument()
+    expect(screen.getByText(/follow-up/i)).toBeInTheDocument()
+  })
+
+  it('renderiza botão de exportação', () => {
+    render(
+      <BrowserRouter>
+        <ReportsPage />
+      </BrowserRouter>,
+    )
+
+    expect(screen.getByRole('button', { name: /exportar/i })).toBeInTheDocument()
+  })
+
+  it('renderiza valores dos KPIs', () => {
+    render(
+      <BrowserRouter>
+        <ReportsPage />
+      </BrowserRouter>,
+    )
+
+    expect(screen.getByText('42')).toBeInTheDocument()
+    expect(screen.getByText('18')).toBeInTheDocument()
+    expect(screen.getByText('35')).toBeInTheDocument()
+    expect(screen.getByText('12')).toBeInTheDocument()
+  })
+
+  it('renderiza painel de jornalistas mais acionados', () => {
+    render(
+      <BrowserRouter>
+        <ReportsPage />
+      </BrowserRouter>,
+    )
+
+    expect(screen.getByText(/jornalistas mais acionados/i)).toBeInTheDocument()
+    expect(screen.getByText(/ana silva/i)).toBeInTheDocument()
+    expect(screen.getByText(/o globo/i)).toBeInTheDocument()
+  })
+
+  it('renderiza painel de demandas por status', () => {
+    render(
+      <BrowserRouter>
+        <ReportsPage />
+      </BrowserRouter>,
+    )
+
+    expect(screen.getByRole('heading', { name: /demandas por status/i })).toBeInTheDocument()
+    expect(screen.getByText(/aberta/i)).toBeInTheDocument()
     expect(screen.getByText(/em andamento/i)).toBeInTheDocument()
-  })
-
-  it('exibe top jornalistas', () => {
-    render(
-      <BrowserRouter>
-        <ReportsPage />
-      </BrowserRouter>,
-    )
-
-    expect(screen.getByText(/jornalistas mais ativos/i)).toBeInTheDocument()
-  })
-
-  it('renderiza botões de exportação', () => {
-    render(
-      <BrowserRouter>
-        <ReportsPage />
-      </BrowserRouter>,
-    )
-
-    expect(screen.getByRole('button', { name: /exportar csv/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /exportar json/i })).toBeInTheDocument()
+    expect(screen.getByText(/enviada/i)).toBeInTheDocument()
+    expect(screen.getByText(/encerrada/i)).toBeInTheDocument()
   })
 })

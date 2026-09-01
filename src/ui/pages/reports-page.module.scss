@@ -1,0 +1,396 @@
+@use '@print/ui/tokens' as *;
+
+$ink: $on-surface;
+$muted: $on-surface-variant;
+$line: $outline-variant;
+$paper: $surface-bright;
+$cream: $surface;
+$forest: $primary;
+$sage: $surface-container-high;
+$gold: $accent-gold;
+
+.heroTitle {
+  margin: 0 !important;
+  color: $ink;
+  font-size: 42px !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.045em !important;
+  font-weight: 500 !important;
+}
+
+.heroEmphasis {
+  color: $gold;
+  font-style: italic;
+  font-weight: 480;
+}
+
+.filtersRow {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) repeat(2, minmax(130px, 0.55fr)) auto;
+  align-items: end;
+  gap: $space-2;
+  margin-bottom: $space-4;
+}
+
+.filtersRow > button {
+  min-height: 46px;
+  white-space: nowrap;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $space-3;
+  margin-bottom: $space-5;
+}
+
+.kpiCard {
+  position: relative;
+  min-height: 156px;
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.kpiHighlight {
+  background: $sage !important;
+  border-color: rgba($forest, 0.15) !important;
+}
+
+.sparklineContainer {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  width: 74px;
+  height: 38px;
+}
+
+.sparkline {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: $gold;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  grid-template-rows: auto auto;
+  gap: $space-4;
+  margin-top: $space-4;
+}
+
+.chartCard {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chartHeader {
+  padding: $space-3 $space-4 $space-2;
+  border-bottom: 1px solid $line;
+}
+
+.chartTitle {
+  margin: 0;
+  color: $ink;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.heatmapWrapper {
+  padding: $space-3 $space-4 $space-4;
+  overflow-x: auto;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.heatmap {
+  display: grid;
+  grid-template-columns: 90px repeat(12, 1fr);
+  gap: 4px;
+  min-width: 600px;
+}
+
+.heatmapLabel {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: $space-2;
+  color: $muted;
+  font-size: 9px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.heatmapHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0;
+  color: $muted;
+  font-size: 9px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.heatmapCell {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: $sage;
+  transition: all 0.15s ease;
+  
+  &:hover {
+    transform: scale(1.08);
+  }
+  
+  &[data-intensity="0"] {
+    background: rgba($surface-container-low, 0.35);
+  }
+  
+  &[data-intensity="1"] {
+    background: rgba($forest, 0.2);
+  }
+  
+  &[data-intensity="2"] {
+    background: rgba($forest, 0.4);
+  }
+  
+  &[data-intensity="3"] {
+    background: rgba($forest, 0.65);
+  }
+  
+  &[data-intensity="4"] {
+    background: $forest;
+  }
+}
+
+.barsWrapper {
+  padding: $space-4;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.barsList {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  width: 100%;
+}
+
+.barItem {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.barHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+}
+
+.barLabel {
+  color: $ink;
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barValue {
+  color: $muted;
+  font-size: 12px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.barTrack {
+  height: 8px;
+  background: rgba($line, 0.4);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: $forest;
+  border-radius: inherit;
+  transition: width 0.4s ease;
+  
+  &[data-type="pauta"] {
+    background: $forest;
+  }
+  
+  &[data-type="entrevista"] {
+    background: $gold;
+  }
+  
+  &[data-type="posicionamento"] {
+    background: rgba($forest, 0.5);
+  }
+  
+  &[data-type="followup"] {
+    background: rgba($gold, 0.7);
+  }
+  
+  &[data-type="reuniao"] {
+    background: rgba($forest, 0.7);
+  }
+}
+
+.compactWrapper {
+  padding: $space-3 $space-4;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.journalistsList {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  width: 100%;
+}
+
+.journalistItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+  padding-bottom: $space-3;
+  
+  &:not(:last-child) {
+    border-bottom: 1px solid $line;
+  }
+}
+
+.journalistInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.journalistName {
+  color: $ink;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journalistOutlet {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journalistCount {
+  color: $forest;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.statusList {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  width: 100%;
+}
+
+.statusItem {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.statusHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+}
+
+.statusLabel {
+  color: $ink;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.statusValue {
+  color: $muted;
+  font-size: 13px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.statusBar {
+  height: 8px;
+  background: rgba($line, 0.35);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.statusBarFill {
+  height: 100%;
+  background: $forest;
+  border-radius: inherit;
+  transition: width 0.4s ease;
+}
+
+.emptyState {
+  padding: $space-5 $space-3;
+  border: 1px dashed $line;
+  border-radius: $radius-md;
+  background: rgba($surface-container-low, 0.25);
+  text-align: center;
+}
+
+.emptyText {
+  color: $muted;
+  font-size: 13px;
+}
+
+@media (max-width: 1100px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .filtersRow {
+    grid-template-columns: 1fr;
+  }
+  
+  .kpiGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .heatmap {
+    min-width: 500px;
+    grid-template-columns: 80px repeat(12, 1fr);
+  }
+  
+  .heatmapCell {
+    width: 24px;
+    height: 24px;
+  }
+}

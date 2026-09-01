@@ -87,7 +87,8 @@ $gold: $accent-gold;
 .journalistFilterActions { display: flex; align-items: center; justify-content: flex-end; gap: $space-1; padding-bottom: 1px; }
 .journalistFilterActions > button { white-space: nowrap; }
 .journalistAdvancedFilters { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: $space-2; margin-top: $space-1; padding-top: $space-3; border-top: 1px solid $line; }
-.journalistResultCount { margin: $space-2 0 0; }
+.journalistResultSummary { display: flex; align-items: center; gap: $space-2; margin: $space-2 0 0; }
+.journalistResultCount { margin: 0; }
 .journalistPagination { margin-top: $space-3; }
 .journalistName, .journalistWork, .journalistContact, .journalistRelationship { display: flex; min-width: 0; flex-direction: column; gap: $space-1; }
 .journalistName a { overflow: hidden; color: $on-surface; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }

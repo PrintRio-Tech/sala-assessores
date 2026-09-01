@@ -152,6 +152,13 @@ $sage: $surface-container-high;
   min-height: 180px;
 }
 
+.actionTile {
+  background: $paper;
+  border: 1px solid $line;
+  border-radius: 18px;
+  box-shadow: 0 2px 5px rgba(20, 32, 27, 0.03);
+}
+
 .actionContent {
   display: flex;
   flex-direction: column;

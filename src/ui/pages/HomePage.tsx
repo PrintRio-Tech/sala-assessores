@@ -118,7 +118,7 @@ export function HomePage() {
             </Button>
           </Card>
 
-          <Card variant="action" padding="lg" className={styles.actionTile}>
+          <Card padding="lg" className={styles.actionTile}>
             <div className={styles.actionContent}>
               <div className={styles.actionIcon}>
                 <DsIcon src={ICONS.nav.journalists} size={24} />
@@ -138,7 +138,7 @@ export function HomePage() {
             </Button>
           </Card>
 
-          <Card variant="action" padding="lg" className={styles.actionTile}>
+          <Card padding="lg" className={styles.actionTile}>
             <div className={styles.actionContent}>
               <div className={styles.actionIcon}>
                 <DsIcon src={ICONS.nav.reports} size={24} />

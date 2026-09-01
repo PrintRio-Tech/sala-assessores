@@ -5,28 +5,30 @@ import { describe, expect, it } from 'vitest'
 import { ReportsPage } from './ReportsPage'
 
 describe('ReportsPage', () => {
-  it('renderiza o título da página', () => {
+  it('renderiza o título da página com palavra em destaque', () => {
     render(
       <BrowserRouter>
         <ReportsPage />
       </BrowserRouter>,
     )
 
-    expect(screen.getByRole('heading', { level: 1, name: /relatórios/i })).toBeInTheDocument()
+    expect(screen.getByText(/visão geral de/i)).toBeInTheDocument()
+    expect(screen.getByText(/cobertura/i)).toBeInTheDocument()
   })
 
-  it('exibe o período atual no subtítulo', () => {
+  it('renderiza filtros de período e escritório', () => {
     render(
       <BrowserRouter>
         <ReportsPage />
       </BrowserRouter>,
     )
 
-    const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-    expect(screen.getByText(new RegExp(currentMonth, 'i'))).toBeInTheDocument()
+    expect(screen.getByLabelText(/escritório/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^de$/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^até$/i)).toBeInTheDocument()
   })
 
-  it('exibe KPIs principais em Cards', () => {
+  it('exibe 4 KPIs principais', () => {
     render(
       <BrowserRouter>
         <ReportsPage />
@@ -36,44 +38,51 @@ describe('ReportsPage', () => {
     expect(screen.getByText(/demandas do mês/i)).toBeInTheDocument()
     expect(screen.getByText(/posicionamentos enviados/i)).toBeInTheDocument()
     expect(screen.getByText(/interações com jornalistas/i)).toBeInTheDocument()
+    expect(screen.getByText(/veículos ativos/i)).toBeInTheDocument()
   })
 
-  it('exibe distribuição por status com todos os status', () => {
+  it('renderiza mapa de calor de demandas', () => {
     render(
       <BrowserRouter>
         <ReportsPage />
       </BrowserRouter>,
     )
 
-    expect(screen.getByText(/demandas por status/i)).toBeInTheDocument()
-    expect(screen.getByText(/rascunho/i)).toBeInTheDocument()
-    expect(screen.getByText(/em andamento/i)).toBeInTheDocument()
-    expect(screen.getByText(/em review/i)).toBeInTheDocument()
-    expect(screen.getByText(/aprovada/i)).toBeInTheDocument()
-    expect(screen.getByText(/enviada/i)).toBeInTheDocument()
-    expect(screen.getByText(/sem envio/i)).toBeInTheDocument()
+    expect(screen.getByText(/mapa de calor: demandas por tipo/i)).toBeInTheDocument()
   })
 
-  it('exibe top jornalistas com ranking', () => {
+  it('renderiza gráfico de barras de demandas por tipo', () => {
     render(
       <BrowserRouter>
         <ReportsPage />
       </BrowserRouter>,
     )
 
-    expect(screen.getByText(/jornalistas mais ativos/i)).toBeInTheDocument()
-    expect(screen.getByText(/ana silva/i)).toBeInTheDocument()
-    expect(screen.getByText(/o globo/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /demandas por tipo/i })).toBeInTheDocument()
+    expect(screen.getByText(/produção de release/i)).toBeInTheDocument()
+    expect(screen.getByText(/disparo\/programação de release na matriz/i)).toBeInTheDocument()
   })
 
-  it('renderiza botões de exportação', () => {
+  it('renderiza botão de exportação', () => {
     render(
       <BrowserRouter>
         <ReportsPage />
       </BrowserRouter>,
     )
 
-    expect(screen.getByRole('button', { name: /exportar csv/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /exportar json/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /exportar/i })).toBeInTheDocument()
+  })
+
+  it('renderiza valores dos KPIs', () => {
+    render(
+      <BrowserRouter>
+        <ReportsPage />
+      </BrowserRouter>,
+    )
+
+    expect(screen.getByText('42')).toBeInTheDocument()
+    expect(screen.getByText('18')).toBeInTheDocument()
+    expect(screen.getByText('35')).toBeInTheDocument()
+    expect(screen.getByText('12')).toBeInTheDocument()
   })
 })

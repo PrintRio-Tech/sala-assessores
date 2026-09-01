@@ -4,140 +4,257 @@ $ink: $on-surface;
 $muted: $on-surface-variant;
 $line: $outline-variant;
 $paper: $surface-bright;
+$cream: $surface;
 $forest: $primary;
+$sage: $surface-container-high;
 $gold: $accent-gold;
+
+.heroTitle {
+  margin: 0 !important;
+  color: $ink;
+  font-size: 42px !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.045em !important;
+  font-weight: 500 !important;
+}
+
+.heroEmphasis {
+  color: $gold;
+  font-style: italic;
+  font-weight: 480;
+}
+
+.filtersBar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(140px, 0.6fr)) auto;
+  align-items: end;
+  gap: $space-2;
+  padding: 22px 24px;
+  margin-bottom: $space-4;
+  background: $paper;
+  border: 1px solid $line;
+  border-radius: 16px;
+  box-shadow: 0 2px 5px rgba(20, 32, 27, 0.03);
+}
+
+.filtersBar > button {
+  min-height: 46px;
+  white-space: nowrap;
+}
 
 .kpiGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: $space-3;
-  margin-bottom: $space-6;
+  margin-bottom: $space-5;
 }
 
 .kpiCard {
-  min-height: 140px;
+  position: relative;
+  min-height: 156px;
   display: flex;
   flex-direction: column;
-  gap: $space-2;
+  gap: $space-1;
 }
 
-.sectionHeading {
+.kpiHighlight {
+  background: $sage;
+  border-color: rgba($forest, 0.15);
+}
+
+.sparklineContainer {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  width: 74px;
+  height: 38px;
+}
+
+.sparkline {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: $gold;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: $space-4;
+  margin-top: $space-4;
+}
+
+.chartSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.chartHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $space-3;
   margin-bottom: $space-2;
 }
 
-.sectionHeading h2 {
+.chartTitle {
   margin: 0;
   color: $ink;
   font-size: 17px;
   font-weight: 600;
 }
 
-.periodLabel {
-  color: $muted;
-  font-size: 13px;
-  font-weight: 500;
+.chartCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-.distributionGrid {
+.heatmapWrapper {
+  flex: 1;
+  padding: $space-4;
+  overflow-x: auto;
+}
+
+.heatmap {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: 100px repeat(7, 1fr);
+  gap: 6px;
+  min-width: 640px;
+}
+
+.heatmapLabel {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: $space-2;
+  color: $muted;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.heatmapHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $space-1 0;
+  color: $muted;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.heatmapCell {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  background: $sage;
+  transition: all 0.2s ease;
+  
+  &[data-intensity="0"] {
+    background: rgba($surface-container-low, 0.4);
+  }
+  
+  &[data-intensity="1"] {
+    background: rgba($forest, 0.2);
+  }
+  
+  &[data-intensity="2"] {
+    background: rgba($forest, 0.4);
+  }
+  
+  &[data-intensity="3"] {
+    background: rgba($forest, 0.65);
+  }
+  
+  &[data-intensity="4"] {
+    background: $forest;
+  }
+}
+
+.barsWrapper {
+  flex: 1;
+  padding: $space-4;
+}
+
+.barsList {
+  display: flex;
+  flex-direction: column;
   gap: $space-4;
 }
 
-.statusItem {
+.barItem {
   display: flex;
   flex-direction: column;
   gap: $space-1;
 }
 
-.statusLabel {
-  color: $muted;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .05em;
-}
-
-.statusValue {
-  color: $ink;
-  font-size: 28px;
-  font-weight: 520;
-  letter-spacing: -.02em;
-  font-variant-numeric: tabular-nums;
-}
-
-.journalistsList {
-  display: flex;
-  flex-direction: column;
-  gap: $space-3;
-}
-
-.journalistItem {
+.barHeader {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: $space-2;
-  padding-bottom: $space-3;
+}
+
+.barLabel {
+  color: $ink;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barValue {
+  color: $muted;
+  font-size: 13px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.barTrack {
+  height: 10px;
+  background: rgba($line, 0.4);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: $forest;
+  border-radius: inherit;
+  transition: width 0.4s ease;
   
-  &:not(:last-child) {
-    border-bottom: 1px solid $line;
+  &[data-type="prod_release"] {
+    background: $forest;
+  }
+  
+  &[data-type="disparo"] {
+    background: $gold;
+  }
+  
+  &[data-type="outros"] {
+    background: rgba($forest, 0.5);
+  }
+  
+  &[data-type="imprensa"] {
+    background: rgba($gold, 0.7);
+  }
+  
+  &[data-type="reuniao"] {
+    background: rgba($forest, 0.7);
   }
 }
 
-.journalistRank {
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: $forest;
-  color: white;
-  font-size: 15px;
-  font-weight: 650;
-}
-
-.journalistInfo {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.journalistName {
-  color: $ink;
-  font-size: 14px;
-  font-weight: 650;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.journalistOutlet {
-  color: $muted;
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.journalistCount {
-  color: $forest;
-  font-size: 22px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-}
-
 .emptyState {
-  padding: $space-4 $space-3;
+  padding: $space-5 $space-3;
   border: 1px dashed $line;
   border-radius: $radius-md;
-  background: rgba($surface-container-low, 0.3);
+  background: rgba($surface-container-low, 0.25);
   text-align: center;
 }
 
@@ -146,30 +263,26 @@ $gold: $accent-gold;
   font-size: 13px;
 }
 
-.contentGrid {
-  display: grid;
-  gap: $space-4;
-  margin-top: $space-4;
-}
-
-@media (min-width: 900px) {
-  .contentGrid {
-    grid-template-columns: 1fr 1fr;
+@media (max-width: 1100px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .chartsGrid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 760px) {
+  .filtersBar {
+    grid-template-columns: 1fr;
+  }
+  
   .kpiGrid {
     grid-template-columns: 1fr;
   }
-
-  .distributionGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: $space-3;
-  }
-
-  .sectionHeading {
-    flex-direction: column;
-    align-items: stretch;
+  
+  .heatmap {
+    min-width: 560px;
   }
 }

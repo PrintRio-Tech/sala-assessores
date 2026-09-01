@@ -1,3 +1,5 @@
+@use '@print/ui/tokens' as *;
+
 .authLayout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -10,7 +12,7 @@
   align-items: center;
   justify-content: center;
   padding: 48px;
-  background: linear-gradient(135deg, #0066CC 0%, #0052A3 100%);
+  background: linear-gradient(135deg, $primary 0%, #0e3328 100%);
   color: white;
 }
 

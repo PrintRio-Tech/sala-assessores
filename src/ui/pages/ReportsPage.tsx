@@ -25,14 +25,14 @@ export function ReportsPage() {
     journalistInteractions: 35,
     activeOutlets: 12,
     demandsByType: [
-      { type: 'Produção de Release', value: 87, color: 'prod_release' },
-      { type: 'Disparo/Programação de Release na Matriz', value: 64, color: 'disparo' },
-      { type: 'Outros', value: 42, color: 'outros' },
-      { type: 'Demanda de imprensa', value: 38, color: 'imprensa' },
+      { type: 'Pauta', value: 87, color: 'pauta' },
+      { type: 'Entrevista', value: 64, color: 'entrevista' },
+      { type: 'Posicionamento', value: 42, color: 'posicionamento' },
+      { type: 'Follow-up', value: 38, color: 'followup' },
       { type: 'Reunião', value: 24, color: 'reuniao' },
     ],
     heatmapData: {
-      types: ['Prod. release', 'Disparo mailing', 'Outros', 'Imprensa', 'Reunião'],
+      types: ['Pauta', 'Entrevista', 'Posicionamento', 'Follow-up', 'Reunião'],
       months: ['08/25', '09/25', '10/25', '11/25', '12/25', '01/26', '02/26'],
       data: [
         [3, 4, 3, 2, 4, 3, 2],

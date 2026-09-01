@@ -59,8 +59,10 @@ describe('ReportsPage', () => {
     )
 
     expect(screen.getByRole('heading', { name: /demandas por tipo/i })).toBeInTheDocument()
-    expect(screen.getByText(/produção de release/i)).toBeInTheDocument()
-    expect(screen.getByText(/disparo\/programação de release na matriz/i)).toBeInTheDocument()
+    expect(screen.getByText(/pauta/i)).toBeInTheDocument()
+    expect(screen.getByText(/entrevista/i)).toBeInTheDocument()
+    expect(screen.getByText(/posicionamento/i)).toBeInTheDocument()
+    expect(screen.getByText(/follow-up/i)).toBeInTheDocument()
   })
 
   it('renderiza botão de exportação', () => {

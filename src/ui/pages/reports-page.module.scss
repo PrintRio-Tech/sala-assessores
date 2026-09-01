@@ -229,19 +229,19 @@ $gold: $accent-gold;
   border-radius: inherit;
   transition: width 0.4s ease;
   
-  &[data-type="prod_release"] {
+  &[data-type="pauta"] {
     background: $forest;
   }
   
-  &[data-type="disparo"] {
+  &[data-type="entrevista"] {
     background: $gold;
   }
   
-  &[data-type="outros"] {
+  &[data-type="posicionamento"] {
     background: rgba($forest, 0.5);
   }
   
-  &[data-type="imprensa"] {
+  &[data-type="followup"] {
     background: rgba($gold, 0.7);
   }
   

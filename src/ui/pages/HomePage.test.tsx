@@ -71,8 +71,8 @@ describe('HomePage', () => {
   it('exibe ações rápidas com labels corretos', () => {
     renderHomePage()
     expect(screen.getAllByText(/Nova demanda/i).length).toBeGreaterThan(0)
-    expect(screen.getByText(/Novo jornalista/i)).toBeInTheDocument()
-    expect(screen.getAllByText(/Ver relatórios/i).length).toBeGreaterThan(0)
+    expect(screen.getByText(/Jornalistas/i)).toBeInTheDocument()
+    expect(screen.getByText(/Relatórios/i)).toBeInTheDocument()
   })
 
   it('navega para demanda ao clicar em item da lista', async () => {

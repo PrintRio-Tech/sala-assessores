@@ -32,21 +32,27 @@ export function HomePage() {
       </header>
 
       <section className={styles.metrics}>
-        <Stat
-          label="Demandas em setembro"
-          value={8}
-          trend={{ direction: 'neutral', label: '5 em andamento' }}
-        />
-        <Stat
-          label="Posicionamentos enviados"
-          value={3}
-          trend={{ direction: 'neutral', label: 'Taxa de aprovação 86%' }}
-        />
-        <Stat
-          label="Interações com jornalistas"
-          value={12}
-          trend={{ direction: 'neutral', label: 'E-mail, telefone, reunião' }}
-        />
+        <Card padding="lg" className={styles.metricCard}>
+          <Stat
+            label="Demandas em setembro"
+            value={8}
+            trend={{ direction: 'neutral', label: '5 em andamento' }}
+          />
+        </Card>
+        <Card padding="lg" className={styles.metricCard}>
+          <Stat
+            label="Posicionamentos enviados"
+            value={3}
+            trend={{ direction: 'neutral', label: 'Taxa de aprovação 86%' }}
+          />
+        </Card>
+        <Card padding="lg" className={styles.metricCard}>
+          <Stat
+            label="Interações com jornalistas"
+            value={12}
+            trend={{ direction: 'neutral', label: 'E-mail, telefone, reunião' }}
+          />
+        </Card>
       </section>
 
       <section className={styles.continueSection}>
@@ -119,10 +125,10 @@ export function HomePage() {
               </div>
               <div className={styles.actionCopy}>
                 <Text variant="labelSm" className={styles.actionLabel}>
-                  Cadastrar mídia
+                  Consultar contatos
                 </Text>
                 <Heading level={3} variant="sm" className={styles.actionTitle}>
-                  Novo jornalista
+                  Jornalistas
                 </Heading>
               </div>
             </div>
@@ -142,7 +148,7 @@ export function HomePage() {
                   Resultados mensais
                 </Text>
                 <Heading level={3} variant="sm" className={styles.actionTitle}>
-                  Ver relatórios
+                  Relatórios
                 </Heading>
               </div>
             </div>

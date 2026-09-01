@@ -40,6 +40,13 @@ $sage: $surface-container-high;
   margin-bottom: 42px;
 }
 
+.metricCard {
+  background: $paper;
+  border: 1px solid $line;
+  border-radius: 16px;
+  box-shadow: 0 2px 5px rgba(20, 32, 27, 0.03);
+}
+
 .continueSection {
   margin-bottom: 48px;
 }
@@ -158,16 +165,13 @@ $sage: $surface-container-high;
   width: 52px;
   height: 52px;
   border-radius: 12px;
+  background: $sage;
+  color: $forest;
 }
 
 .actionTilePrimary .actionIcon {
   background: rgba(255, 255, 255, 0.18);
   color: white;
-}
-
-.actionTile .actionIcon {
-  background: $sage;
-  color: $forest;
 }
 
 .actionCopy {

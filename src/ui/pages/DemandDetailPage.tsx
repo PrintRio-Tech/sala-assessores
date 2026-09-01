@@ -102,15 +102,6 @@ function Timeline({ events }: { events: DemandDetailTimelineEvent[] }) {
   )
 }
 
-function LatestRecords({ demand }: { demand: DemandDetailViewModel }) {
-  return (
-    <div className={styles.latestRecords}>
-      <div><b>Última decisão registrada</b><span>{demand.currentState.latestDecisionSummary}</span></div>
-      {demand.currentState.latestInteractionResult ? <div><b>Último resultado da interação</b><span>{demand.currentState.latestInteractionResult}</span></div> : null}
-      {demand.currentState.latestRecordedNextStep ? <div><b>Último próximo passo registrado em interação</b><span>{demand.currentState.latestRecordedNextStep}</span></div> : null}
-    </div>
-  )
-}
 
 export function DemandDetailPage() {
   const { demandId } = useParams()
@@ -177,8 +168,29 @@ export function DemandDetailPage() {
             <Text tone="muted">Canal: {demand.sourceChannel} · Prazo solicitado: {demand.localCapture.requestedDeadline}</Text>
           </Card> : null}
           {isLocalDemandView(demand) && !demand.identity.journalistId ? <Card variant="surface" padding="lg"><Heading level={2} variant="sm">Contato local</Heading><Text tone="muted">A captura continua válida sem jornalista cadastrado.</Text><Button variant="outline" size="sm" onClick={() => setJournalistOpen(true)}>Enriquecer / converter em jornalista</Button></Card> : null}
-          <Card variant="surface" padding="lg"><Heading level={2} variant="sm">Última decisão</Heading><LatestRecords demand={demand} /></Card>
-          <Card variant="surface" padding="lg"><Heading level={2} variant="sm">Posicionamento</Heading><Positioning demand={demand} /></Card>
+          <Card variant="surface" padding="lg">
+            <Heading level={2} variant="sm">Última decisão registrada</Heading>
+            <div className={styles.railSection}>
+              <Text tone="muted">{demand.currentState.latestDecisionSummary}</Text>
+            </div>
+          </Card>
+          {demand.currentState.latestInteractionResult ? (
+            <Card variant="surface" padding="lg">
+              <Heading level={2} variant="sm">Último resultado de interação</Heading>
+              <div className={styles.railSection}>
+                <Text tone="muted">{demand.currentState.latestInteractionResult}</Text>
+              </div>
+            </Card>
+          ) : null}
+          {demand.currentState.latestRecordedNextStep ? (
+            <Card variant="surface" padding="lg">
+              <Heading level={2} variant="sm">Próximo passo registrado</Heading>
+              <div className={styles.railSection}>
+                <Text tone="muted">{demand.currentState.latestRecordedNextStep}</Text>
+              </div>
+            </Card>
+          ) : null}
+          <Card variant="surface" padding="lg"><Heading level={2} variant="sm">Posicionamento final</Heading><Positioning demand={demand} /></Card>
         </aside>
         <Card variant="surface" padding="lg" className={styles.timelinePanel}>
           <div className={styles.sectionHeading}>

@@ -265,4 +265,21 @@ describe('cabeçalho da lista de demandas', () => {
     expect(screen.queryAllByText('Entrevista exclusiva: CEO TechCorp')).toHaveLength(0)
   })
 
+  it('navegação lista para detalhe e volta preserva filtros e paginação', async () => {
+    renderDemandFlow()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByRole('textbox', { name: 'Busca por texto' }), 'regulação')
+    const firstDemand = (await screen.findAllByRole('link', { name: /regulação/i }))[0]
+    await user.click(firstDemand)
+
+    const detail = await screen.findByTestId('demand-detail')
+    expect(within(detail).getByRole('heading', { level: 1 })).toBeVisible()
+
+    await user.click(within(detail).getByRole('link', { name: 'Voltar às demandas' }))
+
+    expect(await screen.findByRole('heading', { name: 'Todas as demandas' })).toBeVisible()
+    expect(screen.getByRole('textbox', { name: 'Busca por texto' })).toHaveValue('regulação')
+  })
+
 })

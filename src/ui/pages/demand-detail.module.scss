@@ -40,10 +40,7 @@ $red: #c3322d;
 .tagList { display: flex; flex-wrap: wrap; gap: 6px; }
 .tagList > span { padding: 4px 8px; border: 1px solid #cad6c8; border-radius: 999px; background: $sage; color: $forest; font-size: 10px; font-weight: 650; }
 .tagList > small { color: $muted; }
-.latestRecords { display: grid; gap: 14px; }
-.latestRecords > div { display: flex; flex-direction: column; gap: 4px; }
-.latestRecords b { color: $muted; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
-.latestRecords span { color: $ink; font-size: 13px; line-height: 1.5; }
+.railSection { margin-top: 14px; }
 .sectionHeading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
 .sectionHeading p { margin: 0 0 5px; font-size: 9px !important; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
 .sectionHeading h2 { margin: 0; font-size: 22px; letter-spacing: -.03em; }

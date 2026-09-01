@@ -1,16 +1,19 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Avatar, Badge, Button, Card, EmptyState, Heading, Stat, Text } from '@print/ui'
 
 import { useJournalist } from '@/application/modules/Journalist/hooks/use-journalist'
 import { getJournalistDemandStatusLabel } from '@/application/modules/Journalist/presentation/journalist-profile.viewmodel'
 import { useRegisterRelationshipEvaluation } from '@/application/modules/Journalist/hooks/use-register-relationship-evaluation'
 import { useUpdateJournalist } from '@/application/modules/Journalist/hooks/use-update-journalist'
+import { useJournalists } from '@/application/modules/Journalist/hooks/use-journalists'
+import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
 import { formatPercent, formatScore } from '@/shared/format'
 import { ROUTES } from '@/ui/routes/paths'
 import { Icon } from '@/ui/components/Icon'
 import { JournalistCreateDrawer } from './JournalistCreateDrawer'
 import { JournalistEvaluationDrawer } from './JournalistEvaluationDrawer'
+import { DemandCreateDrawer } from './DemandCreateDrawer'
 import styles from '@/ui/styles/design.module.scss'
 
 function shortDate(value: Date) {
@@ -28,9 +31,13 @@ function BackToJournalists() {
 export function JournalistPage() {
   const { journalistId } = useParams()
   const id = journalistId ?? ''
+  const navigate = useNavigate()
   const [editOpen, setEditOpen] = useState(false)
   const [evaluationOpen, setEvaluationOpen] = useState(false)
+  const [demandCreateOpen, setDemandCreateOpen] = useState(false)
   const { data: journalist, isLoading } = useJournalist(journalistId)
+  const { data: journalists, isLoading: journalistsLoading } = useJournalists()
+  const addLocalDemand = useLocalDemandStore((state) => state.add)
   const updateMutation = useUpdateJournalist(id, { onSuccess: () => setEditOpen(false) })
   const evaluationMutation = useRegisterRelationshipEvaluation(id, { onSuccess: () => setEvaluationOpen(false) })
 
@@ -52,7 +59,7 @@ export function JournalistPage() {
         </div>
         <div className={styles.headingActions}>
           <Button type="button" variant="outline" onClick={() => { updateMutation.reset(); setEditOpen(true) }}>Editar perfil</Button>
-          <Link className={styles.primaryButton} to={ROUTES.demands}><Icon name="plus" />Nova demanda</Link>
+          <Button type="button" variant="primary" onClick={() => setDemandCreateOpen(true)}><Icon name="plus" />Nova demanda</Button>
         </div>
       </section>
 
@@ -94,6 +101,18 @@ export function JournalistPage() {
 
       <JournalistCreateDrawer mode="edit" open={editOpen} onOpenChange={setEditOpen} onCreate={() => undefined} onSave={updateMutation.update} initialProfile={journalist} topicSuggestions={journalist.topics} isPending={updateMutation.isPending} error={updateMutation.error} />
       <JournalistEvaluationDrawer open={evaluationOpen} onOpenChange={setEvaluationOpen} onRegister={evaluationMutation.register} isPending={evaluationMutation.isPending} error={evaluationMutation.error} />
+      <DemandCreateDrawer
+        open={demandCreateOpen}
+        onOpenChange={setDemandCreateOpen}
+        onCapture={(capture) => {
+          const record = addLocalDemand(capture)
+          setDemandCreateOpen(false)
+          navigate(ROUTES.demand(record.id))
+        }}
+        journalists={journalists}
+        journalistsLoading={journalistsLoading}
+        initialJournalistId={id}
+      />
     </main>
   )
 }

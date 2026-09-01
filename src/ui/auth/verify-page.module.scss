@@ -1,4 +1,25 @@
-.verifyPage {
+@use '@print/ui/tokens' as *;
+
+.verifyCard {
+  background: linear-gradient(135deg, #d4c4a8 0%, #c8b896 100%);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(20, 32, 27, 0.12);
+  overflow: hidden;
+}
+
+.cardHeader {
+  padding: 28px 32px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.printLogo {
+  width: 100px;
+  height: 20px;
+  color: #2d3a33;
+}
+
+.cardBody {
+  padding: 36px 32px 40px;
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -10,41 +31,63 @@
   gap: 16px;
 }
 
+.title {
+  color: #1a2821;
+  margin: 0;
+}
+
 .badge {
   display: inline-flex;
   flex-direction: column;
   gap: 4px;
-  padding: 12px 16px;
-  background: var(--color-neutral-2);
-  border: 1px solid var(--color-neutral-3);
-  border-radius: 8px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
   width: fit-content;
 }
 
 .badge span {
-  color: var(--color-neutral-6);
+  color: rgba(45, 58, 51, 0.7);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .badge strong {
-  color: var(--color-neutral-9);
-  font-weight: 600;
+  color: #1a2821;
+  font-weight: 650;
+  font-size: 14px;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
 }
 
 .otpWrapper {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .error {
-  color: var(--color-error-6);
+  color: #a93226;
+  font-size: 13px;
   text-align: center;
+  font-weight: 500;
+}
+
+.submitButton {
+  background: $primary !important;
+  border-color: $primary !important;
+  height: 52px;
+  font-weight: 650;
+}
+
+.submitButton:hover {
+  background: #0e3328 !important;
 }
 
 .actions {
@@ -52,30 +95,46 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding-top: 8px;
+  padding-top: 4px;
 }
 
 .link {
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--color-primary-6);
+  color: rgba(45, 58, 51, 0.85);
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .link:hover {
-  color: var(--color-primary-7);
+  color: #1a2821;
 }
 
 .link:focus-visible {
-  outline: 2px solid var(--color-primary-6);
+  outline: 2px solid $primary;
   outline-offset: 2px;
   border-radius: 2px;
 }
 
 .separator {
-  color: var(--color-neutral-5);
+  color: rgba(45, 58, 51, 0.4);
+}
+
+@media (max-width: 480px) {
+  .verifyCard {
+    border-radius: 16px;
+  }
+
+  .cardHeader {
+    padding: 24px 24px 20px;
+  }
+
+  .cardBody {
+    padding: 28px 24px 32px;
+  }
 }

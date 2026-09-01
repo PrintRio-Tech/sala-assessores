@@ -132,7 +132,17 @@ export function DemandsPage() {
       ) : null}
 
       <section className={styles.tableShell} aria-busy={isLoading}>
-        <DataTable columns={columns} data={pagedData} getRowKey={(demand) => demand.id} emptyState="Nenhuma demanda encontrada. Ajuste ou limpe os filtros para ver outros resultados." rowActions={(demand) => <Button type="button" variant="ghost" size="sm" onClick={() => navigate(ROUTES.demand(demand.id))}>Abrir</Button>} />
+        {pagedData.length === 0 && !isLoading ? (
+          <div className={styles.emptyState}>
+            <Icon name="search" />
+            <div className={styles.emptyContent}>
+              <h3>Nenhuma demanda encontrada</h3>
+              <p>{hasActiveFilters ? 'Ajuste ou limpe os filtros para ver outros resultados.' : lifecycle === 'history' ? 'Ainda não há demandas finalizadas no histórico.' : 'Comece criando uma nova demanda acima.'}</p>
+            </div>
+          </div>
+        ) : (
+          <DataTable columns={columns} data={pagedData} getRowKey={(demand) => demand.id} emptyState="Nenhuma demanda encontrada. Ajuste ou limpe os filtros para ver outros resultados." rowActions={(demand) => <Button type="button" variant="ghost" size="sm" onClick={() => navigate(ROUTES.demand(demand.id))}>Abrir</Button>} />
+        )}
       </section>
       <Pagination className={styles.pagination} aria-label="Paginação das demandas" page={page} pageSize={DEMANDS_PAGE_SIZE} totalItems={data.length} onPageChange={filters.setPage} />
       <DemandCreateDrawer

@@ -78,7 +78,7 @@ $gold: $accent-gold;
 .chartsGrid {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
-  align-items: start;
+  grid-template-rows: auto auto;
   gap: $space-4;
   margin-top: $space-4;
 }
@@ -86,6 +86,7 @@ $gold: $accent-gold;
 .chartCard {
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .chartHeader {
@@ -103,6 +104,9 @@ $gold: $accent-gold;
 .heatmapWrapper {
   padding: $space-3 $space-4 $space-4;
   overflow-x: auto;
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
 .heatmap {
@@ -169,12 +173,16 @@ $gold: $accent-gold;
 
 .barsWrapper {
   padding: $space-4;
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
 .barsList {
   display: flex;
   flex-direction: column;
-  gap: $space-4;
+  gap: $space-3;
+  width: 100%;
 }
 
 .barItem {
@@ -192,7 +200,7 @@ $gold: $accent-gold;
 
 .barLabel {
   color: $ink;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -201,16 +209,16 @@ $gold: $accent-gold;
 
 .barValue {
   color: $muted;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
 
 .barTrack {
-  height: 10px;
+  height: 8px;
   background: rgba($line, 0.4);
-  border-radius: 6px;
+  border-radius: 5px;
   overflow: hidden;
 }
 
@@ -243,12 +251,16 @@ $gold: $accent-gold;
 
 .compactWrapper {
   padding: $space-3 $space-4;
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
 .journalistsList {
   display: flex;
   flex-direction: column;
   gap: $space-3;
+  width: 100%;
 }
 
 .journalistItem {
@@ -296,6 +308,7 @@ $gold: $accent-gold;
   display: flex;
   flex-direction: column;
   gap: $space-3;
+  width: 100%;
 }
 
 .statusItem {

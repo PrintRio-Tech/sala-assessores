@@ -7,13 +7,13 @@ import { getJournalistDemandStatusLabel } from '@/application/modules/Journalist
 import { useRegisterRelationshipEvaluation } from '@/application/modules/Journalist/hooks/use-register-relationship-evaluation'
 import { useUpdateJournalist } from '@/application/modules/Journalist/hooks/use-update-journalist'
 import { useJournalists } from '@/application/modules/Journalist/hooks/use-journalists'
-import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
+import { useLocalDemandActions } from '@/application/modules/Demand/hooks/use-local-demand-actions'
 import { formatPercent, formatScore } from '@/shared/format'
 import { ROUTES } from '@/ui/routes/paths'
 import { Icon } from '@/ui/components/Icon'
-import { JournalistCreateDrawer } from './JournalistCreateDrawer'
-import { JournalistEvaluationDrawer } from './JournalistEvaluationDrawer'
-import { DemandCreateDrawer } from './DemandCreateDrawer'
+import { DemandCreateDrawer } from '@/ui/pages/Demand/components/DemandCreateDrawer'
+import { JournalistCreateDrawer } from '../components/JournalistCreateDrawer'
+import { JournalistEvaluationDrawer } from '../components/JournalistEvaluationDrawer'
 import styles from '@/ui/styles/design.module.scss'
 
 function shortDate(value: Date) {
@@ -37,7 +37,7 @@ export function JournalistPage() {
   const [demandCreateOpen, setDemandCreateOpen] = useState(false)
   const { data: journalist, isLoading } = useJournalist(journalistId)
   const { data: journalists, isLoading: journalistsLoading } = useJournalists()
-  const addLocalDemand = useLocalDemandStore((state) => state.add)
+  const { capture } = useLocalDemandActions()
   const updateMutation = useUpdateJournalist(id, { onSuccess: () => setEditOpen(false) })
   const evaluationMutation = useRegisterRelationshipEvaluation(id, { onSuccess: () => setEvaluationOpen(false) })
 
@@ -104,10 +104,13 @@ export function JournalistPage() {
       <DemandCreateDrawer
         open={demandCreateOpen}
         onOpenChange={setDemandCreateOpen}
-        onCapture={(capture) => {
-          const record = addLocalDemand(capture)
-          setDemandCreateOpen(false)
-          navigate(ROUTES.demand(record.id))
+        onCapture={(input) => {
+          capture(input, {
+            onSuccess: (record) => {
+              setDemandCreateOpen(false)
+              navigate(ROUTES.demand(record.id))
+            },
+          })
         }}
         journalists={journalists}
         journalistsLoading={journalistsLoading}

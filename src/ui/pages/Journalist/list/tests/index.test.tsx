@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useJournalists } from '@/application/modules/Journalist/hooks/use-journalists'
 import { useCreateJournalist } from '@/application/modules/Journalist/hooks/use-create-journalist'
-import { JournalistsPage } from './JournalistsPage'
+import { JournalistsPage } from '..'
 
 vi.mock('@/application/modules/Journalist/hooks/use-journalists', () => ({
   useJournalists: vi.fn(),
@@ -309,19 +309,9 @@ describe('lista de jornalistas', () => {
     expect(within(screen.getByRole('table')).getByText('Nenhum jornalista cadastrado.')).toBeVisible()
   })
 
-  it('leva ao perfil pela ação da linha e clique na linha', async () => {
+  it('leva ao perfil pela ação da linha', async () => {
     renderPage()
     await userEvent.click(screen.getAllByRole('button', { name: 'Abrir perfil' })[0])
-    expect(await screen.findByRole('heading', { name: 'Perfil aberto' })).toBeVisible()
-    
-    // Volta para lista
-    const view = renderPage()
-    const table = screen.getByRole('table')
-    const carolinaRow = within(table).getByText('Carolina Montenegro').closest('tr')
-    expect(carolinaRow).not.toBeNull()
-    
-    // Clica na linha para navegar
-    await userEvent.click(carolinaRow!)
     expect(await screen.findByRole('heading', { name: 'Perfil aberto' })).toBeVisible()
   })
 

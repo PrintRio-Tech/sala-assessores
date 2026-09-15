@@ -19,7 +19,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useJournalists, type JournalistFilters } from '@/application/modules/Journalist/hooks/use-journalists'
 import { useCreateJournalist } from '@/application/modules/Journalist/hooks/use-create-journalist'
 import { ROUTES } from '@/ui/routes/paths'
-import { JournalistCreateDrawer } from './JournalistCreateDrawer'
+import { JournalistCreateDrawer } from '../components/JournalistCreateDrawer'
 import styles from '@/ui/styles/design.module.scss'
 
 const channelLabels = {
@@ -317,7 +317,6 @@ export function JournalistsPage() {
             data={pagedData}
             getRowKey={(journalist) => journalist.id}
             emptyState={emptyMessage}
-            onRowClick={(journalist) => navigate(ROUTES.journalist(journalist.id))}
             rowActions={(journalist) => (
               <Button type="button" variant="ghost" size="sm" onClick={() => navigate(ROUTES.journalist(journalist.id))}>
                 Abrir perfil

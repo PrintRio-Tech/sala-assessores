@@ -1,17 +1,23 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Heading, Text, TextInput } from '@print/ui'
 
-import styles from './login-page.module.scss'
+import { useLogin } from '@/application/modules/Auth/hooks/use-login'
+import { ROUTES } from '@/ui/routes/paths'
+import styles from './styles.module.scss'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const { login, isPending } = useLogin({
+    onSuccess: (nextEmail) => {
+      navigate(`${ROUTES.verify}?email=${encodeURIComponent(nextEmail)}`)
+    },
+  })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault()
     setError('')
 
     if (!email) {
@@ -25,12 +31,7 @@ export function LoginPage() {
       return
     }
 
-    setIsSubmitting(true)
-
-    setTimeout(() => {
-      setIsSubmitting(false)
-      navigate(`/login/verificar?email=${encodeURIComponent(email)}`)
-    }, 800)
+    login(email)
   }
 
   return (
@@ -46,7 +47,7 @@ export function LoginPage() {
           <Text as="span" variant="labelSm" className={styles.kicker}>
             ACESSO SEGURO
           </Text>
-          <Heading level={1} size="lg" className={styles.title}>
+          <Heading level={1} variant="lg" className={styles.title}>
             Entre com seu e-mail
           </Heading>
           <Text as="p" variant="bodyMd" className={styles.description}>
@@ -54,14 +55,15 @@ export function LoginPage() {
           </Text>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form noValidate onSubmit={handleSubmit} className={styles.form}>
           <TextInput
             label="E-mail corporativo"
+            name="email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(event) => setEmail(event.target.value)}
             placeholder="nome@empresa.com.br…"
-            disabled={isSubmitting}
+            disabled={isPending}
             error={error}
             autoFocus
           />
@@ -70,11 +72,10 @@ export function LoginPage() {
             type="submit"
             variant="primary"
             size="lg"
-            fullWidth
-            disabled={isSubmitting}
+            disabled={isPending}
             className={styles.submitButton}
           >
-            {isSubmitting ? 'Enviando código...' : 'Enviar Código'}
+            {isPending ? 'Enviando código...' : 'Enviar Código'}
           </Button>
         </form>
       </div>

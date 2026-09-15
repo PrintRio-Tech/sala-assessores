@@ -10,7 +10,7 @@ import {
 } from '@print/ui'
 
 import type { RelationshipEvaluationInput } from '@/application/modules/Journalist/hooks/use-register-relationship-evaluation'
-import styles from './journalist-create-drawer.module.scss'
+import styles from '../JournalistCreateDrawer/styles.module.scss'
 
 type EvaluationValues = {
   score: string

@@ -2,8 +2,8 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
-import { JournalistCreateDrawer } from './JournalistCreateDrawer'
-import styles from './journalist-create-drawer.module.scss'
+import { JournalistCreateDrawer } from './index'
+import styles from './styles.module.scss'
 
 function renderDrawer(overrides: Partial<React.ComponentProps<typeof JournalistCreateDrawer>> = {}) {
   const props = {

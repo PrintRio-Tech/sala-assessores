@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Button, ConfirmDialog, DrawerShell, Text, Textarea } from '@print/ui'
 
 import { useSavePositioning } from '@/application/modules/Demand/hooks/use-save-positioning'
-import styles from './demand-action-drawers.module.scss'
+import styles from './styles.module.scss'
 
 export type DemandPositioningDrawerProps = {
   demandId: string

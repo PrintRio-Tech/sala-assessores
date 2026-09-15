@@ -10,12 +10,12 @@ import {
   TextInput,
   Textarea,
 } from '@print/ui'
-import type { DemandPriority } from '@/domain/Demand/demand.entity'
-import type { Journalist } from '@/domain/Journalist/journalist.entity'
+import type { DemandPriority } from '@/application/modules/Demand/stores/local-demand.store'
+import type { Journalist } from '@/application/modules/Journalist/hooks/use-journalists'
 import type { NewLocalDemandCapture } from '@/application/modules/Demand/stores/local-demand.store'
 import { TagInput } from '@/ui/components/TagInput/TagInput'
 
-import styles from './demand-create-drawer.module.scss'
+import styles from './styles.module.scss'
 
 type ContactMode = 'known' | 'local'
 

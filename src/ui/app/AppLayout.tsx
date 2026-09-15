@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { AppShell, Avatar, BrandLogo, Icon, ICONS, Text, type AppNavItem } from '@print/ui'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
-import { mockAuthService } from '@/application/services/mock-auth-service'
+import { currentUser } from '@/application/current-user'
+import { useSession } from '@/application/modules/Auth/hooks/use-session'
 import { ROUTES } from '@/ui/routes/paths'
 import styles from './app-layout.module.scss'
 
@@ -12,14 +13,15 @@ export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const session = mockAuthService.getSession()
+  const { session, logout } = useSession()
+  const displayName = session?.email || currentUser.name
 
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [location.pathname])
 
   const handleLogout = () => {
-    mockAuthService.logout()
+    logout()
     navigate(ROUTES.login)
   }
 
@@ -58,14 +60,14 @@ export function AppLayout() {
       footerSlot={
         <div className={styles.footerWrapper}>
           <div className={styles.footerUser}>
-            <Avatar name={session?.email || 'Usuário'} size="sm" />
+            <Avatar name={displayName} size="sm" />
             <span className={styles.footerIdentity}>
-              <Text as="strong" variant="labelSm">{session?.email || 'Usuário'}</Text>
+              <Text as="strong" variant="labelSm">{displayName}</Text>
               <Text as="small" variant="labelSm">Assessor de imprensa</Text>
             </span>
           </div>
-          <button type="button" className={styles.logoutButton} onClick={handleLogout} title="Sair">
-            <Icon src={ICONS.actions.logout} size={16} />
+          <button type="button" className={styles.logoutButton} onClick={handleLogout} title="Sair" aria-label="Sair">
+            Sair
           </button>
         </div>
       }

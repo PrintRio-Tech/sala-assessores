@@ -3,23 +3,12 @@ import { ActionTile, Card, Divider, Heading, Icon as DsIcon, ICONS, Text } from 
 import { useNavigate } from 'react-router-dom'
 
 import { currentUser } from '@/application/current-user'
+import { useLocalDemandActions } from '@/application/modules/Demand/hooks/use-local-demand-actions'
 import { useJournalists } from '@/application/modules/Journalist/hooks/use-journalists'
-import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
-import { DemandCreateDrawer } from './DemandCreateDrawer'
+import { DemandCreateDrawer } from '@/ui/pages/Demand/components/DemandCreateDrawer'
 import { ROUTES } from '@/ui/routes/paths'
-import styles from './home-page.module.scss'
-
-interface MockDemandInProgress {
-  id: string
-  code: string
-  title: string
-  responsibleName: string
-}
-
-const MOCK_DEMANDS_IN_PROGRESS: MockDemandInProgress[] = [
-  { id: 'd-ceo', code: 'TEC-889', title: 'Entrevista exclusiva: CEO TechCorp', responsibleName: 'Ana Paula' },
-  { id: 'd-portos', code: 'ECO-442', title: 'Crise Logística: Impacto nos Portos', responsibleName: 'Ricardo M.' },
-]
+import { HOME_DEMANDS_IN_PROGRESS, HOME_MONTH_KPIS } from './constants'
+import styles from './styles.module.scss'
 
 function SectionHeading({ title }: { title: string }) {
   return (
@@ -35,7 +24,7 @@ function SectionHeading({ title }: { title: string }) {
 export function HomePage() {
   const navigate = useNavigate()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const addLocalDemand = useLocalDemandStore((state) => state.add)
+  const { capture } = useLocalDemandActions()
   const { data: journalists, isLoading: journalistsLoading } = useJournalists()
 
   return (
@@ -51,39 +40,25 @@ export function HomePage() {
 
       <section className={styles.section} aria-label="Indicadores do mês">
         <div className={styles.metricsGrid}>
-          <Card variant="elevated" padding="none" className={styles.metricCard} data-kpi-card>
-            <span className={styles.metricDot} aria-hidden="true" />
-            <Text as="p" variant="labelMd" tone="muted" className={styles.metricLabel}>
-              Demandas em setembro
-            </Text>
-            <Heading as="p" variant="lg" className={styles.metricValue}>8</Heading>
-            <Text variant="labelSm" tone="muted">5 em andamento</Text>
-          </Card>
-          <Card variant="elevated" padding="none" className={styles.metricCard} data-kpi-card>
-            <span className={styles.metricDot} aria-hidden="true" />
-            <Text as="p" variant="labelMd" tone="muted" className={styles.metricLabel}>
-              Posicionamentos enviados
-            </Text>
-            <Heading as="p" variant="lg" className={styles.metricValue}>3</Heading>
-            <Text variant="labelSm" tone="muted">Taxa de aprovação 86%</Text>
-          </Card>
-          <Card variant="elevated" padding="none" className={styles.metricCard} data-kpi-card>
-            <span className={styles.metricDot} aria-hidden="true" />
-            <Text as="p" variant="labelMd" tone="muted" className={styles.metricLabel}>
-              Interações com jornalistas
-            </Text>
-            <Heading as="p" variant="lg" className={styles.metricValue}>12</Heading>
-            <Text variant="labelSm" tone="muted">E-mail, telefone, reunião</Text>
-          </Card>
+          {HOME_MONTH_KPIS.map((kpi) => (
+            <Card key={kpi.id} variant="elevated" padding="none" className={styles.metricCard} data-kpi-card>
+              <span className={styles.metricDot} aria-hidden="true" />
+              <Text as="p" variant="labelMd" tone="muted" className={styles.metricLabel}>
+                {kpi.label}
+              </Text>
+              <Heading as="p" variant="lg" className={styles.metricValue}>{kpi.value}</Heading>
+              <Text variant="labelSm" tone="muted">{kpi.hint}</Text>
+            </Card>
+          ))}
         </div>
       </section>
 
       <section className={styles.section} aria-label="Continuar de onde parou">
         <SectionHeading title="Continuar de onde parou" />
 
-        {MOCK_DEMANDS_IN_PROGRESS.length > 0 ? (
+        {HOME_DEMANDS_IN_PROGRESS.length > 0 ? (
           <div className={styles.demandsList}>
-            {MOCK_DEMANDS_IN_PROGRESS.map((demand) => (
+            {HOME_DEMANDS_IN_PROGRESS.map((demand) => (
               <button
                 key={demand.id}
                 type="button"
@@ -142,10 +117,13 @@ export function HomePage() {
       <DemandCreateDrawer
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
-        onCapture={(capture) => {
-          const record = addLocalDemand(capture)
-          setIsCreateOpen(false)
-          navigate(ROUTES.demand(record.id))
+        onCapture={(input) => {
+          capture(input, {
+            onSuccess: (record) => {
+              setIsCreateOpen(false)
+              navigate(ROUTES.demand(record.id))
+            },
+          })
         }}
         journalists={journalists}
         journalistsLoading={journalistsLoading}

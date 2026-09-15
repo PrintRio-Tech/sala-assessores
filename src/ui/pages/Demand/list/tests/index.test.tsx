@@ -5,8 +5,7 @@ import { MemoryRouter, useLocation, Link } from 'react-router-dom'
 import { Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { DemandsPage } from './DemandsPage'
-import { DemandDetailPage } from './DemandDetailPage'
+import { DemandDetailPage, DemandsPage } from '@/ui/pages/Demand'
 import { useDemandFilters } from '@/application/modules/Demand/stores/demand.store'
 import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
 

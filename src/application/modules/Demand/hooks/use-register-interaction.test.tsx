@@ -4,7 +4,17 @@ import type { PropsWithChildren } from 'react'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { useLocalDemandStore } from '../stores/local-demand.store'
-import { useRegisterInteraction } from './use-register-interaction'
+import { interactionClosesCase, useRegisterInteraction } from './use-register-interaction'
+
+describe('interactionClosesCase', () => {
+  it('encerra o caso apenas para resposta enviada ou encerramento sem envio', () => {
+    expect(interactionClosesCase('response_sent')).toBe(true)
+    expect(interactionClosesCase('closed_without_send')).toBe(true)
+    expect(interactionClosesCase('waiting_response')).toBe(false)
+    expect(interactionClosesCase('approved')).toBe(false)
+    expect(interactionClosesCase('')).toBe(false)
+  })
+})
 
 describe('useRegisterInteraction', () => {
   beforeEach(() => useLocalDemandStore.getState().reset())

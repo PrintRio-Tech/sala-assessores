@@ -13,6 +13,10 @@ export type RegisterInteractionInput = Omit<RegisterExternalInteractionInput, 'r
 export const interactionResultRules = EXTERNAL_INTERACTION_RESULT_RULES
 export const validateInteractionResultFields = getExternalInteractionFieldErrors
 
+export function interactionClosesCase(result: RegisterInteractionInput['result'] | '') {
+  return result === 'response_sent' || result === 'closed_without_send'
+}
+
 type RegisterInteractionOptions = {
   onSuccess?: () => void
   onError?: (error: Error) => void

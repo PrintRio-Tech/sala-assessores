@@ -1,86 +1,29 @@
 import { useState } from 'react'
 import { Button, Card, Heading, Icon as DsIcon, ICONS, Stat, Text } from '@print/ui'
 
-import styles from '@/ui/styles/design.module.scss'
-
-type ExportFormat = 'csv' | 'json'
+import pageStyles from '@/ui/styles/design.module.scss'
+import { REPORT_KPIS } from './constants'
+import { downloadReport } from './export-report'
+import styles from './styles.module.scss'
 
 export function ReportsPage() {
   const [isExporting, setIsExporting] = useState(false)
 
-  const mockKpis = {
-    totalDemands: 87,
-    averageResponseTime: '2.3h',
-    satisfactionRate: 92,
-    topJournalists: [
-      { name: 'Ana Silva', outlet: 'O Globo', count: 14 },
-      { name: 'Carlos Mendes', outlet: 'Folha', count: 11 },
-      { name: 'Beatriz Santos', outlet: 'Estado', count: 9 },
-    ],
-    demandsByStatus: {
-      in_progress: 28,
-      sent: 42,
-      closed_without_send: 17,
-    },
-  }
-
-  const handleExport = (format: ExportFormat) => {
+  const handleExport = (format: 'csv' | 'json') => {
     setIsExporting(true)
-
-    const data = {
-      period: 'Últimos 30 dias',
-      generated_at: new Date().toISOString(),
-      kpis: mockKpis,
-    }
-
-    let content: string
-    let filename: string
-    let mimeType: string
-
-    if (format === 'json') {
-      content = JSON.stringify(data, null, 2)
-      filename = `relatorio-sala-assessores-${new Date().toISOString().slice(0, 10)}.json`
-      mimeType = 'application/json'
-    } else {
-      const rows = [
-        ['Métrica', 'Valor'],
-        ['Total de demandas', mockKpis.totalDemands.toString()],
-        ['Tempo médio de resposta', mockKpis.averageResponseTime],
-        ['Taxa de satisfação (%)', mockKpis.satisfactionRate.toString()],
-        ['', ''],
-        ['Status', 'Quantidade'],
-        ['Em andamento', mockKpis.demandsByStatus.in_progress.toString()],
-        ['Enviada', mockKpis.demandsByStatus.sent.toString()],
-        ['Encerrada sem envio', mockKpis.demandsByStatus.closed_without_send.toString()],
-        ['', ''],
-        ['Top Jornalistas', 'Veículo', 'Demandas'],
-        ...mockKpis.topJournalists.map(j => [j.name, j.outlet, j.count.toString()]),
-      ]
-      content = rows.map(row => row.join(',')).join('\n')
-      filename = `relatorio-sala-assessores-${new Date().toISOString().slice(0, 10)}.csv`
-      mimeType = 'text/csv;charset=utf-8;'
-    }
-
-    const blob = new Blob([content], { type: mimeType })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    link.click()
-    URL.revokeObjectURL(url)
-
-    setTimeout(() => setIsExporting(false), 500)
+    downloadReport(format)
+    window.setTimeout(() => setIsExporting(false), 500)
   }
 
   return (
-    <div className={styles.page}>
-      <header className={styles.pageHeading}>
+    <div className={pageStyles.page}>
+      <header className={pageStyles.pageHeading}>
         <div>
-          <Text as="p" variant="labelSm" tone="primary" className={styles.eyebrow}>Analytics e exportações</Text>
-          <Heading level={1} className={styles.pageTitle}>Relatórios</Heading>
+          <Text as="p" variant="labelSm" tone="primary" className={pageStyles.eyebrow}>Analytics e exportações</Text>
+          <Heading level={1} className={pageStyles.pageTitle}>Relatórios</Heading>
           <Text tone="muted">Indicadores de desempenho da assessoria de imprensa.</Text>
         </div>
-        <div className={styles.headingActions}>
+        <div className={pageStyles.headingActions}>
           <Button
             type="button"
             variant="secondary"
@@ -103,35 +46,33 @@ export function ReportsPage() {
       </header>
 
       <section aria-label="KPIs principais">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-          <Stat label="Total de demandas" value={String(mockKpis.totalDemands)} />
-          <Stat label="Tempo médio de resposta" value={mockKpis.averageResponseTime} />
-          <Stat label="Taxa de satisfação" value={`${mockKpis.satisfactionRate}%`} />
+        <div className={styles.statGrid}>
+          <Stat label="Total de demandas" value={String(REPORT_KPIS.totalDemands)} />
+          <Stat label="Tempo médio de resposta" value={REPORT_KPIS.averageResponseTime} />
+          <Stat label="Taxa de satisfação" value={`${REPORT_KPIS.satisfactionRate}%`} />
         </div>
       </section>
 
       <section aria-label="Distribuição por status">
-        <Heading level={2} variant="sm" style={{ marginBottom: '16px' }}>Demandas por status</Heading>
-        <Card padding="lg" style={{ marginBottom: '32px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '24px' }}>
-            <Stat label="Em andamento" value={String(mockKpis.demandsByStatus.in_progress)} />
-            <Stat label="Enviada" value={String(mockKpis.demandsByStatus.sent)} />
-            <Stat label="Encerrada sem envio" value={String(mockKpis.demandsByStatus.closed_without_send)} />
+        <Heading level={2} variant="sm" className={styles.sectionTitle}>Demandas por status</Heading>
+        <Card padding="lg" className={styles.statusCard}>
+          <div className={styles.statusGrid}>
+            <Stat label="Em andamento" value={String(REPORT_KPIS.demandsByStatus.in_progress)} />
+            <Stat label="Enviada" value={String(REPORT_KPIS.demandsByStatus.sent)} />
+            <Stat label="Encerrada sem envio" value={String(REPORT_KPIS.demandsByStatus.closed_without_send)} />
           </div>
         </Card>
       </section>
 
       <section aria-label="Top jornalistas">
-        <Heading level={2} variant="sm" style={{ marginBottom: '16px' }}>Jornalistas mais ativos</Heading>
+        <Heading level={2} variant="sm" className={styles.sectionTitle}>Jornalistas mais ativos</Heading>
         <Card padding="lg">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {mockKpis.topJournalists.map((journalist, idx) => (
-              <div key={journalist.name} style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingBottom: idx < mockKpis.topJournalists.length - 1 ? '16px' : '0', borderBottom: idx < mockKpis.topJournalists.length - 1 ? '1px solid var(--pf-color-outline-variant)' : 'none' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--pf-color-primary)', color: 'white', display: 'grid', placeItems: 'center', fontWeight: 600, fontSize: '14px' }}>
-                  {idx + 1}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <Text variant="labelMd" style={{ fontWeight: 600 }}>{journalist.name}</Text>
+          <div className={styles.ranking}>
+            {REPORT_KPIS.topJournalists.map((journalist, index) => (
+              <div key={journalist.name} className={styles.rankingRow}>
+                <div className={styles.rankBadge}>{index + 1}</div>
+                <div className={styles.rankCopy}>
+                  <Text variant="labelMd">{journalist.name}</Text>
                   <Text variant="labelSm" tone="muted">{journalist.outlet}</Text>
                 </div>
                 <Text as="p" variant="bodyLg">{journalist.count}</Text>

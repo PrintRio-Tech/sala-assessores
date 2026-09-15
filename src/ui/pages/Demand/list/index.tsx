@@ -3,13 +3,12 @@ import { Badge, Button, Card, ConfirmDialog, DataTable, DatePicker, Heading, Ico
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useDemands, type DemandListItem } from '@/application/modules/Demand/hooks/use-demands'
+import { useLocalDemandActions } from '@/application/modules/Demand/hooks/use-local-demand-actions'
 import { useJournalists } from '@/application/modules/Journalist/hooks/use-journalists'
 import { useDemandFilters } from '@/application/modules/Demand/stores/demand.store'
-import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
 import {
   demandListCode,
   demandListTitle,
-  ensureLocalDemandRecord,
   getDemandStatusFilterOptions,
   listAppliedDemandFilters,
   parseDemandStatusFilter,
@@ -19,7 +18,7 @@ import {
 import { collectDemandTags } from '@/application/modules/Demand/presentation/demand-tags'
 import { ROUTES } from '@/ui/routes/paths'
 import { Icon } from '@/ui/components/Icon'
-import { DemandCreateDrawer } from './DemandCreateDrawer'
+import { DemandCreateDrawer } from '../components/DemandCreateDrawer'
 import styles from '@/ui/styles/design.module.scss'
 
 const statusLabels: Record<string, string> = {
@@ -58,7 +57,7 @@ export function DemandsPage() {
   const setPage = useDemandFilters((state) => state.setPage)
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const addLocalDemand = useLocalDemandStore((state) => state.add)
+  const { capture, revise, remove } = useLocalDemandActions()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editing, setEditing] = useState<DemandListItem | null>(null)
   const [deleting, setDeleting] = useState<DemandListItem | null>(null)
@@ -240,15 +239,17 @@ export function DemandsPage() {
           setIsCreateOpen(false)
           setEditing(null)
         }}
-        onCapture={(capture) => {
+        onCapture={(nextCapture) => {
           if (editing) {
-            const local = ensureLocalDemandRecord(editing, (source) => useLocalDemandStore.getState().adopt(source))
-            useLocalDemandStore.getState().updateCapture(local.id, capture)
+            revise(editing, nextCapture)
             return
           }
-          const record = addLocalDemand(capture)
-          setIsCreateOpen(false)
-          navigate(ROUTES.demand(record.id))
+          capture(nextCapture, {
+            onSuccess: (record) => {
+              setIsCreateOpen(false)
+              navigate(ROUTES.demand(record.id))
+            },
+          })
         }}
         journalists={journalists}
         journalistsLoading={journalistsLoading}
@@ -264,8 +265,7 @@ export function DemandsPage() {
         destructive
         onConfirm={() => {
           if (!deleting) return
-          useLocalDemandStore.getState().remove(deleting.id)
-          setDeleting(null)
+          remove(deleting.id, { onSuccess: () => setDeleting(null) })
         }}
       />
     </div>

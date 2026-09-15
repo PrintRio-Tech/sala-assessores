@@ -3,7 +3,7 @@ import { userEvent } from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { describe, it, expect, vi } from 'vitest'
 
-import { LoginPage } from './LoginPage'
+import { LoginPage } from '..'
 
 const mockNavigate = vi.fn()
 
@@ -23,9 +23,9 @@ describe('LoginPage', () => {
       </BrowserRouter>,
     )
 
-    expect(screen.getByText('Acesso seguro')).toBeInTheDocument()
+    expect(screen.getByText('ACESSO SEGURO')).toBeInTheDocument()
     expect(screen.getByText('Entre com seu e-mail')).toBeInTheDocument()
-    expect(screen.getByLabelText('E-mail')).toBeInTheDocument()
+    expect(screen.getByLabelText('E-mail corporativo')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /enviar código/i })).toBeInTheDocument()
   })
 
@@ -38,7 +38,7 @@ describe('LoginPage', () => {
       </BrowserRouter>,
     )
 
-    const emailInput = screen.getByLabelText('E-mail')
+    const emailInput = screen.getByLabelText('E-mail corporativo')
     const submitButton = screen.getByRole('button', { name: /enviar código/i })
 
     await user.type(emailInput, 'invalid-email')
@@ -56,7 +56,7 @@ describe('LoginPage', () => {
       </BrowserRouter>,
     )
 
-    const emailInput = screen.getByLabelText('E-mail')
+    const emailInput = screen.getByLabelText('E-mail corporativo')
     const submitButton = screen.getByRole('button', { name: /enviar código/i })
 
     await user.type(emailInput, 'test@example.com')

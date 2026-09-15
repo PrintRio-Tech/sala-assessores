@@ -1,173 +1,39 @@
-import { useMemo, useState, type ReactNode } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
-  ActionGroup,
   Badge,
   Button,
-  Card,
   ConfirmDialog,
   EmptyState,
-  Heading,
-  Icon,
-  ICONS,
   PersonDetailedCell,
   Text,
 } from '@print/ui'
 
 import { useDemandDetailView } from '@/application/modules/Demand/hooks/use-demand-detail-view'
+import { useLocalDemandActions } from '@/application/modules/Demand/hooks/use-local-demand-actions'
 import { useJournalists } from '@/application/modules/Journalist/hooks/use-journalists'
 import { useCreateJournalist } from '@/application/modules/Journalist/hooks/use-create-journalist'
 import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
 import { collectDemandTags } from '@/application/modules/Demand/presentation/demand-tags'
 import { toDemandCaptureRevision } from '@/application/modules/Demand/presentation/demand-list-filters'
-import type { DemandDetailTimelineEvent, DemandDetailViewModel } from '@/application/modules/Demand/presentation/demand-detail.viewmodel'
+import type { DemandDetailViewModel } from '@/application/modules/Demand/presentation/demand-detail.viewmodel'
 import { ROUTES } from '@/ui/routes/paths'
-import { DemandInteractionDrawer } from './DemandInteractionDrawer'
-import { DemandPositioningDrawer } from './DemandPositioningDrawer'
-import { DemandCreateDrawer } from './DemandCreateDrawer'
-import { JournalistCreateDrawer } from './JournalistCreateDrawer'
-import styles from './demand-detail.module.scss'
+import { DemandCreateDrawer } from '../components/DemandCreateDrawer'
+import { JournalistCreateDrawer } from '@/ui/pages/Journalist/components/JournalistCreateDrawer'
+import { DemandInteractionDrawer } from '../components/DemandInteractionDrawer'
+import { DemandPositioningDrawer } from '../components/DemandPositioningDrawer'
+import { CopyCard } from './components/CopyCard'
+import { DetailHeader } from './components/DetailHeader'
+import { PositioningCard } from './components/PositioningCard'
+import { StackedField } from './components/StackedField'
+import { Timeline } from './components/Timeline'
+import styles from './styles.module.scss'
 
 function isLocalDemandView(demand: DemandDetailViewModel): demand is Extract<DemandDetailViewModel, { isLocal: true }> {
   return 'isLocal' in demand
 }
 
 type CaptureIntent = 'edit' | null
-
-function StackedField({ label, testId, children }: { label: string; testId: string; children: ReactNode }) {
-  return (
-    <div className={styles.stackedField} data-testid={testId}>
-      <Text as="p" variant="labelSm" tone="muted">{label}</Text>
-      <div>{children}</div>
-    </div>
-  )
-}
-
-function CopyCard({ title, testId, children }: { title: string; testId?: string; children: ReactNode }) {
-  return (
-    <Card variant="surface" padding="lg" className={styles.infoCard} data-testid={testId}>
-      <Heading level={2} variant="sm">{title}</Heading>
-      {children}
-    </Card>
-  )
-}
-
-function DetailHeader({
-  demand,
-  onWritePositioning,
-  onRegisterInteraction,
-  onEdit,
-  onDelete,
-}: {
-  demand: DemandDetailViewModel
-  onWritePositioning: () => void
-  onRegisterInteraction: () => void
-  onEdit: () => void
-  onDelete: () => void
-}) {
-  const canWritePositioning = demand.validNextActions.includes('write_positioning') && demand.positioning.canEdit
-  const canRegisterInteraction = demand.validNextActions.includes('register_interaction')
-  const writeIsPrimary = demand.positioning.primaryAction === 'write_positioning'
-  return (
-    <header className={styles.detailHeader}>
-      <ActionGroup align="between" className={styles.toolbar}>
-        <Link to={ROUTES.demands} className={styles.back}>
-          <Icon src={ICONS.ui.chevronLeft} size={20} aria-hidden />
-          Voltar para demandas
-        </Link>
-        <ActionGroup aria-label="Ações da demanda">
-          {canWritePositioning ? (
-            <Button
-              type="button"
-              variant={writeIsPrimary ? 'primary' : 'outline'}
-              size="sm"
-              onClick={onWritePositioning}
-            >
-              {demand.positioning.writeLabel}
-            </Button>
-          ) : null}
-          {canRegisterInteraction ? (
-            <Button
-              type="button"
-              variant={writeIsPrimary ? 'outline' : 'primary'}
-              size="sm"
-              onClick={onRegisterInteraction}
-            >
-              Registrar interação
-            </Button>
-          ) : null}
-          <Button type="button" variant="outline" size="sm" iconOnly aria-label="Editar" onClick={onEdit}>
-            <Icon src={ICONS.table.edit} size={16} aria-hidden />
-          </Button>
-          <Button type="button" variant="outline" size="sm" iconOnly aria-label="Excluir" onClick={onDelete}>
-            <Icon src={ICONS.table.delete} size={16} aria-hidden />
-          </Button>
-        </ActionGroup>
-      </ActionGroup>
-      <div className={styles.headerIdentity}>
-        <Heading level={1}>{demand.identity.title}</Heading>
-        <Text as="div" variant="bodyMd" tone="muted" className={styles.supportLine}>
-          {demand.identity.code ? <span>{demand.identity.code}</span> : null}
-          <Badge tone="neutral" size="sm">{demand.identity.statusLabel}</Badge>
-        </Text>
-      </div>
-    </header>
-  )
-}
-
-function PositioningCard({
-  positioning,
-  onWrite,
-}: {
-  positioning: DemandDetailViewModel['positioning']
-  onWrite: () => void
-}) {
-  return (
-    <Card variant="surface" padding="lg" className={`${styles.infoCard} ${styles.positioning}`} data-testid="demand-positioning">
-      <div className={styles.positioningHeader}>
-        <Heading level={2} variant="sm">Posicionamento</Heading>
-        <Badge tone={positioning.state === 'empty' ? 'neutral' : positioning.state === 'approved' || positioning.state === 'sent' ? 'primary' : 'secondary'} size="sm">
-          {positioning.stateLabel}
-        </Badge>
-      </div>
-      {positioning.isEmpty ? (
-        <Text as="p">Ainda sem resposta</Text>
-      ) : (
-        <Text as="p" className={styles.positioningBody}>{positioning.body}</Text>
-      )}
-      {positioning.approval ? (
-        <Text as="p" variant="labelSm" tone="muted">
-          Aprovado por {positioning.approval.approvedBy}
-          {positioning.approval.opinion ? ` · ${positioning.approval.opinion}` : ''}
-        </Text>
-      ) : null}
-      {positioning.canEdit && positioning.isEmpty ? (
-        <div className={styles.positioningActions}>
-          <Button type="button" variant="outline" size="sm" onClick={onWrite}>
-            {positioning.writeLabel}
-          </Button>
-        </div>
-      ) : null}
-    </Card>
-  )
-}
-
-function Timeline({ events }: { events: DemandDetailTimelineEvent[] }) {
-  return (
-    <div className={styles.timeline}>
-      {events.map((event) => (
-        <article key={event.id} className={`${styles.timelineEvent} ${event.isAttention ? styles.attention : ''} ${event.isCurrent ? styles.current : ''}`}>
-          <i className={styles.timelineDot} />
-          <div className={styles.timelineMeta}>{event.actor ? <strong>{event.actor}</strong> : null}<small>{event.attribution}</small></div>
-          <time dateTime={event.iso}>{event.dateLabel}<small>{event.timeLabel}</small></time>
-          <h3>{event.title}</h3>
-          {event.description ? <p>{event.description}</p> : null}
-          {event.nextStep ? <footer><b>Próximo passo registrado</b>{event.nextStep}</footer> : null}
-        </article>
-      ))}
-    </div>
-  )
-}
 
 function capturedResponsibleName(name: string) {
   return name.trim() && name !== 'Ainda não atribuído' ? name : ''
@@ -178,6 +44,7 @@ export function DemandDetailPage() {
   const navigate = useNavigate()
   const { data: demand, source, isLoading } = useDemandDetailView(demandId)
   const { data: journalists, isLoading: journalistsLoading } = useJournalists()
+  const { revise, remove, linkJournalist } = useLocalDemandActions()
   const localRecords = useLocalDemandStore((state) => state.records)
   const [interactionOpen, setInteractionOpen] = useState(false)
   const [positioningOpen, setPositioningOpen] = useState(false)
@@ -191,18 +58,13 @@ export function DemandDetailPage() {
       : toDemandCaptureRevision(source)
   }, [source])
   const createJournalist = useCreateJournalist({ onSuccess: (journalist) => {
-    if (demandId) useLocalDemandStore.getState().linkJournalist(demandId, { journalistId: journalist.id, journalistName: journalist.name, outletName: journalist.outletName })
+    if (demandId) linkJournalist(demandId, { journalistId: journalist.id, journalistName: journalist.name, outletName: journalist.outletName })
     setJournalistOpen(false)
   } })
 
   if (isLoading) return <div className={styles.statePage}><Text tone="muted">Carregando demanda…</Text></div>
   if (!demand) return <div className={styles.statePage}><EmptyState variant="empty" title="Demanda não encontrada" description="Volte à lista e selecione outra demanda." /></div>
 
-  const ensureLocal = () => {
-    if (!source) return null
-    if ('pressRequest' in source) return source
-    return useLocalDemandStore.getState().adopt(source)
-  }
   const openEdit = () => setCaptureIntent('edit')
   const enrichment = demand.enrichment
   const sourceChannel = demand.sourceChannel.trim()
@@ -365,9 +227,8 @@ export function DemandDetailPage() {
         tagSuggestions={tagSuggestions}
         onOpenChange={(open) => { if (!open) setCaptureIntent(null) }}
         onCapture={(capture) => {
-          const local = ensureLocal()
-          if (!local) return
-          useLocalDemandStore.getState().updateCapture(local.id, capture)
+          if (!source) return
+          revise(source, capture)
           setCaptureIntent(null)
         }}
       />
@@ -379,7 +240,7 @@ export function DemandDetailPage() {
         confirmLabel="Excluir"
         cancelLabel="Cancelar"
         destructive
-        onConfirm={() => { useLocalDemandStore.getState().remove(demand.id); navigate(ROUTES.demands) }}
+        onConfirm={() => { remove(demand.id, { onSuccess: () => navigate(ROUTES.demands) }) }}
       />
       <JournalistCreateDrawer
         open={journalistOpen}

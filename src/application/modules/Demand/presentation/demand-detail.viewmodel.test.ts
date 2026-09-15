@@ -140,6 +140,8 @@ describe('Demand detail presentation contract', () => {
       }),
     ]))
     expect(view.validNextActions).toEqual(['write_positioning', 'register_interaction'])
+    expect(view.canWritePositioning).toBe(true)
+    expect(view.canRegisterInteraction).toBe(true)
     expect(view.positioning.isEmpty).toBe(true)
     expect(view.positioning.primaryAction).toBe('write_positioning')
     expect(view.identity.statusLabel).toBe('Em andamento')

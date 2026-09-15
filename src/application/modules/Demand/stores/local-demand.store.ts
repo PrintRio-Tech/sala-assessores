@@ -6,7 +6,7 @@ import type { RegisterExternalInteractionInput } from '@/domain/Demand/demand.re
 import { prepareExternalInteraction } from '@/domain/Demand/use-cases/register-external-interaction.use-case'
 import { applyDemandCaptureRevision, type DemandCaptureRevision, type DemandCreatedBy } from '@/domain/Demand/use-cases/revise-demand-capture.use-case'
 
-export type { DemandCreatedBy }
+export type { DemandCreatedBy, DemandPriority, DemandStatus }
 
 export const EMPTY_DEMAND_ENRICHMENT: DemandEnrichment = {
   tags: [], topics: [], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null,

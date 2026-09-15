@@ -28,7 +28,7 @@ export function AuthLayout() {
             <Text as="p" variant="labelSm" className={styles.eyebrow}>
               • ASSESSORIA DE IMPRENSA
             </Text>
-            <Text as="h1" variant="displaySm" className={styles.headline}>
+            <Text as="h1" variant="bodyLg" className={styles.headline}>
               Sua narrativa <span className={styles.highlight}>organizada</span>
             </Text>
             <Text as="p" variant="bodyLg" className={styles.lead}>
@@ -41,7 +41,7 @@ export function AuthLayout() {
               <Text as="strong" variant="labelMd" className={styles.pillarTitle}>
                 Demandas
               </Text>
-              <Text as="p" variant="bodySm" className={styles.pillarDesc}>
+              <Text as="p" variant="bodyMd" className={styles.pillarDesc}>
                 Gerencie pedidos da imprensa
               </Text>
             </div>
@@ -49,7 +49,7 @@ export function AuthLayout() {
               <Text as="strong" variant="labelMd" className={styles.pillarTitle}>
                 Jornalistas
               </Text>
-              <Text as="p" variant="bodySm" className={styles.pillarDesc}>
+              <Text as="p" variant="bodyMd" className={styles.pillarDesc}>
                 Mapeie e avalie relacionamentos
               </Text>
             </div>
@@ -57,7 +57,7 @@ export function AuthLayout() {
               <Text as="strong" variant="labelMd" className={styles.pillarTitle}>
                 Posicionamentos
               </Text>
-              <Text as="p" variant="bodySm" className={styles.pillarDesc}>
+              <Text as="p" variant="bodyMd" className={styles.pillarDesc}>
                 Organize respostas estratégicas
               </Text>
             </div>
@@ -65,14 +65,14 @@ export function AuthLayout() {
               <Text as="strong" variant="labelMd" className={styles.pillarTitle}>
                 Relatórios
               </Text>
-              <Text as="p" variant="bodySm" className={styles.pillarDesc}>
+              <Text as="p" variant="bodyMd" className={styles.pillarDesc}>
                 Acompanhe métricas e resultados
               </Text>
             </div>
           </div>
 
           <div className={styles.heroFooter}>
-            <Text as="p" variant="bodySm">
+            <Text as="p" variant="bodyMd">
               Sala de Assessores · Powered by Print
             </Text>
           </div>

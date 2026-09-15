@@ -394,3 +394,58 @@ $gold: $accent-gold;
     height: 24px;
   }
 }
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.sectionTitle {
+  margin-bottom: 16px;
+}
+
+.statusCard {
+  margin-bottom: 32px;
+}
+
+.statusGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 24px;
+}
+
+.ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rankingRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.rankingRow + .rankingRow {
+  padding-top: 16px;
+  border-top: 1px solid $line;
+}
+
+.rankBadge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: $forest;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.rankCopy {
+  flex: 1;
+  min-width: 0;
+}

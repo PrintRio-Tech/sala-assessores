@@ -19,7 +19,7 @@ describe('rotas da Sala de Assessores', () => {
   })
 
   it('registra home, demandas, jornalistas e relatórios no AppLayout', () => {
-    const appLayoutRoute = appRoutes.find((route) => route.children)
+    const appLayoutRoute = appRoutes.find((route) => route.children && route.path !== 'login')
 
     expect(appLayoutRoute?.children?.map((route) => route.path)).toEqual([
       '/',
@@ -28,6 +28,15 @@ describe('rotas da Sala de Assessores', () => {
       'jornalistas',
       'jornalistas/:journalistId',
       'relatorios',
+    ])
+  })
+
+  it('registra login e verificação como rotas de convidado', () => {
+    const loginRoute = appRoutes.find((route) => route.path === 'login')
+
+    expect(loginRoute?.children?.map((route) => route.index ? 'index' : route.path)).toEqual([
+      'index',
+      'verificar',
     ])
   })
 })

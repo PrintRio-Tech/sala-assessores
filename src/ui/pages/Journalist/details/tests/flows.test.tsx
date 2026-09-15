@@ -9,7 +9,7 @@ import { useJournalists } from '@/application/modules/Journalist/hooks/use-journ
 import { useRegisterRelationshipEvaluation } from '@/application/modules/Journalist/hooks/use-register-relationship-evaluation'
 import { useUpdateJournalist } from '@/application/modules/Journalist/hooks/use-update-journalist'
 import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
-import { JournalistPage } from './JournalistPage'
+import { JournalistPage } from '..'
 
 vi.mock('@/application/modules/Journalist/hooks/use-journalist', () => ({ useJournalist: vi.fn() }))
 vi.mock('@/application/modules/Journalist/hooks/use-journalists', () => ({ useJournalists: vi.fn() }))

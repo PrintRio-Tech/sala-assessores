@@ -2,12 +2,13 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Badge, Button, Card, Checkbox, ConfirmDialog, DatePicker, DrawerShell, isValidTime, SelectField, Text, TextInput, Textarea, TimeInput } from '@print/ui'
 
 import {
+  interactionClosesCase,
   interactionResultRules,
   useRegisterInteraction,
   validateInteractionResultFields,
   type RegisterInteractionInput,
 } from '@/application/modules/Demand/hooks/use-register-interaction'
-import styles from './demand-interaction-drawer.module.scss'
+import styles from './styles.module.scss'
 
 type InteractionType = NonNullable<RegisterInteractionInput['type']>
 type InteractionResult = RegisterInteractionInput['result']
@@ -75,10 +76,6 @@ function initialValues(): FormValues {
     recipient: '',
     body: '',
   }
-}
-
-function closesCase(result: InteractionResult | '') {
-  return result === 'response_sent' || result === 'closed_without_send'
 }
 
 function validate(values: FormValues, confirmed: boolean): FormErrors {
@@ -268,7 +265,7 @@ export function DemandInteractionDrawer({
     })
   }
 
-  const canRepeat = !closesCase(values.result)
+  const canRepeat = !interactionClosesCase(values.result)
 
   return (
     <>

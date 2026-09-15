@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
-import { HomePage } from './HomePage'
+import { HomePage } from '..'
 
 const mockNavigate = vi.fn()
 

@@ -1,12 +1,12 @@
 import { Navigate } from 'react-router-dom'
-import { mockAuthService } from '@/application/services/mock-auth-service'
+import { useSession } from '@/application/modules/Auth/hooks/use-session'
 
 interface GuestRouteProps {
   children: React.ReactNode
 }
 
 export function GuestRoute({ children }: GuestRouteProps) {
-  const isAuthenticated = mockAuthService.isAuthenticated()
+  const { isAuthenticated } = useSession()
 
   if (isAuthenticated) {
     return <Navigate to="/" replace />

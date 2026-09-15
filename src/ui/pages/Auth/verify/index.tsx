@@ -1,56 +1,28 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Button, Heading, Text, OtpInput } from '@print/ui'
 
-import { mockAuthService } from '@/application/services/mock-auth-service'
-import styles from './verify-page.module.scss'
+import { useVerifyCode } from '@/application/modules/Auth/hooks/use-verify-code'
+import { ROUTES } from '@/ui/routes/paths'
+import styles from './styles.module.scss'
 
 export function VerifyPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const email = searchParams.get('email') || ''
-
   const [code, setCode] = useState('')
-  const [isVerifying, setIsVerifying] = useState(false)
-  const [error, setError] = useState('')
+  const { verify, isPending, error } = useVerifyCode({
+    onSuccess: () => navigate(ROUTES.home),
+    onError: () => setCode(''),
+  })
 
   useEffect(() => {
-    if (!email) {
-      navigate('/login')
-    }
+    if (!email) navigate(ROUTES.login)
   }, [email, navigate])
 
-  const handleVerify = async () => {
-    setError('')
-
-    if (code.length !== 6) {
-      setError('O código deve ter 6 dígitos')
-      return
-    }
-
-    setIsVerifying(true)
-
-    setTimeout(() => {
-      const isValid = mockAuthService.verifyCode(code)
-
-      if (isValid) {
-        mockAuthService.setAuthenticated(true, email)
-        navigate('/')
-      } else {
-        setError('Código inválido. Tente 123456')
-        setIsVerifying(false)
-        setCode('')
-      }
-    }, 600)
-  }
-
-  const handleResend = () => {
-    setCode('')
-    setError('')
-  }
-
-  const handleChangeEmail = () => {
-    navigate('/login')
+  const handleVerify = () => {
+    if (code.length !== 6) return
+    verify({ code, email })
   }
 
   return (
@@ -63,7 +35,7 @@ export function VerifyPage() {
 
       <div className={styles.cardBody}>
         <div className={styles.header}>
-          <Heading level={1} size="lg" className={styles.title}>
+          <Heading level={1} variant="lg" className={styles.title}>
             Confirme o código
           </Heading>
           <div className={styles.badge}>
@@ -75,37 +47,38 @@ export function VerifyPage() {
         <div className={styles.form}>
           <div className={styles.otpWrapper}>
             <OtpInput
+              label="Código de verificação"
+              name="otp"
               length={6}
               value={code}
               onChange={setCode}
-              disabled={isVerifying}
+              disabled={isPending}
               autoFocus
             />
-            {error && (
-              <Text as="p" variant="bodySm" className={styles.error}>
-                {error}
+            {error ? (
+              <Text as="p" variant="bodyMd" className={styles.error}>
+                {error.message}
               </Text>
-            )}
+            ) : null}
           </div>
 
           <Button
             type="button"
             variant="primary"
             size="lg"
-            fullWidth
-            disabled={isVerifying || code.length !== 6}
+            disabled={isPending || code.length !== 6}
             onClick={handleVerify}
             className={styles.submitButton}
           >
-            {isVerifying ? 'Verificando...' : 'Entrar na Plataforma'}
+            {isPending ? 'Verificando...' : 'Entrar na Plataforma'}
           </Button>
 
           <div className={styles.actions}>
-            <button type="button" className={styles.link} onClick={handleResend}>
+            <button type="button" className={styles.link} onClick={() => setCode('')}>
               Reenviar código
             </button>
             <span className={styles.separator}>•</span>
-            <button type="button" className={styles.link} onClick={handleChangeEmail}>
+            <button type="button" className={styles.link} onClick={() => navigate(ROUTES.login)}>
               Alterar e-mail
             </button>
           </div>

@@ -1,17 +1,13 @@
 import { createBrowserRouter, type RouteObject } from 'react-router-dom'
 
 import { AppLayout } from '@/ui/app/AppLayout'
-import { AuthLayout } from '@/ui/auth/AuthLayout'
-import { LoginPage } from '@/ui/auth/LoginPage'
-import { VerifyPage } from '@/ui/auth/VerifyPage'
+import { AuthLayout, LoginPage, VerifyPage } from '@/ui/pages/Auth'
 import { GuestRoute } from '@/ui/routes/GuestRoute'
 import { ProtectedRoute } from '@/ui/routes/ProtectedRoute'
-import { DemandDetailPage } from '@/ui/pages/DemandDetailPage'
-import { DemandsPage } from '@/ui/pages/DemandsPage'
-import { HomePage } from '@/ui/pages/HomePage'
-import { JournalistPage } from '@/ui/pages/JournalistPage'
-import { JournalistsPage } from '@/ui/pages/JournalistsPage'
-import { ReportsPage } from '@/ui/pages/ReportsPage'
+import { DemandDetailPage, DemandsPage } from '@/ui/pages/Demand'
+import { HomePage } from '@/ui/pages/Home'
+import { JournalistPage, JournalistsPage } from '@/ui/pages/Journalist'
+import { ReportsPage } from '@/ui/pages/Report'
 
 export const appRoutes: RouteObject[] = [
   {

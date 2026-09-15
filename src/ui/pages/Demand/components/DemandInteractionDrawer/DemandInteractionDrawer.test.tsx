@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
-import { DemandInteractionDrawer } from './DemandInteractionDrawer'
+import { DemandInteractionDrawer } from './index'
 
 afterEach(() => {
   cleanup()

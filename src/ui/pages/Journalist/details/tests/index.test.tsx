@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import { queryKeys } from '@/application/constants/query-keys'
 import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
-import { JournalistPage } from './JournalistPage'
+import { JournalistPage } from '..'
 
 describe('perfil do jornalista', () => {
   it('deriva contagens, temas e histórico de demandas locais vinculadas sem misturar avaliações manuais', async () => {

@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { currentUser } from '@/application/current-user'
 import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
-import { DemandPositioningDrawer } from './DemandPositioningDrawer'
+import { DemandPositioningDrawer } from './index'
 
 afterEach(() => {
   useLocalDemandStore.getState().reset()

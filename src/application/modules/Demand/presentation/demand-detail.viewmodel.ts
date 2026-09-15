@@ -187,6 +187,8 @@ export function buildDemandDetailViewModel(demand: Demand) {
   const latestInteraction = interactions.at(-1)
   const enrichment = demand.enrichment ?? { tags: [], topics: [], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null }
   const recordedNextStep = [...interactions].reverse().find((item) => item.nextStep)?.nextStep ?? enrichment.nextStep
+  const validNextActions = getDemandNextActions(demand.status)
+  const positioning = positioningView(demand.positioning, demand.status)
   const stateEvents: DemandDetailTimelineEvent[] = (demand.stateTransitions ?? []).map((item) => ({
     id: item.id, kind: 'state_change', title: statusLabels[item.to], actor: item.recordedBy,
     attribution: `Mudança de estado · ${statusLabels[item.from]} → ${statusLabels[item.to]}`, description: null,
@@ -238,8 +240,10 @@ export function buildDemandDetailViewModel(demand: Demand) {
     sourceChannel: demand.channel?.trim() ?? '',
     createdByName: null,
     enrichment,
-    validNextActions: getDemandNextActions(demand.status),
-    positioning: positioningView(demand.positioning, demand.status),
+    validNextActions,
+    canWritePositioning: validNextActions.includes('write_positioning') && positioning.canEdit,
+    canRegisterInteraction: validNextActions.includes('register_interaction'),
+    positioning,
     interactions,
     currentState: {
       statusLabel: statusLabels[demand.status],
@@ -270,6 +274,8 @@ export function buildLocalDemandDetailViewModel(record: LocalDemandCapture) {
       ? `${brDate[1]}/${brDate[2]}/${brDate[3].slice(2)}`
       : localDeadline
   const interactions = mapInteractions(record.interactions, record.positioning)
+  const validNextActions = getDemandNextActions(record.status)
+  const positioning = positioningView(record.positioning, record.status)
   const stateEvents: DemandDetailTimelineEvent[] = record.stateTransitions.map((item) => ({
     id: item.id, kind: 'state_change', title: statusLabels[item.to], actor: item.recordedBy,
     attribution: `Mudança de estado · ${statusLabels[item.from]} → ${statusLabels[item.to]}`, description: null,
@@ -338,8 +344,10 @@ export function buildLocalDemandDetailViewModel(record: LocalDemandCapture) {
     factContext: record.factContext,
     createdByName: record.createdBy && record.createdBy.name !== record.responsibleName ? record.createdBy.name : null,
     enrichment: record.enrichment,
-    validNextActions: getDemandNextActions(record.status),
-    positioning: positioningView(record.positioning, record.status),
+    validNextActions,
+    canWritePositioning: validNextActions.includes('write_positioning') && positioning.canEdit,
+    canRegisterInteraction: validNextActions.includes('register_interaction'),
+    positioning,
     sourceChannel: record.channel,
     localCapture: {
       requestedDeadline: localDeadline,

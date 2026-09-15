@@ -21,7 +21,7 @@ import {
 
 import type { NewJournalistInput } from '@/application/modules/Journalist/hooks/use-create-journalist'
 import type { EditableJournalistProfile } from '@/application/modules/Journalist/hooks/use-update-journalist'
-import styles from './journalist-create-drawer.module.scss'
+import styles from './styles.module.scss'
 
 type FormValues = {
   name: string

@@ -2,7 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 
 import { journalistService } from '@/application/composition'
 import { queryKeys } from '@/application/constants/query-keys'
+import type { Journalist } from '@/domain/Journalist/journalist.entity'
 
+export type { Journalist }
 export type JournalistStatusFilter = 'active' | 'inactive'
 
 export interface JournalistFilters {

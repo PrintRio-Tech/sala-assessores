@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { DemandDetailPage } from './DemandDetailPage'
+import { DemandDetailPage } from '..'
 import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
-import type { DemandStatus } from '@/domain/Demand/demand.entity'
+import type { DemandStatus } from '@/application/modules/Demand/stores/local-demand.store'
 
 function renderDemandDetail(demandId = 'd-regulacao') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })

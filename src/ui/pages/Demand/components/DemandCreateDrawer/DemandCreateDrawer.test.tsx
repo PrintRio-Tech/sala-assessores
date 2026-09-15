@@ -3,9 +3,9 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
-import type { Journalist } from '@/domain/Journalist/journalist.entity'
+import type { Journalist } from '@/application/modules/Journalist/hooks/use-journalists'
 import type { NewLocalDemandCapture } from '@/application/modules/Demand/stores/local-demand.store'
-import { DemandCreateDrawer } from './DemandCreateDrawer'
+import { DemandCreateDrawer } from './index'
 
 const journalist: Journalist = {
   id: 'j-carolina',

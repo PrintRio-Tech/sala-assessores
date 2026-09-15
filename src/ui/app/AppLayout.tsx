@@ -47,7 +47,7 @@ export function AppLayout() {
       mobileLogo={
         <img
           className={styles.mobileHeaderLogo}
-          src="/logos/wordmark-chumbo.png"
+          src={`${import.meta.env.BASE_URL}logos/wordmark-chumbo.png`}
           alt="Print"
           width={120}
           height={32}

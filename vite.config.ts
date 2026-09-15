@@ -6,6 +6,7 @@ import { defineConfig } from 'vitest/config'
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
+  base: process.env.GITHUB_PAGES === 'true' ? '/sala-assessores/' : '/',
   plugins: [react()],
   test: {
     environment: 'jsdom',

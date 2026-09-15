@@ -4,7 +4,7 @@ import type {
   NewExternalInteraction,
   Paginated,
 } from '@/domain/Demand/demand.repository'
-import type { Demand } from '@/domain/Demand/demand.entity'
+import type { Demand, PositioningAttachment } from '@/domain/Demand/demand.entity'
 import {
   applyInteractionToPositioning,
   emptyPositioning,
@@ -23,6 +23,12 @@ function fromPositioning(positioning: ReturnType<typeof emptyPositioning>): NonN
       body: item.body,
       author: item.author,
       saved_at: item.savedAt.toISOString(),
+      attachment: item.attachment ? {
+        filename: item.attachment.filename,
+        content_type: item.attachment.contentType,
+        size_bytes: item.attachment.sizeBytes,
+        object_url: item.attachment.objectUrl,
+      } : null,
     })),
     approval: positioning.approval ? {
       approved_by: positioning.approval.approvedBy,
@@ -101,7 +107,7 @@ export class MockDemandRepository implements DemandRepository {
     return toDomain(demandDtoSchema.parse(dto))
   }
 
-  async savePositioning(id: string, input: { body: string; author: string; savedAt: Date }): Promise<Demand | null> {
+  async savePositioning(id: string, input: { body: string; author: string; savedAt: Date; attachment?: PositioningAttachment | null }): Promise<Demand | null> {
     const dto = this.records.find((item) => item.id === id)
     if (!dto) return null
     const current = toDomain(demandDtoSchema.parse(dto))
@@ -111,6 +117,7 @@ export class MockDemandRepository implements DemandRepository {
       body: input.body,
       author: input.author,
       savedAt: input.savedAt,
+      attachment: input.attachment ?? null,
     }, current.status)
     dto.positioning = fromPositioning(next)
     dto.updated_at = input.savedAt.toISOString()

@@ -180,4 +180,68 @@ describe('Demand detail presentation contract', () => {
     expect(adiada.positioning.body).toContain('fala já liberada')
     expect(adiada.interactions[0]?.originLabel).toBe('Fora da plataforma')
   })
+
+  it('recorta texto longo na timeline e expõe anexo sem despejar o corpo inteiro', async () => {
+    const demand = await demandService.getById('d-regulacao')
+    const longBody = `${'A nota oficial descreve o cronograma, as metas e a ressalva regulatória. '.repeat(8)}Fim.`
+    demand!.positioning = {
+      state: 'draft',
+      approval: null,
+      versions: [{
+        id: 'pos-long',
+        body: longBody,
+        author: 'Ana Paula',
+        savedAt: new Date('2026-10-21T10:00:00.000Z'),
+        attachment: {
+          filename: 'nota-oficial.pdf',
+          contentType: 'application/pdf',
+          sizeBytes: 2048,
+          objectUrl: 'blob:http://localhost/nota',
+        },
+      }],
+    }
+
+    const viewModel = buildDemandDetailViewModel(demand!)
+    const event = viewModel.timeline.find((item) => item.kind === 'positioning_version')
+
+    expect(viewModel.positioning.attachment?.filename).toBe('nota-oficial.pdf')
+    expect(viewModel.positioning.hasBody).toBe(true)
+    expect(viewModel.positioning.isTruncated).toBe(true)
+    expect(event?.description).not.toBe(longBody)
+    expect(event?.description?.endsWith('…')).toBe(true)
+    expect(event?.isTruncated).toBe(true)
+    expect(event?.hasBody).toBe(true)
+    expect(event?.attachment?.filename).toBe('nota-oficial.pdf')
+  })
+
+  it('não trata anexo sem texto como posicionamento vazio', () => {
+    useLocalDemandStore.getState().reset()
+    const record = useLocalDemandStore.getState().add({
+      subject: 'Caso com arquivo', factContext: 'Fato.', pressRequest: 'Pedido.',
+      requestedDeadline: '2026-08-28', channel: 'E-mail', contactMode: 'local', contactName: 'Plantão',
+      contactOutlet: 'Redação', journalistId: '', journalistName: 'Plantão', outletName: 'Redação',
+    })
+    useLocalDemandStore.getState().savePositioning(record.id, {
+      body: '',
+      attachment: {
+        filename: 'nota.pdf',
+        contentType: 'application/pdf',
+        sizeBytes: 1024,
+        objectUrl: 'blob:http://localhost/pdf',
+      },
+    })
+
+    const view = buildLocalDemandDetailViewModel(useLocalDemandStore.getState().records[0]!)
+
+    expect(view.positioning.isEmpty).toBe(false)
+    expect(view.positioning.hasBody).toBe(false)
+    expect(view.positioning.writeLabel).toBe('Atualizar posicionamento')
+    expect(view.positioning.attachment?.filename).toBe('nota.pdf')
+    expect(view.timeline.find((event) => event.kind === 'positioning_version')).toEqual(expect.objectContaining({
+      title: 'Versão salva',
+      hasBody: false,
+      description: null,
+      attachment: expect.objectContaining({ filename: 'nota.pdf' }),
+    }))
+  })
 })

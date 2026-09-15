@@ -197,11 +197,19 @@ export const POSITIONING_STATE_LABELS: Record<PositioningState, string> = {
   sent: 'Enviado',
 }
 
+export interface PositioningAttachment {
+  filename: string
+  contentType: string
+  sizeBytes: number
+  objectUrl: string
+}
+
 export interface PositioningVersion {
   id: string
   body: string
   author: string
   savedAt: Date
+  attachment: PositioningAttachment | null
 }
 
 export interface PositioningApproval {
@@ -225,21 +233,37 @@ export function currentPositioningBody(positioning: DemandPositioning): string {
   return positioning.versions.at(-1)?.body ?? ''
 }
 
+export function currentPositioningAttachment(positioning: DemandPositioning): PositioningAttachment | null {
+  return positioning.versions.at(-1)?.attachment ?? null
+}
+
+export function hasPositioningContent(positioning: DemandPositioning): boolean {
+  const version = positioning.versions.at(-1)
+  return Boolean(version && (version.body.trim() || version.attachment))
+}
+
 export function canEditPositioning(status: DemandStatus): boolean {
   return status === 'in_progress'
 }
 
 export function savePositioningVersion(
   positioning: DemandPositioning,
-  input: { id: string; body: string; author: string; savedAt: Date },
+  input: { id: string; body: string; author: string; savedAt: Date; attachment?: PositioningAttachment | null },
   demandStatus: DemandStatus,
 ): DemandPositioning {
   if (!canEditPositioning(demandStatus)) throw new PositioningNotEditableError()
   const body = input.body.trim()
-  if (!body) throw new PositioningTextRequiredError('Informe o texto do posicionamento.')
+  const attachment = input.attachment ?? null
+  if (!body && !attachment) throw new PositioningTextRequiredError('Inclua o arquivo, o texto, ou os dois.')
   return {
     state: 'draft',
-    versions: [...positioning.versions, { id: input.id, body, author: input.author.trim() || 'Autoria não informada', savedAt: input.savedAt }],
+    versions: [...positioning.versions, {
+      id: input.id,
+      body,
+      author: input.author.trim() || 'Autoria não informada',
+      savedAt: input.savedAt,
+      attachment,
+    }],
     approval: null,
   }
 }
@@ -255,8 +279,9 @@ export function applyInteractionToPositioning(
 ): DemandPositioning {
   if (input.result === 'approved') {
     const version = positioning.versions.at(-1)
-    const body = currentPositioningBody(positioning)
-    if (!version || !body) throw new PositioningTextRequiredError('Salve o texto do posicionamento antes de registrar a aprovação.')
+    if (!version || !hasPositioningContent(positioning)) {
+      throw new PositioningTextRequiredError('Salve o posicionamento (texto ou anexo) antes de registrar a aprovação.')
+    }
     return {
       ...positioning,
       state: 'approved',

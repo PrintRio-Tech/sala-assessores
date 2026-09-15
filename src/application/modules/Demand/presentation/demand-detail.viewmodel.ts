@@ -1,14 +1,17 @@
 import {
   EXTERNAL_INTERACTION_RESULT_RULES,
   POSITIONING_STATE_LABELS,
+  currentPositioningAttachment,
   currentPositioningBody,
   emptyPositioning,
   getDemandNextActions,
+  hasPositioningContent,
   type Demand,
   type DemandPositioning,
   type DemandStatus,
   type DemandPriority,
   type ExternalInteractionType,
+  type PositioningAttachment,
 } from '@/domain/Demand/demand.entity'
 import type { LocalDemandCapture } from '../stores/local-demand.store'
 
@@ -82,6 +85,16 @@ function compareTimeline(left: DemandDetailTimelineEvent, right: DemandDetailTim
   return right.iso.localeCompare(left.iso)
 }
 
+export const POSITIONING_EXCERPT_LIMIT = 180
+export const POSITIONING_CARD_PREVIEW_LIMIT = 280
+
+export function excerptText(body: string, limit: number): { excerpt: string; isTruncated: boolean } {
+  const trimmed = body.trim()
+  if (!trimmed) return { excerpt: '', isTruncated: false }
+  if (trimmed.length <= limit) return { excerpt: trimmed, isTruncated: false }
+  return { excerpt: `${trimmed.slice(0, limit).trimEnd()}…`, isTruncated: true }
+}
+
 export type DemandDetailTimelineEvent = {
   id: string
   kind: 'request' | 'interaction' | 'state_change' | 'current' | 'enrichment' | 'positioning_version'
@@ -96,36 +109,52 @@ export type DemandDetailTimelineEvent = {
   iso: string
   dateLabel: string
   timeLabel: string
+  hasBody?: boolean
+  isTruncated?: boolean
+  attachment?: PositioningAttachment | null
 }
 
 function positioningView(positioning: DemandPositioning | undefined, status: DemandStatus) {
   const artifact = positioning ?? emptyPositioning()
   const body = currentPositioningBody(artifact)
+  const attachment = currentPositioningAttachment(artifact)
+  const hasContent = hasPositioningContent(artifact)
+  const preview = excerptText(body, POSITIONING_CARD_PREVIEW_LIMIT)
   return {
     state: artifact.state,
     stateLabel: POSITIONING_STATE_LABELS[artifact.state],
     body,
-    isEmpty: artifact.state === 'empty' || !body,
+    attachment,
+    hasBody: Boolean(body),
+    isTruncated: preview.isTruncated,
+    excerpt: preview.excerpt,
+    isEmpty: artifact.state === 'empty' || !hasContent,
     canEdit: status === 'in_progress',
-    writeLabel: body ? 'Atualizar posicionamento' : 'Escrever posicionamento',
-    primaryAction: (!body ? 'write_positioning' : 'register_interaction') as 'write_positioning' | 'register_interaction',
+    writeLabel: hasContent ? 'Atualizar posicionamento' : 'Escrever posicionamento',
+    primaryAction: (!hasContent ? 'write_positioning' : 'register_interaction') as 'write_positioning' | 'register_interaction',
     approval: artifact.approval,
     versions: artifact.versions,
   }
 }
 
 function positioningTimelineEvents(positioning: DemandPositioning | undefined): DemandDetailTimelineEvent[] {
-  return (positioning ?? emptyPositioning()).versions.map((item) => ({
-    id: item.id,
-    kind: 'positioning_version' as const,
-    title: 'Versão salva',
-    actor: item.author,
-    attribution: 'Posicionamento',
-    description: item.body,
-    isAttention: false,
-    isCurrent: false,
-    ...dateTime(item.savedAt),
-  }))
+  return (positioning ?? emptyPositioning()).versions.map((item) => {
+    const preview = excerptText(item.body, POSITIONING_EXCERPT_LIMIT)
+    return {
+      id: item.id,
+      kind: 'positioning_version' as const,
+      title: 'Versão salva',
+      actor: item.author,
+      attribution: 'Posicionamento',
+      description: preview.excerpt || null,
+      hasBody: Boolean(item.body.trim()),
+      isTruncated: preview.isTruncated,
+      attachment: item.attachment,
+      isAttention: false,
+      isCurrent: false,
+      ...dateTime(item.savedAt),
+    }
+  })
 }
 
 function mapInteractions(

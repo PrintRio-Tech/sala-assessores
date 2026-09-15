@@ -70,7 +70,7 @@ describe('DemandInteractionDrawer', () => {
     await user.type(within(drawer).getByLabelText('Quem aprovou / área'), 'Coordenação')
     await user.type(within(drawer).getByLabelText('Parecer'), 'Liberado internamente.')
     await user.click(within(drawer).getByRole('button', { name: 'Salvar' }))
-    expect(await within(drawer).findByText('Salve o texto do posicionamento antes de registrar a aprovação.')).toBeVisible()
+    expect(await within(drawer).findByText('Salve o posicionamento (texto ou anexo) antes de registrar a aprovação.')).toBeVisible()
     expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.interactions).toEqual([])
 
     useLocalDemandStore.getState().savePositioning(demand.id, { body: 'Nota da sessão.' })

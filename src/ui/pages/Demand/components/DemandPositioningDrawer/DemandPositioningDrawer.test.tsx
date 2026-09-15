@@ -48,7 +48,7 @@ describe('DemandPositioningDrawer', () => {
     const drawer = screen.getByRole('dialog', { name: 'Escrever posicionamento' })
 
     await user.click(within(drawer).getByRole('button', { name: 'Salvar versão' }))
-    expect(within(drawer).getByText('Informe o texto do posicionamento.')).toBeVisible()
+    expect(within(drawer).getByRole('alert')).toHaveTextContent('Inclua o arquivo, o texto, ou os dois.')
     expect(useLocalDemandStore.getState().records[0]?.positioning.state).toBe('empty')
 
     fireEvent.change(within(drawer).getByRole('textbox', { name: 'Texto do posicionamento' }), {
@@ -81,5 +81,27 @@ describe('DemandPositioningDrawer', () => {
 
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
     expect(screen.queryByRole('dialog', { name: 'Descartar alterações?' })).not.toBeInTheDocument()
+  })
+
+  it('salva só com anexo e aceita texto junto', async () => {
+    const { demand, onOpenChange } = renderDrawer()
+    const user = userEvent.setup()
+    const drawer = screen.getByRole('dialog', { name: 'Escrever posicionamento' })
+    const file = new File(['nota'], 'nota-oficial.pdf', { type: 'application/pdf' })
+
+    await user.upload(within(drawer).getByLabelText('Anexo do posicionamento'), file)
+    await user.click(within(drawer).getByRole('button', { name: 'Salvar versão' }))
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
+    expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.positioning.versions.at(-1)).toEqual(
+      expect.objectContaining({
+        body: '',
+        attachment: expect.objectContaining({
+          filename: 'nota-oficial.pdf',
+          contentType: 'application/pdf',
+          sizeBytes: file.size,
+        }),
+      }),
+    )
   })
 })

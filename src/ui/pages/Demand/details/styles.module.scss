@@ -36,8 +36,20 @@ $red: #c3322d;
 .mainStack { display: grid; gap: 16px; min-width: 0; }
 .infoCard { display: grid; gap: 12px; }
 .positioningHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: $space-3; }
-.positioningBody { white-space: pre-wrap; }
-.positioningActions { display: flex; justify-content: flex-start; }
+.positioningBody {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 8;
+  overflow: hidden;
+  white-space: pre-wrap;
+}
+.positioningActions { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: $space-2; }
+.timelinePositioning {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: $space-2;
+  min-width: 0;
+}
 .stackedFields { display: grid; gap: 16px; }
 .stackedField { display: grid; gap: 4px; }
 .personDetail,

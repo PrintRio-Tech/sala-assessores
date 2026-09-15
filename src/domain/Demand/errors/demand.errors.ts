@@ -27,7 +27,7 @@ export class DemandInteractionNotAllowedError extends DomainError {
 export class PositioningTextRequiredError extends DomainError {
   readonly code = 'POSITIONING_TEXT_REQUIRED'
 
-  constructor(message = 'Salve o texto do posicionamento antes de registrar a aprovação.') {
+  constructor(message = 'Salve o posicionamento (texto ou anexo) antes de registrar a aprovação.') {
     super(message)
   }
 }

@@ -45,7 +45,16 @@ export function toDomain(dto: DemandDto): Demand {
     positioning: dto.positioning ? {
       state: dto.positioning.state,
       versions: dto.positioning.versions.map((item) => ({
-        id: item.id, body: item.body, author: item.author, savedAt: new Date(item.saved_at),
+        id: item.id,
+        body: item.body,
+        author: item.author,
+        savedAt: new Date(item.saved_at),
+        attachment: item.attachment ? {
+          filename: item.attachment.filename,
+          contentType: item.attachment.content_type,
+          sizeBytes: item.attachment.size_bytes,
+          objectUrl: item.attachment.object_url,
+        } : null,
       })),
       approval: dto.positioning.approval ? {
         approvedBy: dto.positioning.approval.approved_by,

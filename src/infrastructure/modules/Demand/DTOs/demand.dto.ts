@@ -64,6 +64,12 @@ export const demandDtoSchema = z.object({
       body: z.string(),
       author: z.string(),
       saved_at: z.string(),
+      attachment: z.object({
+        filename: z.string(),
+        content_type: z.string(),
+        size_bytes: z.number(),
+        object_url: z.string(),
+      }).nullish(),
     })),
     approval: z.object({
       approved_by: z.string(),

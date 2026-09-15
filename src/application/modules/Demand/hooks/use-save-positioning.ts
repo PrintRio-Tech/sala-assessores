@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { demandService } from '@/application/composition'
 import { queryKeys } from '@/application/constants/query-keys'
 import { currentUser } from '@/application/current-user'
-import type { Demand } from '@/domain/Demand/demand.entity'
+import type { Demand, PositioningAttachment } from '@/domain/Demand/demand.entity'
 import { DemandNotFoundError } from '@/domain/Demand/errors/demand.errors'
 import { useLocalDemandStore } from '../stores/local-demand.store'
 
@@ -16,14 +16,18 @@ export function useSavePositioning(demandId: string, options: SavePositioningOpt
   const queryClient = useQueryClient()
   const isLocal = useLocalDemandStore((state) => state.records.some((record) => record.id === demandId))
   const mutation = useMutation({
-    mutationFn: async (input: { body: string }): Promise<Demand | null> => {
+    mutationFn: async (input: { body: string; attachment?: PositioningAttachment | null }): Promise<Demand | null> => {
       if (!isLocal) {
         return demandService.savePositioning(demandId, {
           body: input.body,
           author: currentUser.name,
+          attachment: input.attachment ?? null,
         })
       }
-      const record = useLocalDemandStore.getState().savePositioning(demandId, { body: input.body })
+      const record = useLocalDemandStore.getState().savePositioning(demandId, {
+        body: input.body,
+        attachment: input.attachment ?? null,
+      })
       if (!record) throw new DemandNotFoundError()
       return null
     },

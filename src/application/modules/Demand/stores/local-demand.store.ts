@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import { applyInteractionToPositioning, emptyPositioning, savePositioningVersion, transitionDemand, type Demand, type DemandEnrichment, type DemandPositioning, type DemandPriority, type DemandStateTransition, type DemandStatus, type ExternalInteraction } from '@/domain/Demand/demand.entity'
+import { applyInteractionToPositioning, emptyPositioning, savePositioningVersion, transitionDemand, type Demand, type DemandEnrichment, type DemandPositioning, type DemandPriority, type DemandStateTransition, type DemandStatus, type ExternalInteraction, type PositioningAttachment } from '@/domain/Demand/demand.entity'
 import { currentUser } from '@/application/current-user'
 import type { RegisterExternalInteractionInput } from '@/domain/Demand/demand.repository'
 import { prepareExternalInteraction } from '@/domain/Demand/use-cases/register-external-interaction.use-case'
@@ -57,7 +57,7 @@ type LocalDemandState = {
   remove: (id: string) => void
   isHidden: (id: string) => boolean
   registerInteraction: (id: string, input: RegisterExternalInteractionInput) => LocalDemandCapture | null
-  savePositioning: (id: string, input: { body: string }) => LocalDemandCapture | null
+  savePositioning: (id: string, input: { body: string; attachment?: PositioningAttachment | null }) => LocalDemandCapture | null
   updateEnrichment: (id: string, input: Partial<DemandEnrichment> & { responsibleId?: string; responsibleName?: string; priority?: DemandPriority }) => LocalDemandCapture | null
   linkJournalist: (id: string, input: { journalistId: string; journalistName: string; outletName: string }) => LocalDemandCapture | null
   reset: () => void
@@ -197,6 +197,7 @@ export const useLocalDemandStore = create<LocalDemandState>((set, get) => ({
       body: input.body,
       author: currentUser.name,
       savedAt,
+      attachment: input.attachment ?? null,
     }, current.status)
     let updated: LocalDemandCapture | null = null
     set((state) => ({

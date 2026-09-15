@@ -1,4 +1,4 @@
-import type { Demand, DemandStatus, ExternalInteraction, ExternalInteractionResult, ExternalInteractionType } from './demand.entity'
+import type { Demand, DemandStatus, ExternalInteraction, ExternalInteractionResult, ExternalInteractionType, PositioningAttachment } from './demand.entity'
 
 export interface DemandListParams {
   search?: string
@@ -37,5 +37,5 @@ export interface DemandRepository {
   list(params?: DemandListParams): Promise<Paginated<Demand>>
   getById(id: string): Promise<Demand | null>
   registerInteraction(id: string, input: NewExternalInteraction): Promise<Demand | null>
-  savePositioning(id: string, input: { body: string; author: string; savedAt: Date }): Promise<Demand | null>
+  savePositioning(id: string, input: { body: string; author: string; savedAt: Date; attachment?: PositioningAttachment | null }): Promise<Demand | null>
 }

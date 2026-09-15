@@ -48,6 +48,8 @@ export function DemandDetailPage() {
   const localRecords = useLocalDemandStore((state) => state.records)
   const [interactionOpen, setInteractionOpen] = useState(false)
   const [positioningOpen, setPositioningOpen] = useState(false)
+  const [positioningMode, setPositioningMode] = useState<'edit' | 'view'>('edit')
+  const [readVersionId, setReadVersionId] = useState<string | null>(null)
   const [captureIntent, setCaptureIntent] = useState<CaptureIntent>(null)
   const [journalistOpen, setJournalistOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -85,7 +87,11 @@ export function DemandDetailPage() {
     <div className={styles.page} data-testid="demand-detail">
       <DetailHeader
         demand={demand}
-        onWritePositioning={() => setPositioningOpen(true)}
+        onWritePositioning={() => {
+          setPositioningMode('edit')
+          setReadVersionId(null)
+          setPositioningOpen(true)
+        }}
         onRegisterInteraction={() => setInteractionOpen(true)}
         onEdit={openEdit}
         onDelete={() => setDeleteOpen(true)}
@@ -164,7 +170,19 @@ export function DemandDetailPage() {
           ) : null}
         </aside>
         <div className={styles.mainStack}>
-          <PositioningCard positioning={demand.positioning} onWrite={() => setPositioningOpen(true)} />
+          <PositioningCard
+            positioning={demand.positioning}
+            onWrite={() => {
+              setPositioningMode('edit')
+              setReadVersionId(null)
+              setPositioningOpen(true)
+            }}
+            onReadMore={() => {
+              setPositioningMode('view')
+              setReadVersionId(demand.positioning.versions.at(-1)?.id ?? null)
+              setPositioningOpen(true)
+            }}
+          />
           {pressRequest ? (
             <CopyCard title="Pedido da imprensa" testId="demand-press-request">
               <Text as="p">{pressRequest}</Text>
@@ -197,7 +215,14 @@ export function DemandDetailPage() {
             </CopyCard>
           ) : null}
           <CopyCard title="Histórico">
-            <Timeline events={demand.timeline} />
+            <Timeline
+              events={demand.timeline}
+              onReadPositioning={(versionId) => {
+                setPositioningMode('view')
+                setReadVersionId(versionId)
+                setPositioningOpen(true)
+              }}
+            />
           </CopyCard>
         </div>
       </div>
@@ -205,9 +230,21 @@ export function DemandDetailPage() {
         demandId={demand.id}
         demandCode={demand.identity.code}
         demandTitle={demand.identity.title}
-        initialBody={demand.positioning.body}
+        mode={positioningMode}
+        initialBody={(readVersionId
+          ? demand.positioning.versions.find((version) => version.id === readVersionId)?.body
+          : demand.positioning.body) ?? ''}
+        initialAttachment={(readVersionId
+          ? demand.positioning.versions.find((version) => version.id === readVersionId)?.attachment
+          : demand.positioning.attachment) ?? null}
         open={positioningOpen}
-        onOpenChange={setPositioningOpen}
+        onOpenChange={(open) => {
+          setPositioningOpen(open)
+          if (!open) {
+            setPositioningMode('edit')
+            setReadVersionId(null)
+          }
+        }}
       />
       <DemandInteractionDrawer
         demandId={demand.id}

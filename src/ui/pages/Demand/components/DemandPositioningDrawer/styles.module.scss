@@ -52,7 +52,25 @@
 }
 
 .submitError { margin: 0; }
-.sourceContext { margin: 0; line-height: 1.5; }
+.sourceContext { margin: 0; line-height: 1.5; white-space: pre-wrap; }
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.fileActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+}
 
 @include mobile {
   .grid { grid-template-columns: 1fr; }

@@ -177,7 +177,7 @@ describe('Demand domain', () => {
     expect(saved.approval).toBeNull()
   })
 
-  it('rejeita salvar posicionamento sem texto ou em caso já fechado', () => {
+  it('rejeita salvar posicionamento sem texto nem anexo ou em caso já fechado', () => {
     expect(() => savePositioningVersion(emptyPositioning(), {
       id: 'pos-1', body: '   ', author: 'Noel Ferreira', savedAt: new Date(),
     }, 'in_progress')).toThrow(PositioningTextRequiredError)
@@ -187,6 +187,83 @@ describe('Demand domain', () => {
     expect(() => savePositioningVersion(emptyPositioning(), {
       id: 'pos-1', body: 'Nota.', author: 'Noel Ferreira', savedAt: new Date(),
     }, 'closed_without_send')).toThrow(PositioningNotEditableError)
+  })
+
+  it('salva versão só com anexo e deixa o texto vazio', () => {
+    const saved = savePositioningVersion(emptyPositioning(), {
+      id: 'pos-file',
+      body: '   ',
+      author: 'Noel Ferreira',
+      savedAt: new Date('2026-09-13T18:00:00.000Z'),
+      attachment: {
+        filename: 'nota-oficial.pdf',
+        contentType: 'application/pdf',
+        sizeBytes: 2048,
+        objectUrl: 'blob:http://localhost/nota',
+      },
+    }, 'in_progress')
+
+    expect(saved.state).toBe('draft')
+    expect(currentPositioningBody(saved)).toBe('')
+    expect(saved.versions.at(-1)).toEqual(expect.objectContaining({
+      id: 'pos-file',
+      body: '',
+      attachment: {
+        filename: 'nota-oficial.pdf',
+        contentType: 'application/pdf',
+        sizeBytes: 2048,
+        objectUrl: 'blob:http://localhost/nota',
+      },
+    }))
+  })
+
+  it('salva versão com texto e anexo juntos', () => {
+    const saved = savePositioningVersion(emptyPositioning(), {
+      id: 'pos-both',
+      body: '  Trecho da nota.  ',
+      author: 'Noel Ferreira',
+      savedAt: new Date('2026-09-13T18:00:00.000Z'),
+      attachment: {
+        filename: 'nota.docx',
+        contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        sizeBytes: 4096,
+        objectUrl: 'blob:http://localhost/docx',
+      },
+    }, 'in_progress')
+
+    expect(currentPositioningBody(saved)).toBe('Trecho da nota.')
+    expect(saved.versions.at(-1)?.attachment?.filename).toBe('nota.docx')
+  })
+
+  it('aprovar sem texto nem anexo falha; anexo sozinho libera o parecer', () => {
+    expect(() => applyInteractionToPositioning(emptyPositioning(), {
+      result: 'approved',
+      approvedBy: 'Coordenação',
+      opinion: 'Liberado.',
+    })).toThrow(PositioningTextRequiredError)
+
+    const draft = savePositioningVersion(emptyPositioning(), {
+      id: 'pos-file',
+      body: '',
+      author: 'Noel Ferreira',
+      savedAt: new Date('2026-09-13T18:00:00.000Z'),
+      attachment: {
+        filename: 'nota.pdf',
+        contentType: 'application/pdf',
+        sizeBytes: 1024,
+        objectUrl: 'blob:http://localhost/pdf',
+      },
+    }, 'in_progress')
+    const approved = applyInteractionToPositioning(draft, {
+      result: 'approved',
+      approvedBy: 'Coordenação',
+      opinion: 'Liberado para envio.',
+      occurredAt: new Date('2026-09-13T19:00:00.000Z'),
+    })
+
+    expect(approved.state).toBe('approved')
+    expect(approved.approval?.versionId).toBe('pos-file')
+    expect(new PositioningTextRequiredError().message).toBe('Salve o posicionamento (texto ou anexo) antes de registrar a aprovação.')
   })
 
   it('aprovar sem texto falha; com texto marca o artefato e prende o parecer a esta versão', () => {

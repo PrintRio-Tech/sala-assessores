@@ -287,9 +287,15 @@ export const mockDemandDtos: DemandDto[] = [
       state: 'draft',
       versions: [{
         id: 'pos-regulacao-1',
-        body: 'O grupo segue o cronograma de adequação regulatória e publicará as metas de 2027 após a validação da fonte dos indicadores.',
+        body: 'O grupo segue o cronograma de adequação regulatória e publicará as metas de 2027 após a validação da fonte dos indicadores. A nota detalha a origem dos dados, o rito interno de conferência e o compromisso de atualizar o material se a agência pedir revisão. Essa versão longa serve para a assessoria ler o recorte no card e o texto integral no drawer.',
         author: 'Ana Paula',
         saved_at: '2026-10-21T10:00:00.000Z',
+        attachment: {
+          filename: 'cronograma-regulatorio.pdf',
+          content_type: 'application/pdf',
+          size_bytes: 24576,
+          object_url: '#',
+        },
       }],
       approval: null,
     },

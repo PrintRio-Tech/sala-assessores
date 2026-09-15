@@ -35,8 +35,9 @@ describe('ReportsPage', () => {
     )
 
     expect(screen.getByText(/demandas por status/i)).toBeInTheDocument()
-    expect(screen.getByText(/rascunho/i)).toBeInTheDocument()
     expect(screen.getByText(/em andamento/i)).toBeInTheDocument()
+    expect(screen.queryByText(/rascunho/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/em review/i)).not.toBeInTheDocument()
   })
 
   it('exibe top jornalistas', () => {

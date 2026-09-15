@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { LocalDemandCapture } from '@/application/modules/Demand/stores/local-demand.store'
 import type { Demand } from '@/domain/Demand/demand.entity'
+import { emptyPositioning } from '@/domain/Demand/demand.entity'
 import type { Journalist } from '@/domain/Journalist/journalist.entity'
 import { buildJournalistProfileViewModel } from './journalist-profile.viewmodel'
 
@@ -34,12 +35,10 @@ const mockDemand: Demand = {
   responsibleName: 'Ana Paula',
   deadlineAt: new Date('2026-08-30T12:00:00.000Z'),
   priority: 'medium',
-  status: 'draft',
+  status: 'in_progress',
   createdAt: new Date('2026-08-20T12:00:00.000Z'),
   updatedAt: new Date('2026-08-20T12:00:00.000Z'),
   interactions: [],
-  decisions: [],
-  finalPositioning: null,
   enrichment: { tags: [], topics: ['Tema antigo'], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null },
 }
 
@@ -59,24 +58,27 @@ const adoptedLocalDemand: LocalDemandCapture = {
   outletName: journalist.outletName,
   createdAt: mockDemand.createdAt,
   updatedAt: new Date('2026-08-25T12:00:00.000Z'),
-  interactions: [],
   status: 'sent',
   responsibleId: 'r-noel',
   responsibleName: 'Noel Ferreira',
+  createdBy: null,
   priority: 'critical',
   enrichment: { tags: [], topics: ['Tema local'], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null },
-  reviewRequests: [],
-  decisions: [],
-  finalPositioning: {
-    versionLabel: 'v2',
+  stateTransitions: [],
+  positioning: emptyPositioning(),
+  interactions: [{
+    id: 'int-sent',
+    occurredAt: new Date('2026-08-25T12:00:00.000Z'),
+    type: null,
+    result: 'response_sent',
+    participants: null,
+    summary: null,
+    nextStep: null,
     channel: 'E-mail',
-    sentAt: new Date('2026-08-25T12:00:00.000Z'),
     recipient: journalist.name,
     body: 'Posicionamento',
-  },
-      closure: null,
-      versions: [],
-      stateTransitions: [],
+    origin: 'off_platform',
+  }],
 }
 
 describe('buildJournalistProfileViewModel', () => {

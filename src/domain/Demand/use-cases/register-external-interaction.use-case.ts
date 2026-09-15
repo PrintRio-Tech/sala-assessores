@@ -44,6 +44,9 @@ export function prepareExternalInteraction(input: RegisterExternalInteractionInp
     participants: rules.participants.visible ? normalizeText(input.participants) : null,
     summary: rules.summary.visible ? normalizeText(input.summary) : null,
     nextStep: rules.nextStep.visible ? normalizeText(input.nextStep) : null,
+    channel: rules.channel.visible ? normalizeText(input.channel) : null,
+    recipient: rules.recipient.visible ? normalizeText(input.recipient) : null,
+    body: rules.body.visible ? normalizeText(input.body) : null,
   }
 
   const [firstError] = Object.values(getExternalInteractionFieldErrors(input.result, normalized))

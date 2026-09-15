@@ -18,10 +18,7 @@ export function ReportsPage() {
       { name: 'Beatriz Santos', outlet: 'Estado', count: 9 },
     ],
     demandsByStatus: {
-      draft: 5,
-      in_progress: 12,
-      pending_review: 3,
-      approved: 8,
+      in_progress: 28,
       sent: 42,
       closed_without_send: 17,
     },
@@ -52,10 +49,7 @@ export function ReportsPage() {
         ['Taxa de satisfação (%)', mockKpis.satisfactionRate.toString()],
         ['', ''],
         ['Status', 'Quantidade'],
-        ['Rascunho', mockKpis.demandsByStatus.draft.toString()],
         ['Em andamento', mockKpis.demandsByStatus.in_progress.toString()],
-        ['Em review', mockKpis.demandsByStatus.pending_review.toString()],
-        ['Aprovada', mockKpis.demandsByStatus.approved.toString()],
         ['Enviada', mockKpis.demandsByStatus.sent.toString()],
         ['Encerrada sem envio', mockKpis.demandsByStatus.closed_without_send.toString()],
         ['', ''],
@@ -110,22 +104,9 @@ export function ReportsPage() {
 
       <section aria-label="KPIs principais">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-          <Stat
-            label="Total de demandas"
-            value={mockKpis.totalDemands}
-            subtitle="Últimos 30 dias"
-          />
-          <Stat
-            label="Tempo médio de resposta"
-            value={mockKpis.averageResponseTime}
-            subtitle="Primeira interação"
-          />
-          <Stat
-            label="Taxa de satisfação"
-            value={`${mockKpis.satisfactionRate}%`}
-            tone="success"
-            trend={{ direction: 'up', label: '+3% vs. mês anterior' }}
-          />
+          <Stat label="Total de demandas" value={String(mockKpis.totalDemands)} />
+          <Stat label="Tempo médio de resposta" value={mockKpis.averageResponseTime} />
+          <Stat label="Taxa de satisfação" value={`${mockKpis.satisfactionRate}%`} />
         </div>
       </section>
 
@@ -133,30 +114,9 @@ export function ReportsPage() {
         <Heading level={2} variant="sm" style={{ marginBottom: '16px' }}>Demandas por status</Heading>
         <Card padding="lg" style={{ marginBottom: '32px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '24px' }}>
-            <div>
-              <Text variant="labelSm" tone="muted">Rascunho</Text>
-              <Text as="p" variant="headingLg" style={{ marginTop: '8px' }}>{mockKpis.demandsByStatus.draft}</Text>
-            </div>
-            <div>
-              <Text variant="labelSm" tone="muted">Em andamento</Text>
-              <Text as="p" variant="headingLg" style={{ marginTop: '8px' }}>{mockKpis.demandsByStatus.in_progress}</Text>
-            </div>
-            <div>
-              <Text variant="labelSm" tone="muted">Em review</Text>
-              <Text as="p" variant="headingLg" style={{ marginTop: '8px' }}>{mockKpis.demandsByStatus.pending_review}</Text>
-            </div>
-            <div>
-              <Text variant="labelSm" tone="muted">Aprovada</Text>
-              <Text as="p" variant="headingLg" style={{ marginTop: '8px' }}>{mockKpis.demandsByStatus.approved}</Text>
-            </div>
-            <div>
-              <Text variant="labelSm" tone="muted">Enviada</Text>
-              <Text as="p" variant="headingLg" style={{ marginTop: '8px' }}>{mockKpis.demandsByStatus.sent}</Text>
-            </div>
-            <div>
-              <Text variant="labelSm" tone="muted">Encerrada sem envio</Text>
-              <Text as="p" variant="headingLg" style={{ marginTop: '8px' }}>{mockKpis.demandsByStatus.closed_without_send}</Text>
-            </div>
+            <Stat label="Em andamento" value={String(mockKpis.demandsByStatus.in_progress)} />
+            <Stat label="Enviada" value={String(mockKpis.demandsByStatus.sent)} />
+            <Stat label="Encerrada sem envio" value={String(mockKpis.demandsByStatus.closed_without_send)} />
           </div>
         </Card>
       </section>
@@ -174,9 +134,7 @@ export function ReportsPage() {
                   <Text variant="labelMd" style={{ fontWeight: 600 }}>{journalist.name}</Text>
                   <Text variant="labelSm" tone="muted">{journalist.outlet}</Text>
                 </div>
-                <Text variant="headingMd" style={{ fontWeight: 600, color: 'var(--pf-color-primary)' }}>
-                  {journalist.count}
-                </Text>
+                <Text as="p" variant="bodyLg">{journalist.count}</Text>
               </div>
             ))}
           </div>

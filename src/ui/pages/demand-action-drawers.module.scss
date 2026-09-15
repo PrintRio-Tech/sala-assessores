@@ -52,6 +52,7 @@
 }
 
 .submitError { margin: 0; }
+.sourceContext { margin: 0; line-height: 1.5; }
 
 @include mobile {
   .grid { grid-template-columns: 1fr; }

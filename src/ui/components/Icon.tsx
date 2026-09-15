@@ -15,6 +15,7 @@ type IconName =
   | 'plus'
   | 'search'
   | 'sparkle'
+  | 'trash'
   | 'user'
 
 const paths: Record<IconName, React.ReactNode> = {
@@ -32,6 +33,7 @@ const paths: Record<IconName, React.ReactNode> = {
   plus: <path d="M12 5v14M5 12h14"/>,
   search: <><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></>,
   sparkle: <><path d="m12 3 1.3 4.2L17 9l-3.7 1.8L12 15l-1.3-4.2L7 9l3.7-1.8Z"/><path d="m19 15 .7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7Z"/></>,
+  trash: <><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></>,
   user: <><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></>,
 }
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { Badge, Button, Card, ConfirmDialog, DatePicker, DrawerShell, isValidTime, SelectField, Text, TextInput, Textarea, TimeInput } from '@print/ui'
+import { Badge, Button, Card, Checkbox, ConfirmDialog, DatePicker, DrawerShell, isValidTime, SelectField, Text, TextInput, Textarea, TimeInput } from '@print/ui'
 
 import {
   interactionResultRules,
@@ -19,8 +19,11 @@ type FormValues = {
   participants: string
   summary: string
   nextStep: string
+  channel: string
+  recipient: string
+  body: string
 }
-type FormErrors = Partial<Record<keyof FormValues, string>>
+type FormErrors = Partial<Record<keyof FormValues | 'confirmed', string>>
 type SaveMode = 'close' | 'repeat'
 
 const typeOptions = [
@@ -68,10 +71,17 @@ function initialValues(): FormValues {
     participants: '',
     summary: '',
     nextStep: '',
+    channel: '',
+    recipient: '',
+    body: '',
   }
 }
 
-function validate(values: FormValues): FormErrors {
+function closesCase(result: InteractionResult | '') {
+  return result === 'response_sent' || result === 'closed_without_send'
+}
+
+function validate(values: FormValues, confirmed: boolean): FormErrors {
   const errors: FormErrors = {}
   if (!values.result) errors.result = 'Informe o resultado da interação.'
   if (!values.occurredDate) errors.occurredDate = 'Informe a data.'
@@ -81,6 +91,9 @@ function validate(values: FormValues): FormErrors {
     errors.occurredDate = 'Informe uma data válida.'
   }
   if (values.result) Object.assign(errors, validateInteractionResultFields(values.result, values))
+  if (values.result === 'closed_without_send' && !confirmed) {
+    errors.confirmed = 'Confirme o encerramento sem resposta enviada.'
+  }
   return errors
 }
 
@@ -88,24 +101,36 @@ export type DemandInteractionDrawerProps = {
   demandId: string
   demandCode: string
   demandTitle: string
+  positioningBody?: string
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-export function DemandInteractionDrawer({ demandId, demandCode, demandTitle, open, onOpenChange }: DemandInteractionDrawerProps) {
+export function DemandInteractionDrawer({
+  demandId,
+  demandCode,
+  demandTitle,
+  positioningBody = '',
+  open,
+  onOpenChange,
+}: DemandInteractionDrawerProps) {
   const [values, setValues] = useState<FormValues>(initialValues)
   const [errors, setErrors] = useState<FormErrors>({})
+  const [confirmed, setConfirmed] = useState(false)
   const [discardOpen, setDiscardOpen] = useState(false)
   const [announcement, setAnnouncement] = useState('')
   const [dirty, setDirty] = useState(false)
   const saveMode = useRef<SaveMode>('close')
   const focusResultAfterReset = useRef(false)
+  const skipDirtyCloseRef = useRef(false)
+  const wasOpenRef = useRef(false)
   const formRef = useRef<HTMLFormElement>(null)
   const formId = useId()
 
   const resetAll = useCallback(() => {
     setValues(initialValues())
     setErrors({})
+    setConfirmed(false)
     setAnnouncement('')
     setDirty(false)
   }, [])
@@ -124,22 +149,30 @@ export function DemandInteractionDrawer({ demandId, demandCode, demandTitle, ope
           participants: '',
           summary: '',
           nextStep: '',
+          channel: '',
+          recipient: '',
+          body: '',
         }))
+        setConfirmed(false)
         setErrors({})
         setAnnouncement('Interação registrada. Preencha a próxima.')
         setDirty(false)
         return
       }
+      skipDirtyCloseRef.current = true
+      setDirty(false)
       onOpenChange(false)
       resetAll()
     },
   })
 
   useEffect(() => {
-    if (open) {
+    if (open && !wasOpenRef.current) {
       resetAll()
       resetMutation()
+      skipDirtyCloseRef.current = false
     }
+    wasOpenRef.current = open
   }, [open, resetAll, resetMutation])
 
   useEffect(() => {
@@ -166,7 +199,13 @@ export function DemandInteractionDrawer({ demandId, demandCode, demandTitle, ope
       participants: nextRules.participants.visible ? current.participants : '',
       summary: nextRules.summary.visible ? current.summary : '',
       nextStep: nextRules.nextStep.visible ? current.nextStep : '',
+      channel: nextRules.channel.visible ? current.channel : '',
+      recipient: nextRules.recipient.visible ? current.recipient : '',
+      body: nextRules.body.visible
+        ? (result === 'response_sent' ? (current.body.trim() || positioningBody) : current.body)
+        : '',
     }))
+    setConfirmed(false)
     setErrors((current) => ({
       ...current,
       result: undefined,
@@ -174,6 +213,10 @@ export function DemandInteractionDrawer({ demandId, demandCode, demandTitle, ope
       participants: undefined,
       summary: undefined,
       nextStep: undefined,
+      channel: undefined,
+      recipient: undefined,
+      body: undefined,
+      confirmed: undefined,
     }))
     setAnnouncement('')
     setDirty(true)
@@ -181,14 +224,25 @@ export function DemandInteractionDrawer({ demandId, demandCode, demandTitle, ope
   }
 
   const closeNow = () => {
+    skipDirtyCloseRef.current = false
     setDiscardOpen(false)
     onOpenChange(false)
     resetAll()
   }
-  const requestClose = () => dirty ? setDiscardOpen(true) : closeNow()
+  const requestClose = () => {
+    if (skipDirtyCloseRef.current) {
+      closeNow()
+      return
+    }
+    if (dirty) {
+      setDiscardOpen(true)
+      return
+    }
+    closeNow()
+  }
 
   const submit = (mode: SaveMode) => {
-    const nextErrors = validate(values)
+    const nextErrors = validate(values, confirmed)
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) {
       const firstInvalid = Object.keys(nextErrors)[0]
@@ -208,8 +262,13 @@ export function DemandInteractionDrawer({ demandId, demandCode, demandTitle, ope
       participants: values.participants || null,
       summary: values.summary || null,
       nextStep: values.nextStep || null,
+      channel: values.channel || null,
+      recipient: values.recipient || null,
+      body: values.body || null,
     })
   }
+
+  const canRepeat = !closesCase(values.result)
 
   return (
     <>
@@ -217,7 +276,7 @@ export function DemandInteractionDrawer({ demandId, demandCode, demandTitle, ope
         open={open}
         onOpenChange={(nextOpen) => nextOpen ? onOpenChange(true) : requestClose()}
         title="Registrar interação"
-        description={`${demandCode} · ${demandTitle}`}
+        description={`${demandCode} · ${demandTitle}. Documente o que já aconteceu fora da Sala. Resposta enviada e encerramento sem resposta fecham o caso.`}
         size="lg"
         presentation="layer"
         origin="end"
@@ -225,7 +284,9 @@ export function DemandInteractionDrawer({ demandId, demandCode, demandTitle, ope
         footer={(
           <div className={styles.footerActions}>
             <Button className={styles.footerAction} type="button" variant="ghost" onClick={requestClose}>Cancelar</Button>
-            <Button className={styles.footerAction} type="button" variant="outline" disabled={isPending} onClick={() => submit('repeat')}>Salvar e registrar outra</Button>
+            {canRepeat ? (
+              <Button className={styles.footerAction} type="button" variant="outline" disabled={isPending} onClick={() => submit('repeat')}>Salvar e registrar outra</Button>
+            ) : null}
             <Button className={styles.footerAction} form={formId} type="submit" disabled={isPending}>Salvar</Button>
           </div>
         )}
@@ -249,9 +310,25 @@ export function DemandInteractionDrawer({ demandId, demandCode, demandTitle, ope
           const fields = interactionResultRules[values.result].fields
           return <>
             {fields.type.visible ? <SelectField label={fields.type.label} name="type" required={fields.type.required} contained placeholder="Selecione o tipo" options={typeOptions} value={values.type} error={errors.type} onValueChange={(value) => update('type', value as InteractionType)} /> : null}
+            {fields.channel.visible ? <TextInput aria-label={fields.channel.label} label={fields.channel.label} name="channel" required={fields.channel.required} value={values.channel} error={errors.channel} onChange={(event) => update('channel', event.target.value)} /> : null}
+            {fields.recipient.visible ? <TextInput aria-label={fields.recipient.label} label={fields.recipient.label} name="recipient" required={fields.recipient.required} value={values.recipient} error={errors.recipient} onChange={(event) => update('recipient', event.target.value)} /> : null}
             {fields.participants.visible ? <TextInput aria-label={fields.participants.label} label={fields.participants.label} name="participants" required={fields.participants.required} value={values.participants} error={errors.participants} onChange={(event) => update('participants', event.target.value)} /> : null}
             {fields.summary.visible ? <Textarea aria-label={fields.summary.label} label={fields.summary.label} name="summary" required={fields.summary.required} rows={fields.summary.required ? 5 : 3} value={values.summary} error={errors.summary} onChange={(event) => update('summary', event.target.value)} /> : null}
+            {fields.body.visible ? <Textarea aria-label={fields.body.label} label={fields.body.label} name="body" required={fields.body.required} rows={5} value={values.body} error={errors.body} onChange={(event) => update('body', event.target.value)} /> : null}
             {fields.nextStep.visible ? <Textarea aria-label={fields.nextStep.label} label={fields.nextStep.label} name="nextStep" required={fields.nextStep.required} rows={3} value={values.nextStep} error={errors.nextStep} onChange={(event) => update('nextStep', event.target.value)} /> : null}
+            {values.result === 'closed_without_send' ? (
+              <Checkbox
+                name="confirmClosure"
+                checked={confirmed}
+                onCheckedChange={(next) => {
+                  setConfirmed(next)
+                  setErrors((current) => ({ ...current, confirmed: undefined }))
+                  setDirty(true)
+                }}
+                label="Confirmo o encerramento sem resposta enviada"
+              />
+            ) : null}
+            {errors.confirmed ? <Text as="p" variant="labelSm" tone="error" role="alert">{errors.confirmed}</Text> : null}
           </>
         })() : null}
         {mutationError ? <Text as="p" variant="labelSm" tone="error" className={styles.submitError} role="alert">{mutationError.message}</Text> : null}

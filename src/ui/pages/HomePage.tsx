@@ -1,7 +1,11 @@
-import { Button, Card, Heading, Icon as DsIcon, ICONS, Stat, Text } from '@print/ui'
+import { useState } from 'react'
+import { ActionTile, Card, Divider, Heading, Icon as DsIcon, ICONS, Text } from '@print/ui'
 import { useNavigate } from 'react-router-dom'
 
 import { currentUser } from '@/application/current-user'
+import { useJournalists } from '@/application/modules/Journalist/hooks/use-journalists'
+import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
+import { DemandCreateDrawer } from './DemandCreateDrawer'
 import { ROUTES } from '@/ui/routes/paths'
 import styles from './home-page.module.scss'
 
@@ -17,50 +21,65 @@ const MOCK_DEMANDS_IN_PROGRESS: MockDemandInProgress[] = [
   { id: 'd-portos', code: 'ECO-442', title: 'Crise Logística: Impacto nos Portos', responsibleName: 'Ricardo M.' },
 ]
 
+function SectionHeading({ title }: { title: string }) {
+  return (
+    <div className={styles.sectionHeader}>
+      <Heading level={2} variant="md" className={styles.sectionTitle}>
+        {title}
+      </Heading>
+      <Divider className={styles.sectionDivider} />
+    </div>
+  )
+}
+
 export function HomePage() {
   const navigate = useNavigate()
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const addLocalDemand = useLocalDemandStore((state) => state.add)
+  const { data: journalists, isLoading: journalistsLoading } = useJournalists()
 
   return (
     <div className={styles.homePage}>
       <header className={styles.greeting}>
-        <Heading level={1} className={styles.greetingTitle}>
+        <Heading level={1} variant="xl" className={styles.greetingTitle}>
           Olá, {currentUser.name}
         </Heading>
-        <Text tone="muted" className={styles.greetingSubtitle}>
+        <p className={styles.greetingSubtitle}>
           O que foi realizado neste mês?
-        </Text>
+        </p>
       </header>
 
-      <section className={styles.metrics}>
-        <Stat
-          label="Demandas em setembro"
-          value={8}
-          trend={{ direction: 'neutral', label: '5 em andamento' }}
-        />
-        <Stat
-          label="Posicionamentos enviados"
-          value={3}
-          trend={{ direction: 'neutral', label: 'Taxa de aprovação 86%' }}
-        />
-        <Stat
-          label="Interações com jornalistas"
-          value={12}
-          trend={{ direction: 'neutral', label: 'E-mail, telefone, reunião' }}
-        />
+      <section className={styles.section} aria-label="Indicadores do mês">
+        <div className={styles.metricsGrid}>
+          <Card variant="elevated" padding="none" className={styles.metricCard} data-kpi-card>
+            <span className={styles.metricDot} aria-hidden="true" />
+            <Text as="p" variant="labelMd" tone="muted" className={styles.metricLabel}>
+              Demandas em setembro
+            </Text>
+            <Heading as="p" variant="lg" className={styles.metricValue}>8</Heading>
+            <Text variant="labelSm" tone="muted">5 em andamento</Text>
+          </Card>
+          <Card variant="elevated" padding="none" className={styles.metricCard} data-kpi-card>
+            <span className={styles.metricDot} aria-hidden="true" />
+            <Text as="p" variant="labelMd" tone="muted" className={styles.metricLabel}>
+              Posicionamentos enviados
+            </Text>
+            <Heading as="p" variant="lg" className={styles.metricValue}>3</Heading>
+            <Text variant="labelSm" tone="muted">Taxa de aprovação 86%</Text>
+          </Card>
+          <Card variant="elevated" padding="none" className={styles.metricCard} data-kpi-card>
+            <span className={styles.metricDot} aria-hidden="true" />
+            <Text as="p" variant="labelMd" tone="muted" className={styles.metricLabel}>
+              Interações com jornalistas
+            </Text>
+            <Heading as="p" variant="lg" className={styles.metricValue}>12</Heading>
+            <Text variant="labelSm" tone="muted">E-mail, telefone, reunião</Text>
+          </Card>
+        </div>
       </section>
 
-      <section className={styles.continueSection}>
-        <div className={styles.sectionHeader}>
-          <Heading level={2} variant="sm">
-            Continuar de onde parou
-          </Heading>
-          <Button
-            variant="secondary"
-            onClick={() => navigate(ROUTES.demands)}
-          >
-            Nova demanda
-          </Button>
-        </div>
+      <section className={styles.section} aria-label="Continuar de onde parou">
+        <SectionHeading title="Continuar de onde parou" />
 
         {MOCK_DEMANDS_IN_PROGRESS.length > 0 ? (
           <div className={styles.demandsList}>
@@ -86,73 +105,51 @@ export function HomePage() {
         )}
       </section>
 
-      <section className={styles.quickActions}>
-        <Heading level={2} variant="sm" className={styles.actionsHeading}>
-          Ações rápidas
-        </Heading>
-
+      <section className={styles.section} aria-label="Ações rápidas">
+        <SectionHeading title="Ações rápidas" />
         <div className={styles.actionsGrid}>
-          <Card variant="action" padding="lg" className={styles.actionTilePrimary}>
-            <div className={styles.actionContent}>
-              <div className={styles.actionIcon}>
-                <DsIcon src={ICONS.home.addCircle} size={24} />
-              </div>
-              <div className={styles.actionCopy}>
-                <Text variant="labelSm" tone="inverse" className={styles.actionLabel}>
-                  Iniciar registro
-                </Text>
-                <Heading level={3} variant="sm" className={styles.actionTitle}>
-                  Nova demanda
-                </Heading>
-              </div>
-            </div>
-            <Button type="button" variant="ghost" onClick={() => navigate(ROUTES.demands)}>
-              Ir para demandas
-              <DsIcon src={ICONS.home.arrowForward} size={18} aria-hidden="true" />
-            </Button>
-          </Card>
-
-          <Card variant="action" padding="lg" className={styles.actionTile}>
-            <div className={styles.actionContent}>
-              <div className={styles.actionIcon}>
-                <DsIcon src={ICONS.nav.journalists} size={24} />
-              </div>
-              <div className={styles.actionCopy}>
-                <Text variant="labelSm" className={styles.actionLabel}>
-                  Cadastrar mídia
-                </Text>
-                <Heading level={3} variant="sm" className={styles.actionTitle}>
-                  Novo jornalista
-                </Heading>
-              </div>
-            </div>
-            <Button type="button" variant="secondary" onClick={() => navigate(ROUTES.journalists)}>
-              Ver jornalistas
-              <DsIcon src={ICONS.home.arrowForward} size={18} aria-hidden="true" />
-            </Button>
-          </Card>
-
-          <Card variant="action" padding="lg" className={styles.actionTile}>
-            <div className={styles.actionContent}>
-              <div className={styles.actionIcon}>
-                <DsIcon src={ICONS.nav.reports} size={24} />
-              </div>
-              <div className={styles.actionCopy}>
-                <Text variant="labelSm" className={styles.actionLabel}>
-                  Resultados mensais
-                </Text>
-                <Heading level={3} variant="sm" className={styles.actionTitle}>
-                  Ver relatórios
-                </Heading>
-              </div>
-            </div>
-            <Button type="button" variant="secondary" onClick={() => navigate(ROUTES.reports)}>
-              Ver relatórios
-              <DsIcon src={ICONS.home.arrowForward} size={18} aria-hidden="true" />
-            </Button>
-          </Card>
+          <ActionTile
+            variant="primary"
+            eyebrow="Iniciar registro"
+            title="Nova demanda"
+            icon={<DsIcon src={ICONS.home.addCircle} size={28} />}
+            onClick={() => setIsCreateOpen(true)}
+          />
+          <ActionTile
+            variant="outline"
+            eyebrow="Cadastrar mídia"
+            title="Novo jornalista"
+            icon={<DsIcon src={ICONS.nav.journalists} size={28} />}
+            onClick={() => navigate(ROUTES.journalists)}
+          />
+          <ActionTile
+            variant="outline"
+            eyebrow="Consultar casos"
+            title="Ver demandas"
+            icon={<DsIcon src={ICONS.nav.activities} size={28} />}
+            onClick={() => navigate(ROUTES.demands)}
+          />
+          <ActionTile
+            variant="muted"
+            eyebrow="Resultados mensais"
+            title="Ver relatórios"
+            icon={<DsIcon src={ICONS.home.chart} size={28} />}
+            onClick={() => navigate(ROUTES.reports)}
+          />
         </div>
       </section>
+
+      <DemandCreateDrawer
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        onCapture={(capture) => {
+          const record = addLocalDemand(capture)
+          setIsCreateOpen(false)
+          navigate(ROUTES.demand(record.id))
+        }}
+        journalists={journalists}
+        journalistsLoading={journalistsLoading}
+      />
     </div>
   )
 }

@@ -27,6 +27,9 @@ export type RegisterExternalInteractionInput = {
   participants?: string | null
   summary?: string | null
   nextStep?: string | null
+  channel?: string | null
+  recipient?: string | null
+  body?: string | null
 }
 export type NewExternalInteraction = Omit<ExternalInteraction, 'id'>
 
@@ -34,4 +37,5 @@ export interface DemandRepository {
   list(params?: DemandListParams): Promise<Paginated<Demand>>
   getById(id: string): Promise<Demand | null>
   registerInteraction(id: string, input: NewExternalInteraction): Promise<Demand | null>
+  savePositioning(id: string, input: { body: string; author: string; savedAt: Date }): Promise<Demand | null>
 }

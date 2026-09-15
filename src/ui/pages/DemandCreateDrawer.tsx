@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Button,
-  Card,
   ConfirmDialog,
   DatePicker,
   DrawerSteps,
@@ -11,8 +10,10 @@ import {
   TextInput,
   Textarea,
 } from '@print/ui'
+import type { DemandPriority } from '@/domain/Demand/demand.entity'
 import type { Journalist } from '@/domain/Journalist/journalist.entity'
 import type { NewLocalDemandCapture } from '@/application/modules/Demand/stores/local-demand.store'
+import { TagInput } from '@/ui/components/TagInput/TagInput'
 
 import styles from './demand-create-drawer.module.scss'
 
@@ -28,6 +29,10 @@ type FormValues = {
   requestedDeadline: string
   channel: string
   journalistId: string
+  tags: string[]
+  topic: string
+  area: string
+  priority: DemandPriority | ''
 }
 
 type FormErrors = Partial<Record<keyof FormValues, string>>
@@ -42,6 +47,10 @@ const initialValues: FormValues = {
   requestedDeadline: '',
   channel: '',
   journalistId: '',
+  tags: [],
+  topic: '',
+  area: '',
+  priority: '',
 }
 
 const channelOptions = [
@@ -49,6 +58,13 @@ const channelOptions = [
   { value: 'phone', label: 'Telefone' },
   { value: 'whatsapp', label: 'WhatsApp' },
   { value: 'other', label: 'Outro canal' },
+]
+
+const priorityOptions: Array<{ value: DemandPriority; label: string }> = [
+  { value: 'low', label: 'Baixa' },
+  { value: 'medium', label: 'Média' },
+  { value: 'high', label: 'Alta' },
+  { value: 'critical', label: 'Crítica' },
 ]
 
 function fieldError(key: keyof FormValues, values: FormValues) {
@@ -65,8 +81,8 @@ function fieldError(key: keyof FormValues, values: FormValues) {
 
 const stepFields: Array<Array<keyof FormValues>> = [
   ['channel', 'journalistId', 'contactName', 'contactOutlet'],
-  ['subject', 'factContext'],
-  ['pressRequest', 'requestedDeadline'],
+  ['subject', 'factContext', 'pressRequest', 'requestedDeadline'],
+  [],
 ]
 
 export type DemandCreateDrawerProps = {
@@ -76,24 +92,79 @@ export type DemandCreateDrawerProps = {
   journalists: Journalist[]
   journalistsLoading?: boolean
   initialJournalistId?: string
+  mode?: 'create' | 'edit'
+  intent?: 'create' | 'edit'
+  initialCapture?: NewLocalDemandCapture
+  tagSuggestions?: string[]
+  tagsLoading?: boolean
 }
 
-export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists, journalistsLoading = false, initialJournalistId }: DemandCreateDrawerProps) {
+function captureToFormValues(capture: NewLocalDemandCapture): FormValues {
+  const channel = channelOptions.find((option) => (
+    option.value === capture.channel
+    || option.label.toLocaleLowerCase('pt-BR') === capture.channel.toLocaleLowerCase('pt-BR')
+  ))
+  return {
+    contactMode: capture.contactMode,
+    contactName: capture.contactName,
+    contactOutlet: capture.contactOutlet,
+    subject: capture.subject,
+    factContext: capture.factContext,
+    pressRequest: capture.pressRequest,
+    requestedDeadline: capture.requestedDeadline,
+    channel: channel?.value ?? (capture.channel ? 'other' : ''),
+    journalistId: capture.journalistId,
+    tags: capture.enrichment?.tags ?? [],
+    topic: capture.enrichment?.topics[0] ?? '',
+    area: capture.enrichment?.relatedAreas[0] ?? '',
+    priority: capture.priority ?? '',
+  }
+}
+
+export function DemandCreateDrawer({
+  open,
+  onOpenChange,
+  onCapture,
+  journalists,
+  journalistsLoading = false,
+  initialJournalistId,
+  mode = 'create',
+  intent,
+  initialCapture,
+  tagSuggestions = [],
+  tagsLoading = false,
+}: DemandCreateDrawerProps) {
   const [values, setValues] = useState<FormValues>(initialValues)
+  const [baseline, setBaseline] = useState<FormValues>(initialValues)
   const [errors, setErrors] = useState<FormErrors>({})
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false)
   const [journalistQuery, setJournalistQuery] = useState('')
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
+  const skipDirtyCloseRef = useRef(false)
+  const wasOpenRef = useRef(false)
+  const sessionModeRef = useRef(mode)
+  const sessionIntentRef = useRef(intent ?? mode)
+  if (open) {
+    sessionModeRef.current = mode
+    sessionIntentRef.current = intent ?? mode
+  }
+  const sessionMode = open ? mode : sessionModeRef.current
+  const sessionIntent = open ? (intent ?? mode) : sessionIntentRef.current
 
   const resetFlow = useCallback(() => {
-    setValues(initialJournalistId ? { ...initialValues, journalistId: initialJournalistId } : initialValues)
+    const nextValues = mode === 'edit' && initialCapture
+      ? captureToFormValues(initialCapture)
+      : initialJournalistId ? { ...initialValues, journalistId: initialJournalistId } : initialValues
+    setValues(nextValues)
+    setBaseline(nextValues)
     setErrors({})
     setJournalistQuery('')
     setCurrentStepIndex(0)
-  }, [initialJournalistId])
+  }, [initialCapture, initialJournalistId, mode])
 
   useEffect(() => {
-    if (open) resetFlow()
+    if (open && !wasOpenRef.current) resetFlow()
+    wasOpenRef.current = open
   }, [open, resetFlow])
 
   const update = <K extends keyof FormValues>(key: K, value: FormValues[K]) => {
@@ -111,8 +182,11 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
 
   const isStepValid = useCallback((index: number) => stepFields[index].every((key) => !fieldError(key, values)), [values])
 
-  const hasUnsavedChanges = values.contactMode === 'local'
-    || Object.entries(values).some(([key, value]) => key !== 'contactMode' && value.trim().length > 0)
+  const hasUnsavedChanges = sessionMode === 'edit'
+    ? JSON.stringify(values) !== JSON.stringify(baseline)
+    : values.contactMode === 'local'
+      || values.tags.length > 0
+      || Object.entries(values).some(([key, value]) => key !== 'contactMode' && key !== 'tags' && typeof value === 'string' && value.trim().length > 0)
   const selectedJournalist = journalists.find((journalist) => journalist.id === values.journalistId)
   const journalistOptions = useMemo(() => {
     const query = journalistQuery.trim().toLocaleLowerCase('pt-BR')
@@ -133,12 +207,16 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
   }, [journalistQuery])
 
   const closeNow = () => {
+    skipDirtyCloseRef.current = false
     setConfirmDiscardOpen(false)
     onOpenChange(false)
-    resetFlow()
   }
 
   const handleRequestClose = () => {
+    if (skipDirtyCloseRef.current) {
+      closeNow()
+      return
+    }
     if (hasUnsavedChanges) {
       setConfirmDiscardOpen(true)
       return
@@ -147,9 +225,10 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
   }
 
   const complete = () => {
-    if (!validateStep(2)) return
+    if (!validateStep(0) || !validateStep(1)) return
     const contactName = values.contactMode === 'local' ? values.contactName.trim() : selectedJournalist?.name ?? ''
     const contactOutlet = values.contactMode === 'local' ? values.contactOutlet.trim() : selectedJournalist?.outletName ?? ''
+    skipDirtyCloseRef.current = true
     onCapture({
       contactMode: values.contactMode,
       contactName,
@@ -162,8 +241,16 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
       journalistId: values.contactMode === 'known' ? values.journalistId : '',
       journalistName: contactName,
       outletName: contactOutlet,
+      priority: values.priority || null,
+      enrichment: {
+        tags: values.tags,
+        topics: values.topic.trim() ? [values.topic.trim()] : [],
+        relatedAreas: values.area.trim() ? [values.area.trim()] : [],
+        confirmedFacts: initialCapture?.enrichment?.confirmedFacts ?? [],
+        pendingFacts: initialCapture?.enrichment?.pendingFacts ?? [],
+        nextStep: initialCapture?.enrichment?.nextStep ?? null,
+      },
     })
-    resetFlow()
   }
 
   const steps = useMemo(() => [
@@ -200,41 +287,55 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
             </div>
           )}
           <SelectField label="Canal de entrada" name="channel" required value={values.channel} error={errors.channel} options={channelOptions} onValueChange={(value) => update('channel', value)} />
-          {(selectedJournalist || (values.contactMode === 'local' && (values.contactName || values.contactOutlet))) && (
-            <Card variant="surface" padding="md" className={styles.journalistContext} role="region" aria-label="Contexto do contato">
+          <SelectField label="Prioridade" name="priority" placeholder="Não informar" options={priorityOptions} value={values.priority} onValueChange={(value) => update('priority', value as DemandPriority)} />
+          {(selectedJournalist || (values.contactMode === 'local' && values.contactName.trim())) && (
+            <div className={styles.journalistContext} role="region" aria-label="Contexto do contato">
               {selectedJournalist ? (
-                <PersonDetailedCell name={selectedJournalist.name} subtitle={`${selectedJournalist.outletName} · ${selectedJournalist.desk}`} email={selectedJournalist.email} phone={selectedJournalist.phone} />
+                <PersonDetailedCell
+                  name={selectedJournalist.name}
+                  subtitle={[selectedJournalist.outletName, selectedJournalist.desk].filter(Boolean).join(' · ') || undefined}
+                  email={selectedJournalist.email || undefined}
+                  phone={selectedJournalist.phone || undefined}
+                />
               ) : (
-                <PersonDetailedCell name={values.contactName || 'Nome do contato'} subtitle={values.contactOutlet || 'Redação ou veículo'} />
+                <PersonDetailedCell
+                  name={values.contactName}
+                  subtitle={values.contactOutlet.trim() || undefined}
+                />
               )}
-            </Card>
+            </div>
           )}
-        </div>
-      ),
-    },
-    {
-      id: 'case',
-      label: 'Caso',
-      isValid: isStepValid(1),
-      content: (
-        <div className={styles.stepContent}>
-          <TextInput autoFocus label="Assunto" name="subject" required value={values.subject} error={errors.subject} onChange={(event) => update('subject', event.target.value)} />
-          <Textarea label="O que aconteceu?" name="factContext" required rows={5} value={values.factContext} error={errors.factContext} description="Registre o fato recebido." onChange={(event) => update('factContext', event.target.value)} />
         </div>
       ),
     },
     {
       id: 'request',
       label: 'Pedido',
-      isValid: isStepValid(2),
+      isValid: isStepValid(1),
       content: (
         <div className={styles.stepContent}>
-          <Textarea autoFocus label="O que foi pedido pela imprensa?" name="pressRequest" required rows={5} value={values.pressRequest} error={errors.pressRequest} onChange={(event) => update('pressRequest', event.target.value)} />
+          <TextInput autoFocus label="Assunto" name="subject" required value={values.subject} error={errors.subject} onChange={(event) => update('subject', event.target.value)} />
+          <Textarea label="O que aconteceu?" name="factContext" required rows={5} value={values.factContext} error={errors.factContext} description="Registre o fato recebido." onChange={(event) => update('factContext', event.target.value)} />
+          <Textarea label="O que foi pedido pela imprensa?" name="pressRequest" required rows={5} value={values.pressRequest} error={errors.pressRequest} onChange={(event) => update('pressRequest', event.target.value)} />
           <DatePicker label="Prazo solicitado" name="requestedDeadline" required value={values.requestedDeadline} error={errors.requestedDeadline} onValueChange={(value) => update('requestedDeadline', value)} />
         </div>
       ),
     },
-  ], [beginNewContact, canAddNewContact, errors, isStepValid, journalistOptions, journalistsLoading, journalistQuery, selectedJournalist, values])
+    {
+      id: 'classification',
+      label: 'Classificação',
+      isValid: true,
+      content: (
+        <div className={styles.stepContent}>
+          <TagInput tags={values.tags} onChange={(tags) => update('tags', tags)} suggestions={tagSuggestions} loading={tagsLoading} />
+          <div className={styles.grid}>
+            <TextInput label="Tema" name="topic" value={values.topic} onChange={(event) => update('topic', event.target.value)} />
+            <TextInput label="Áreas ou entidades" name="area" value={values.area} onChange={(event) => update('area', event.target.value)} />
+          </div>
+        </div>
+      ),
+    },
+  ], [beginNewContact, canAddNewContact, errors, isStepValid, journalistOptions, journalistsLoading, journalistQuery, selectedJournalist, tagSuggestions, tagsLoading, values])
 
   return (
     <>
@@ -242,12 +343,12 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
         open={open}
         onOpenChange={(nextOpen) => (nextOpen ? onOpenChange(true) : handleRequestClose())}
         onRequestClose={handleRequestClose}
-        flowTitle="Nova demanda"
+        flowTitle={sessionIntent === 'edit' ? 'Editar demanda' : 'Nova demanda'}
         steps={steps}
         currentStepIndex={currentStepIndex}
         onStepChange={setCurrentStepIndex}
         onComplete={complete}
-        completeLabel="Concluir captura"
+        completeLabel={sessionIntent === 'edit' ? 'Salvar alterações' : 'Concluir captura'}
         advanceLabel="Continuar"
         backLabel="Voltar"
         closeLabel="Cancelar"
@@ -259,8 +360,8 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
       <ConfirmDialog
         open={confirmDiscardOpen}
         onOpenChange={setConfirmDiscardOpen}
-        title="Descartar captura?"
-        description="As informações preenchidas nesta entrada serão perdidas."
+        title={sessionMode === 'edit' ? 'Descartar alterações?' : 'Descartar captura?'}
+        description={sessionMode === 'edit' ? 'As alterações desta demanda não serão salvas.' : 'As informações preenchidas nesta entrada serão perdidas.'}
         confirmLabel="Descartar"
         cancelLabel="Continuar editando"
         destructive

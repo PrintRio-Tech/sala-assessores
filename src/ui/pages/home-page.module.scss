@@ -1,58 +1,128 @@
 @use '@print/ui/tokens' as *;
+@use '@print/ui/mixins' as *;
 
 $ink: $on-surface;
 $muted: $on-surface-variant;
 $line: $outline-variant;
-$cream: $surface;
 $paper: $surface-bright;
-$forest: $primary;
-$sage: $surface-container-high;
 
 .homePage {
+  display: flex;
+  flex-direction: column;
+  gap: $space-8;
   width: 100%;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 52px 40px 64px;
 }
 
 .greeting {
-  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
 }
 
 .greetingTitle {
-  margin: 0 0 6px;
-  color: $ink;
-  font-size: 38px;
-  line-height: 1.1;
-  letter-spacing: -0.045em;
+  --pf-on-surface: #{$primary};
+  color: var(--pf-on-surface);
 }
 
 .greetingSubtitle {
   margin: 0;
-  font-size: 17px;
+  font-size: clamp(1.5rem, 4vw, 1.875rem);
   font-style: italic;
+  font-weight: $font-weight-regular;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  color: $accent-salvia;
+  text-wrap: balance;
 }
 
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-  margin-bottom: 42px;
-}
-
-.continueSection {
-  margin-bottom: 48px;
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
 }
 
 .sectionHeader {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
+  gap: $space-3;
+  min-width: 0;
 }
 
-.sectionHeader h2 {
+.sectionTitle {
+  --pf-on-surface: #{$primary};
+  color: var(--pf-on-surface);
+  flex-shrink: 0;
+}
+
+.sectionDivider {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  height: 1px;
+  border: 0;
+  background-color: $outline-variant;
+  opacity: 0.5;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-3;
+
+  @media (min-width: $breakpoint-sm) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include desktop {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.metricsGrid > .metricCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  padding: $space-2 $space-3;
+  overflow: hidden;
+}
+
+.metricDot {
+  position: absolute;
+  top: $space-2;
+  right: $space-2;
+  width: $space-1;
+  height: $space-1;
+  border-radius: $radius-full;
+  background-color: $accent-gold;
+}
+
+.metricLabel {
   margin: 0;
+  padding-inline-end: $space-3;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: $label-sm-size;
+}
+
+.metricValue {
+  --pf-on-surface: #{$primary};
+  color: var(--pf-on-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.actionsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-3;
+
+  @media (min-width: $breakpoint-sm) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include desktop {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .demandsList {
@@ -123,139 +193,10 @@ $sage: $surface-container-high;
   text-align: center;
 }
 
-.quickActions {
-  margin-bottom: 24px;
-}
-
-.actionsHeading {
-  margin: 0 0 18px;
-}
-
-.actionsGrid {
-  display: grid;
-  grid-template-columns: 1.3fr repeat(2, 1fr);
-  gap: 20px;
-}
-
-.actionTilePrimary,
-.actionTile {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  min-height: 180px;
-}
-
-.actionContent {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-}
-
-.actionIcon {
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
-}
-
-.actionTilePrimary .actionIcon {
-  background: rgba(255, 255, 255, 0.18);
-  color: white;
-}
-
-.actionTile .actionIcon {
-  background: $sage;
-  color: $forest;
-}
-
-.actionCopy {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.actionLabel {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.actionTilePrimary .actionLabel {
-  color: rgba(255, 255, 255, 0.82);
-}
-
-.actionTitle {
-  font-size: 20px;
-  font-weight: 620;
-  letter-spacing: -0.02em;
-  margin: 0;
-}
-
-.actionTilePrimary .actionTitle {
-  color: white;
-}
-
-@media (max-width: 1250px) {
-  .homePage {
-    padding-left: 36px;
-    padding-right: 36px;
-  }
-
-  .metrics {
-    gap: 16px;
-  }
-
-  .actionsGrid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .actionTilePrimary {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 760px) {
-  .homePage {
-    padding: 32px 20px 64px;
-  }
-
-  .greetingTitle {
-    font-size: 32px;
-  }
-
-  .greetingSubtitle {
-    font-size: 15px;
-  }
-
-  .metrics {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-
-  .sectionHeader {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .sectionHeader button {
-    width: 100%;
-  }
-
+@include mobile {
   .demandItem {
     grid-template-columns: 1fr;
-    gap: 6px;
+    gap: $space-1;
     min-height: auto;
-  }
-
-  .actionsGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .actionTilePrimary {
-    grid-column: auto;
   }
 }

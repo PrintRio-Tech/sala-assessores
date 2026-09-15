@@ -10,7 +10,7 @@ import { JournalistPage } from './JournalistPage'
 describe('perfil do jornalista', () => {
   it('deriva contagens, temas e histórico de demandas locais vinculadas sem misturar avaliações manuais', async () => {
     useLocalDemandStore.getState().reset()
-    const localDemand = useLocalDemandStore.getState().add({
+    useLocalDemandStore.getState().add({
       subject: 'Demanda local vinculada',
       factContext: 'Contexto confirmado localmente.',
       pressRequest: 'Pedido de posicionamento.',
@@ -22,12 +22,7 @@ describe('perfil do jornalista', () => {
       journalistId: 'j-local-derived',
       journalistName: 'Joana Local',
       outletName: 'Jornal Local',
-    })
-    useLocalDemandStore.getState().enrich(localDemand.id, {
-      topics: ['Mobilidade urbana'],
-      responsibleId: 'r-ana',
-      responsibleName: 'Ana Paula',
-      priority: 'medium',
+      enrichment: { tags: [], topics: ['Mobilidade urbana'], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null },
     })
 
     const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } })
@@ -68,7 +63,7 @@ describe('perfil do jornalista', () => {
     const activeDemand = screen.getByRole('link', { name: /Crise Logística: Impacto nos Portos/ })
     expect(activeDemand).toBeVisible()
     expect(activeDemand).toHaveTextContent('Em andamento')
-    expect(screen.getByText('5 solicitadas · 0 proativas')).toBeVisible()
+    expect(screen.getByText(/6 solicitadas · 0 proativas/)).toBeVisible()
   })
 
   it('mantém os fatos objetivos de Maria ao abrir o detalhe pela lista', async () => {

@@ -160,7 +160,8 @@ describe('fluxos do perfil do jornalista', () => {
     expect(dialog).toBeVisible()
     
     const journalistField = within(dialog).getByRole('combobox', { name: 'Quem entrou em contato?' })
-    expect(journalistField).toHaveValue('j-maria')
+    expect(journalistField).toHaveValue('Maria Clara')
+    expect(within(dialog).getByRole('region', { name: 'Contexto do contato' })).toHaveTextContent('Maria Clara')
     
     await user.click(within(dialog).getByRole('combobox', { name: 'Canal de entrada' }))
     await user.click(await screen.findByRole('option', { name: 'E-mail' }))
@@ -168,10 +169,9 @@ describe('fluxos do perfil do jornalista', () => {
     
     await user.type(within(dialog).getByRole('textbox', { name: 'Assunto' }), 'Novo caso de teste')
     await user.type(within(dialog).getByRole('textbox', { name: 'O que aconteceu?' }), 'Contexto do caso')
-    await user.click(within(dialog).getByRole('button', { name: 'Continuar' }))
-    
     await user.type(within(dialog).getByRole('textbox', { name: 'O que foi pedido pela imprensa?' }), 'Posicionamento solicitado')
     await user.type(within(dialog).getByRole('textbox', { name: 'Prazo solicitado' }), '01092026')
+    await user.click(within(dialog).getByRole('button', { name: 'Continuar' }))
     await user.click(within(dialog).getByRole('button', { name: 'Concluir captura' }))
     
     const localDemands = useLocalDemandStore.getState().records

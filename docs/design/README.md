@@ -37,17 +37,17 @@ Os modelos verticais `image.png` e `image copy 2.png` pertencem à mesma linguag
 
 ## Arquitetura permanente do detalhe
 
-O detalhe canônico em `/demandas/:demandId` usa **histórico como espinha dorsal**. O cabeçalho responde o que é a demanda; o rail responde onde ela está e concentra responsável, prioridade, prazo, contexto, última decisão, último próximo passo registrado e situação do posicionamento; a timeline reconstrói o que aconteceu em ordem cronológica.
+O detalhe canônico em `/demandas/:demandId` usa **histórico como espinha dorsal**. O cabeçalho responde o que é a demanda; o rail concentra responsável, prioridade, prazo e contexto; a timeline reconstrói o que aconteceu em ordem cronológica.
 
 Os eventos preservam diferenças contratuais que não podem ser reduzidas a um único “status”:
 
-- `Em review` é o estado atual da demanda;
-- `Ajustes solicitados` é a última decisão, atribuída a Marina Sousa (Coordenação), com data e justificativa próprias;
-- telefonema, e-mail e consulta são fatos ocorridos fora da plataforma e aparecem como tal;
-- `finalPositioning: null` aparece como “Sem posicionamento final registrado”, uma ausência de artefato, não uma etapa implicitamente concluída;
+- `Em andamento` é o estado do caso aberto; qualquer interação cabe.
+- Recusa, aprovação, encaminhamento e ajustes são **resultados de interação** e não mudam o status.
+- telefonema, e-mail, consulta e parecer são fatos ocorridos fora da plataforma e aparecem como tal;
+- `Resposta enviada` e `Encerrado sem resposta` fecham o caso (`sent` / `closed_without_send`);
 - próximos passos são registros das interações, não automações nem ordens executadas pela plataforma.
 
-O botão **Solicitar review** foi preservado porque já fazia parte da interface promovida. O contrato atual não define se essa ação está disponível quando a demanda já está em `pending_review`; portanto, sua presença não deve ser interpretada como uma regra de transição validada. Habilitação, permissão e comportamento permanecem risco de produto a resolver antes de conectar mutações reais.
+O acompanhamento ativo tem **posicionamento** (texto da resposta, sempre visível no detalhe, com versões) e **Registrar interação** (fatos fora da Sala). Encerrar sem resposta e registrar envio acontecem como resultados do drawer de interação. Não há motor interno de review nem Solicitar revisão.
 
 ## Auditoria inicial da família
 
@@ -64,7 +64,7 @@ As capturas finais de `1440 × 1000` foram comparadas lado a lado com os modelos
 | Tela | O que coincidiu com o modelo | Correções após comparação |
 | --- | --- | --- |
 | Lista | página larga; ações no topo; filtro em faixa única; tabs; tabela com primeira coluna dominante e linhas densas | prazo foi reinserido como filtro compacto; primitives do DS substituíram inputs locais sem perder a densidade |
-| Detalhe | rail contextual à esquerda; timeline dominante à direita; proporção próxima de 30/70 | cabeçalho foi compactado; estado atual, última decisão e artefato final passaram a ocupar registros distintos; eventos externos ganharam origem explícita; decisão e estado atual receberam ênfases próprias |
+| Detalhe | rail contextual à esquerda; timeline dominante à direita; proporção próxima de 30/70 | cabeçalho foi compactado; estado atual e interações (incluindo envio e encerramento) ocupam registros distintos na timeline; eventos externos ganharam origem explícita |
 | Jornalista | hero integral; ações à direita; três KPIs e contato; duas colunas de contexto; histórico largo | foto e nome foram reduzidos; glyph provisório virou sparkline SVG; escala comportamental recuperou os polos semânticos |
 
 ### Desvios finais conscientes

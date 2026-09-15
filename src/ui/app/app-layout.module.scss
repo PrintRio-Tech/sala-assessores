@@ -1,18 +1,40 @@
-.brand { width: 100%; display: flex; align-items: center; gap: 10px; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; font: inherit; font-weight: 700; white-space: nowrap; }
-.brandMark, .brandCollapsed { width: 32px; height: 32px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.25); border-radius: 9px; background: rgba(255,255,255,.1); color: white; font-weight: 700; }
-.brandCollapsed { margin: 0 auto; cursor: pointer; }
+@use '@print/ui/mixins' as *;
+@use '@print/ui/tokens' as *;
+
+.brandHome {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.brandHome:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
+}
+
 .footerUser { display: flex; align-items: center; gap: 10px; min-width: 0; color: inherit; }
 .footerIdentity { display: grid; min-width: 0; gap: 1px; }
 .footerIdentity > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .footerIdentity strong { color: inherit; }
 .footerIdentity small { color: rgba(255,255,255,.72); }
 
-.brand:focus-visible,
-.brandCollapsed:focus-visible {
-  outline: 2px solid white;
-  outline-offset: 3px;
+.mobileHeaderLogo {
+  display: block;
+  flex-shrink: 0;
+  width: 7.5rem;
+  height: $space-4;
+  object-fit: cover;
+  object-position: center;
 }
 
 .withoutTopbar :global(header[aria-label='Barra superior']) {
-  display: none;
+  @include desktop {
+    display: none;
+  }
 }

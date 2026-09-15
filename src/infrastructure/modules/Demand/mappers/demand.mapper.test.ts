@@ -10,6 +10,7 @@ describe('demand.mapper', () => {
       code: 'DEM-1',
       title: 'Título',
       request_summary: 'Resumo',
+      fact_context: 'Fato inicial da pauta, separado do pedido.',
       journalist_id: 'j1',
       journalist_name: 'Ana',
       outlet_name: 'Valor',
@@ -17,7 +18,7 @@ describe('demand.mapper', () => {
       responsible_name: 'Bruno',
       deadline_at: '2026-08-12T12:00:00.000Z',
       priority: 'high',
-      status: 'draft',
+      status: 'in_progress',
       created_at: '2026-08-01T12:00:00.000Z',
       updated_at: '2026-08-02T12:00:00.000Z',
       interactions: [{
@@ -33,57 +34,63 @@ describe('demand.mapper', () => {
       }, {
         id: 'i2',
         occurred_at: '2026-08-02T11:00:00.000Z',
-        result: 'resolved',
+        result: 'waiting_response',
         type: null,
         participants: null,
-        summary: null,
+        summary: 'Confirmação de recebimento.',
         next_step: null,
         origin: 'off_platform',
       }],
-      decisions: [],
-      final_positioning: null,
     }
 
     const entity = toDomain(dto)
 
     expect(entity.requestSummary).toBe('Resumo')
+    expect(entity.factContext).toBe('Fato inicial da pauta, separado do pedido.')
     expect(entity.journalistId).toBe('j1')
+    expect(entity.status).toBe('in_progress')
     expect(entity.deadlineAt.toISOString()).toBe('2026-08-12T12:00:00.000Z')
     expect(entity.interactions[0]).toEqual(expect.objectContaining({
       result: 'waiting_response',
       recordedBy: 'Noel Ferreira',
       occurredAt: new Date('2026-08-02T10:00:00.000Z'),
+      channel: null,
+      recipient: null,
+      body: null,
     }))
     expect(entity.interactions[1]).toEqual(expect.objectContaining({
-      result: 'resolved',
+      result: 'waiting_response',
       recordedBy: 'Noel Ferreira',
       type: null,
       participants: null,
-      summary: null,
+      summary: 'Confirmação de recebimento.',
       nextStep: null,
     }))
+    expect(entity.positioning).toEqual({ state: 'empty', versions: [], approval: null })
   })
 
-  it('mapeia enriquecimento, reviews e encerramento sem envio sem confundir os registros', () => {
+  it('mapeia envio e encerramento como interações e transições de estado', () => {
     const dto: DemandDto = {
       id: 'd2', code: 'DEM-2', title: 'Sem envio', request_summary: 'Pedido', journalist_id: '', journalist_name: 'Contato desconhecido', outlet_name: 'Redação',
       responsible_id: 'r1', responsible_name: 'Noel Ferreira', deadline_at: '2026-08-28T18:00:00.000Z', priority: 'critical', status: 'closed_without_send',
-      created_at: '2026-08-28T10:00:00.000Z', updated_at: '2026-08-28T16:00:00.000Z', interactions: [], decisions: [], final_positioning: null,
+      created_at: '2026-08-28T10:00:00.000Z', updated_at: '2026-08-28T16:00:00.000Z',
+      interactions: [{
+        id: 'i-close',
+        occurred_at: '2026-08-28T16:00:00.000Z',
+        result: 'closed_without_send',
+        summary: 'Redação desistiu.',
+        origin: 'off_platform',
+      }],
       enrichment: { tags: ['urgente'], topics: ['Operação'], related_areas: ['Jurídico'], confirmed_facts: ['Fato confirmado'], pending_facts: [], next_step: 'Aguardar.' },
-      review_requests: [{ id: 'rv1', requested_at: '2026-08-28T12:00:00.000Z', requested_by: 'Noel Ferreira', reviewer: 'Coordenação', version_label: 'v1' }],
-      versions: [{ id: 'v2', version_label: 'v2', body: 'Texto revisado.', created_at: '2026-08-28T14:00:00.000Z', created_by: 'Noel Ferreira' }],
-      state_transitions: [{ id: 'st1', from: 'changes_requested', to: 'in_progress', occurred_at: '2026-08-28T14:00:00.000Z', recorded_by: 'Noel Ferreira', trigger: 'new_version' }],
-      closure: { closed_at: '2026-08-28T16:00:00.000Z', closed_by: 'Noel Ferreira', reason: 'Redação desistiu.' },
+      state_transitions: [{ id: 'st1', from: 'in_progress', to: 'closed_without_send', occurred_at: '2026-08-28T16:00:00.000Z', recorded_by: 'Noel Ferreira', trigger: 'closed_without_send' }],
     }
 
     const entity = toDomain(dto)
 
     expect(entity.status).toBe('closed_without_send')
     expect(entity.enrichment?.tags).toEqual(['urgente'])
-    expect(entity.reviewRequests?.[0]?.versionLabel).toBe('v1')
-    expect(entity.versions?.[0]).toEqual(expect.objectContaining({ versionLabel: 'v2', createdBy: 'Noel Ferreira' }))
-    expect(entity.stateTransitions?.[0]).toEqual(expect.objectContaining({ from: 'changes_requested', to: 'in_progress', trigger: 'new_version' }))
-    expect(entity.closure?.reason).toBe('Redação desistiu.')
-    expect(entity.finalPositioning).toBeNull()
+    expect(entity.interactions[0]).toEqual(expect.objectContaining({ result: 'closed_without_send', summary: 'Redação desistiu.' }))
+    expect(entity.stateTransitions?.[0]).toEqual(expect.objectContaining({ from: 'in_progress', to: 'closed_without_send', trigger: 'closed_without_send' }))
+    expect(entity.factContext).toBeUndefined()
   })
 })

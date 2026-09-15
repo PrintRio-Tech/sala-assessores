@@ -6,11 +6,6 @@
   gap: $space-4;
 }
 
-.receivedAtRow {
-  display: flex;
-  gap: $space-3;
-}
-
 .contactGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -25,23 +20,9 @@
   min-width: 0;
 }
 
-.tagsContainer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $space-2;
-  margin-bottom: $space-2;
-  min-height: 32px;
-}
-
-.suggestedTags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $space-2;
-  align-items: center;
-  margin-top: $space-2;
-
-  small {
-    color: var(--color-text-muted);
-    margin-right: $space-1;
-  }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $space-3;
+  align-items: start;
 }

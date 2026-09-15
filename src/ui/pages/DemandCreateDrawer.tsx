@@ -1,8 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Button,
-  Card,
-  Chip,
   ConfirmDialog,
   DatePicker,
   DrawerSteps,
@@ -12,12 +10,14 @@ import {
   TextInput,
   Textarea,
 } from '@print/ui'
+import type { DemandPriority } from '@/domain/Demand/demand.entity'
 import type { Journalist } from '@/domain/Journalist/journalist.entity'
 import type { NewLocalDemandCapture } from '@/application/modules/Demand/stores/local-demand.store'
+import { TagInput } from '@/ui/components/TagInput/TagInput'
 
 import styles from './demand-create-drawer.module.scss'
 
-type ContactMode = 'known' | 'local' | 'skip'
+type ContactMode = 'known' | 'local'
 
 type FormValues = {
   contactMode: ContactMode
@@ -30,7 +30,9 @@ type FormValues = {
   channel: string
   journalistId: string
   tags: string[]
-  receivedAt: string
+  topic: string
+  area: string
+  priority: DemandPriority | ''
 }
 
 type FormErrors = Partial<Record<keyof FormValues, string>>
@@ -46,7 +48,9 @@ const initialValues: FormValues = {
   channel: '',
   journalistId: '',
   tags: [],
-  receivedAt: new Date().toISOString().slice(0, 16),
+  topic: '',
+  area: '',
+  priority: '',
 }
 
 const channelOptions = [
@@ -56,21 +60,16 @@ const channelOptions = [
   { value: 'other', label: 'Outro canal' },
 ]
 
-const suggestedTags = [
-  'acidente',
-  'operação',
-  'segurança',
-  'manutenção',
-  'ambiental',
-  'regulatório',
-  'financeiro',
-  'RH',
-  'comunicado',
-  'urgente',
+const priorityOptions: Array<{ value: DemandPriority; label: string }> = [
+  { value: 'low', label: 'Baixa' },
+  { value: 'medium', label: 'Média' },
+  { value: 'high', label: 'Alta' },
+  { value: 'critical', label: 'Crítica' },
 ]
 
 function fieldError(key: keyof FormValues, values: FormValues) {
   if (key === 'channel' && !values.channel) return 'Informe o canal de entrada.'
+  if (key === 'journalistId' && values.contactMode === 'known' && !values.journalistId) return 'Informe o contato ou registre-o localmente.'
   if (key === 'contactName' && values.contactMode === 'local' && !values.contactName.trim()) return 'Informe o nome do contato.'
   if (key === 'contactOutlet' && values.contactMode === 'local' && !values.contactOutlet.trim()) return 'Informe a redação ou veículo.'
   if (key === 'subject' && !values.subject.trim()) return 'Informe o assunto do caso.'
@@ -81,9 +80,9 @@ function fieldError(key: keyof FormValues, values: FormValues) {
 }
 
 const stepFields: Array<Array<keyof FormValues>> = [
-  ['channel', 'receivedAt', 'journalistId', 'contactName', 'contactOutlet'],
-  ['subject', 'factContext'],
-  ['pressRequest', 'requestedDeadline', 'tags'],
+  ['channel', 'journalistId', 'contactName', 'contactOutlet'],
+  ['subject', 'factContext', 'pressRequest', 'requestedDeadline'],
+  [],
 ]
 
 export type DemandCreateDrawerProps = {
@@ -93,49 +92,85 @@ export type DemandCreateDrawerProps = {
   journalists: Journalist[]
   journalistsLoading?: boolean
   initialJournalistId?: string
+  mode?: 'create' | 'edit'
+  intent?: 'create' | 'edit'
+  initialCapture?: NewLocalDemandCapture
+  tagSuggestions?: string[]
+  tagsLoading?: boolean
 }
 
-export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists, journalistsLoading = false, initialJournalistId }: DemandCreateDrawerProps) {
+function captureToFormValues(capture: NewLocalDemandCapture): FormValues {
+  const channel = channelOptions.find((option) => (
+    option.value === capture.channel
+    || option.label.toLocaleLowerCase('pt-BR') === capture.channel.toLocaleLowerCase('pt-BR')
+  ))
+  return {
+    contactMode: capture.contactMode,
+    contactName: capture.contactName,
+    contactOutlet: capture.contactOutlet,
+    subject: capture.subject,
+    factContext: capture.factContext,
+    pressRequest: capture.pressRequest,
+    requestedDeadline: capture.requestedDeadline,
+    channel: channel?.value ?? (capture.channel ? 'other' : ''),
+    journalistId: capture.journalistId,
+    tags: capture.enrichment?.tags ?? [],
+    topic: capture.enrichment?.topics[0] ?? '',
+    area: capture.enrichment?.relatedAreas[0] ?? '',
+    priority: capture.priority ?? '',
+  }
+}
+
+export function DemandCreateDrawer({
+  open,
+  onOpenChange,
+  onCapture,
+  journalists,
+  journalistsLoading = false,
+  initialJournalistId,
+  mode = 'create',
+  intent,
+  initialCapture,
+  tagSuggestions = [],
+  tagsLoading = false,
+}: DemandCreateDrawerProps) {
   const [values, setValues] = useState<FormValues>(initialValues)
+  const [baseline, setBaseline] = useState<FormValues>(initialValues)
   const [errors, setErrors] = useState<FormErrors>({})
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false)
   const [journalistQuery, setJournalistQuery] = useState('')
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
-  const [tagInput, setTagInput] = useState('')
+  const skipDirtyCloseRef = useRef(false)
+  const wasOpenRef = useRef(false)
+  const sessionModeRef = useRef(mode)
+  const sessionIntentRef = useRef(intent ?? mode)
+  if (open) {
+    sessionModeRef.current = mode
+    sessionIntentRef.current = intent ?? mode
+  }
+  const sessionMode = open ? mode : sessionModeRef.current
+  const sessionIntent = open ? (intent ?? mode) : sessionIntentRef.current
 
   const resetFlow = useCallback(() => {
-    setValues(initialJournalistId ? { ...initialValues, journalistId: initialJournalistId } : initialValues)
+    const nextValues = mode === 'edit' && initialCapture
+      ? captureToFormValues(initialCapture)
+      : initialJournalistId ? { ...initialValues, journalistId: initialJournalistId } : initialValues
+    setValues(nextValues)
+    setBaseline(nextValues)
     setErrors({})
     setJournalistQuery('')
     setCurrentStepIndex(0)
-    setTagInput('')
-  }, [initialJournalistId])
+  }, [initialCapture, initialJournalistId, mode])
 
   useEffect(() => {
-    if (open) resetFlow()
+    if (open && !wasOpenRef.current) resetFlow()
+    wasOpenRef.current = open
   }, [open, resetFlow])
 
   const update = <K extends keyof FormValues>(key: K, value: FormValues[K]) => {
     setValues((current) => ({ ...current, [key]: value }))
     setErrors((current) => ({ ...current, [key]: undefined }))
   }
-
-  const addTag = (tag: string) => {
-    const trimmed = tag.trim()
-    if (!trimmed || values.tags.includes(trimmed)) return
-    update('tags', [...values.tags, trimmed])
-    setTagInput('')
-  }
-
-  const removeTag = (tag: string) => {
-    update('tags', values.tags.filter((t) => t !== tag))
-  }
-
-  const skipContact = useCallback(() => {
-    setValues((current) => ({ ...current, contactMode: 'skip', contactName: '', contactOutlet: '', journalistId: '' }))
-    setJournalistQuery('')
-    setErrors((current) => ({ ...current, journalistId: undefined, contactName: undefined, contactOutlet: undefined }))
-  }, [])
 
   const validateStep = useCallback((index: number) => {
     const nextErrors = Object.fromEntries(
@@ -147,13 +182,11 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
 
   const isStepValid = useCallback((index: number) => stepFields[index].every((key) => !fieldError(key, values)), [values])
 
-  const hasUnsavedChanges = values.contactMode !== 'known'
-    || Object.entries(values).some(([key, value]) => {
-      if (key === 'contactMode' || key === 'tags') return false
-      if (key === 'tags') return Array.isArray(value) && value.length > 0
-      return typeof value === 'string' && value.trim().length > 0
-    })
-    || values.tags.length > 0
+  const hasUnsavedChanges = sessionMode === 'edit'
+    ? JSON.stringify(values) !== JSON.stringify(baseline)
+    : values.contactMode === 'local'
+      || values.tags.length > 0
+      || Object.entries(values).some(([key, value]) => key !== 'contactMode' && key !== 'tags' && typeof value === 'string' && value.trim().length > 0)
   const selectedJournalist = journalists.find((journalist) => journalist.id === values.journalistId)
   const journalistOptions = useMemo(() => {
     const query = journalistQuery.trim().toLocaleLowerCase('pt-BR')
@@ -174,12 +207,16 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
   }, [journalistQuery])
 
   const closeNow = () => {
+    skipDirtyCloseRef.current = false
     setConfirmDiscardOpen(false)
     onOpenChange(false)
-    resetFlow()
   }
 
   const handleRequestClose = () => {
+    if (skipDirtyCloseRef.current) {
+      closeNow()
+      return
+    }
     if (hasUnsavedChanges) {
       setConfirmDiscardOpen(true)
       return
@@ -188,15 +225,12 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
   }
 
   const complete = () => {
-    if (!validateStep(2)) return
-    const contactName = values.contactMode === 'local' ? values.contactName.trim() 
-      : values.contactMode === 'known' ? (selectedJournalist?.name ?? '') 
-      : 'Sem contato cadastrado'
-    const contactOutlet = values.contactMode === 'local' ? values.contactOutlet.trim() 
-      : values.contactMode === 'known' ? (selectedJournalist?.outletName ?? '') 
-      : ''
+    if (!validateStep(0) || !validateStep(1)) return
+    const contactName = values.contactMode === 'local' ? values.contactName.trim() : selectedJournalist?.name ?? ''
+    const contactOutlet = values.contactMode === 'local' ? values.contactOutlet.trim() : selectedJournalist?.outletName ?? ''
+    skipDirtyCloseRef.current = true
     onCapture({
-      contactMode: values.contactMode === 'skip' ? 'local' : values.contactMode,
+      contactMode: values.contactMode,
       contactName,
       contactOutlet,
       subject: values.subject.trim(),
@@ -207,10 +241,16 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
       journalistId: values.contactMode === 'known' ? values.journalistId : '',
       journalistName: contactName,
       outletName: contactOutlet,
-      tags: values.tags,
-      receivedAt: values.receivedAt ? new Date(values.receivedAt) : undefined,
+      priority: values.priority || null,
+      enrichment: {
+        tags: values.tags,
+        topics: values.topic.trim() ? [values.topic.trim()] : [],
+        relatedAreas: values.area.trim() ? [values.area.trim()] : [],
+        confirmedFacts: initialCapture?.enrichment?.confirmedFacts ?? [],
+        pendingFacts: initialCapture?.enrichment?.pendingFacts ?? [],
+        nextStep: initialCapture?.enrichment?.nextStep ?? null,
+      },
     })
-    resetFlow()
   }
 
   const steps = useMemo(() => [
@@ -220,127 +260,82 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
       isValid: isStepValid(0),
       content: (
         <div className={styles.stepContent}>
-          <div className={styles.receivedAtRow}>
-            <TextInput 
-              type="datetime-local" 
-              label="Data/hora do recebimento" 
-              name="receivedAt" 
-              value={values.receivedAt} 
-              onChange={(event) => update('receivedAt', event.target.value)}
-              description="Momento em que a demanda foi recebida"
-            />
-          </div>
-          <SelectField label="Canal de entrada" name="channel" required value={values.channel} error={errors.channel} options={channelOptions} onValueChange={(value) => update('channel', value)} />
           {values.contactMode === 'known' ? (
-            <>
-              <SearchableSelectField
-                label="Quem entrou em contato?"
-                name="journalistId"
-                value={values.journalistId}
-                options={journalistOptions}
-                placeholder="Buscar contato ou redação"
-                emptyMessage="Nenhum contato encontrado."
-                loading={journalistsLoading}
-                selectedLabel={selectedJournalist?.name}
-                error={errors.journalistId}
-                onValueChange={(value) => update('journalistId', value)}
-                onQueryChange={setJournalistQuery}
-                footerSlot={canAddNewContact ? (
-                  <Button type="button" variant="ghost" onClick={beginNewContact}>
-                    Adicionar {journalistQuery.trim()} como novo contato
-                  </Button>
-                ) : undefined}
-              />
-              <Button type="button" variant="ghost" onClick={skipContact}>
-                Receber sem contato cadastrado
-              </Button>
-            </>
-          ) : values.contactMode === 'local' ? (
-            <>
-              <div className={styles.contactGrid}>
-                <TextInput autoFocus label="Quem entrou em contato?" name="contactName" required value={values.contactName} error={errors.contactName} onChange={(event) => update('contactName', event.target.value)} />
-                <TextInput label="Redação ou veículo" name="contactOutlet" required value={values.contactOutlet} error={errors.contactOutlet} onChange={(event) => update('contactOutlet', event.target.value)} />
-              </div>
-              <Button type="button" variant="ghost" onClick={() => update('contactMode', 'known')}>
-                Voltar à busca de contato
-              </Button>
-            </>
+            <SearchableSelectField
+              label="Quem entrou em contato?"
+              name="journalistId"
+              required
+              value={values.journalistId}
+              options={journalistOptions}
+              placeholder="Buscar contato ou redação"
+              emptyMessage="Nenhum contato encontrado."
+              loading={journalistsLoading}
+              selectedLabel={selectedJournalist?.name}
+              error={errors.journalistId}
+              onValueChange={(value) => update('journalistId', value)}
+              onQueryChange={setJournalistQuery}
+              footerSlot={canAddNewContact ? (
+                <Button type="button" variant="ghost" onClick={beginNewContact}>
+                  Adicionar {journalistQuery.trim()} como novo contato
+                </Button>
+              ) : undefined}
+            />
           ) : (
-            <>
-              <Card variant="surface" padding="md">
-                <p>Recebimento sem contato cadastrado. Você poderá enriquecer ou converter em jornalista posteriormente.</p>
-              </Card>
-              <Button type="button" variant="ghost" onClick={() => update('contactMode', 'known')}>
-                Buscar contato cadastrado
-              </Button>
-            </>
+            <div className={styles.contactGrid}>
+              <TextInput autoFocus label="Quem entrou em contato?" name="contactName" required value={values.contactName} error={errors.contactName} onChange={(event) => update('contactName', event.target.value)} />
+              <TextInput label="Redação ou veículo" name="contactOutlet" required value={values.contactOutlet} error={errors.contactOutlet} onChange={(event) => update('contactOutlet', event.target.value)} />
+            </div>
           )}
-          {(selectedJournalist || (values.contactMode === 'local' && (values.contactName || values.contactOutlet))) && (
-            <Card variant="surface" padding="md" className={styles.journalistContext} role="region" aria-label="Contexto do contato">
+          <SelectField label="Canal de entrada" name="channel" required value={values.channel} error={errors.channel} options={channelOptions} onValueChange={(value) => update('channel', value)} />
+          <SelectField label="Prioridade" name="priority" placeholder="Não informar" options={priorityOptions} value={values.priority} onValueChange={(value) => update('priority', value as DemandPriority)} />
+          {(selectedJournalist || (values.contactMode === 'local' && values.contactName.trim())) && (
+            <div className={styles.journalistContext} role="region" aria-label="Contexto do contato">
               {selectedJournalist ? (
-                <PersonDetailedCell name={selectedJournalist.name} subtitle={`${selectedJournalist.outletName} · ${selectedJournalist.desk}`} email={selectedJournalist.email} phone={selectedJournalist.phone} />
+                <PersonDetailedCell
+                  name={selectedJournalist.name}
+                  subtitle={[selectedJournalist.outletName, selectedJournalist.desk].filter(Boolean).join(' · ') || undefined}
+                  email={selectedJournalist.email || undefined}
+                  phone={selectedJournalist.phone || undefined}
+                />
               ) : (
-                <PersonDetailedCell name={values.contactName || 'Nome do contato'} subtitle={values.contactOutlet || 'Redação ou veículo'} />
+                <PersonDetailedCell
+                  name={values.contactName}
+                  subtitle={values.contactOutlet.trim() || undefined}
+                />
               )}
-            </Card>
+            </div>
           )}
-        </div>
-      ),
-    },
-    {
-      id: 'case',
-      label: 'Caso',
-      isValid: isStepValid(1),
-      content: (
-        <div className={styles.stepContent}>
-          <TextInput autoFocus label="Assunto" name="subject" required value={values.subject} error={errors.subject} onChange={(event) => update('subject', event.target.value)} />
-          <Textarea label="O que aconteceu?" name="factContext" required rows={5} value={values.factContext} error={errors.factContext} description="Registre o fato recebido." onChange={(event) => update('factContext', event.target.value)} />
         </div>
       ),
     },
     {
       id: 'request',
       label: 'Pedido',
-      isValid: isStepValid(2),
+      isValid: isStepValid(1),
       content: (
         <div className={styles.stepContent}>
-          <Textarea autoFocus label="O que foi pedido pela imprensa?" name="pressRequest" required rows={5} value={values.pressRequest} error={errors.pressRequest} onChange={(event) => update('pressRequest', event.target.value)} />
+          <TextInput autoFocus label="Assunto" name="subject" required value={values.subject} error={errors.subject} onChange={(event) => update('subject', event.target.value)} />
+          <Textarea label="O que aconteceu?" name="factContext" required rows={5} value={values.factContext} error={errors.factContext} description="Registre o fato recebido." onChange={(event) => update('factContext', event.target.value)} />
+          <Textarea label="O que foi pedido pela imprensa?" name="pressRequest" required rows={5} value={values.pressRequest} error={errors.pressRequest} onChange={(event) => update('pressRequest', event.target.value)} />
           <DatePicker label="Prazo solicitado" name="requestedDeadline" required value={values.requestedDeadline} error={errors.requestedDeadline} onValueChange={(value) => update('requestedDeadline', value)} />
-          <div>
-            <label htmlFor="tags-input">Tags de recuperação</label>
-            <div className={styles.tagsContainer}>
-              {values.tags.map((tag) => (
-                <Chip key={tag} label={tag} onRemove={() => removeTag(tag)} />
-              ))}
-            </div>
-            <TextInput
-              id="tags-input"
-              name="tags"
-              placeholder="Digite uma tag e pressione Enter"
-              value={tagInput}
-              onChange={(event) => setTagInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault()
-                  addTag(tagInput)
-                }
-              }}
-            />
-            <div className={styles.suggestedTags}>
-              <small>Sugestões:</small>
-              {suggestedTags
-                .filter((tag) => !values.tags.includes(tag))
-                .map((tag) => (
-                  <Button key={tag} type="button" variant="ghost" size="sm" onClick={() => addTag(tag)}>
-                    {tag}
-                  </Button>
-                ))}
-            </div>
+        </div>
+      ),
+    },
+    {
+      id: 'classification',
+      label: 'Classificação',
+      isValid: true,
+      content: (
+        <div className={styles.stepContent}>
+          <TagInput tags={values.tags} onChange={(tags) => update('tags', tags)} suggestions={tagSuggestions} loading={tagsLoading} />
+          <div className={styles.grid}>
+            <TextInput label="Tema" name="topic" value={values.topic} onChange={(event) => update('topic', event.target.value)} />
+            <TextInput label="Áreas ou entidades" name="area" value={values.area} onChange={(event) => update('area', event.target.value)} />
           </div>
         </div>
       ),
     },
-  ], [beginNewContact, canAddNewContact, errors, isStepValid, journalistOptions, journalistsLoading, journalistQuery, selectedJournalist, skipContact, tagInput, values])
+  ], [beginNewContact, canAddNewContact, errors, isStepValid, journalistOptions, journalistsLoading, journalistQuery, selectedJournalist, tagSuggestions, tagsLoading, values])
 
   return (
     <>
@@ -348,12 +343,12 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
         open={open}
         onOpenChange={(nextOpen) => (nextOpen ? onOpenChange(true) : handleRequestClose())}
         onRequestClose={handleRequestClose}
-        flowTitle="Nova demanda"
+        flowTitle={sessionIntent === 'edit' ? 'Editar demanda' : 'Nova demanda'}
         steps={steps}
         currentStepIndex={currentStepIndex}
         onStepChange={setCurrentStepIndex}
         onComplete={complete}
-        completeLabel="Concluir captura"
+        completeLabel={sessionIntent === 'edit' ? 'Salvar alterações' : 'Concluir captura'}
         advanceLabel="Continuar"
         backLabel="Voltar"
         closeLabel="Cancelar"
@@ -365,8 +360,8 @@ export function DemandCreateDrawer({ open, onOpenChange, onCapture, journalists,
       <ConfirmDialog
         open={confirmDiscardOpen}
         onOpenChange={setConfirmDiscardOpen}
-        title="Descartar captura?"
-        description="As informações preenchidas nesta entrada serão perdidas."
+        title={sessionMode === 'edit' ? 'Descartar alterações?' : 'Descartar captura?'}
+        description={sessionMode === 'edit' ? 'As alterações desta demanda não serão salvas.' : 'As informações preenchidas nesta entrada serão perdidas.'}
         confirmLabel="Descartar"
         cancelLabel="Continuar editando"
         destructive

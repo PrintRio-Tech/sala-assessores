@@ -15,12 +15,8 @@ type LinkedDemand = {
 }
 
 const demandStatusLabels: Record<DemandStatus, string> = {
-  draft: 'Rascunho',
   in_progress: 'Em andamento',
-  pending_review: 'Em review',
-  changes_requested: 'Ajustes solicitados',
-  approved: 'Aprovada',
-  sent: 'Posicionamento enviado',
+  sent: 'Enviada',
   closed_without_send: 'Encerrada sem envio',
 }
 
@@ -36,7 +32,7 @@ function fromMockDemand(demand: Demand): LinkedDemand {
     status: demand.status,
     updatedAt: demand.updatedAt,
     topics: demand.enrichment?.topics ?? [],
-    hasPositioning: Boolean(demand.finalPositioning),
+    hasPositioning: demand.interactions.some((item) => item.result === 'response_sent'),
     kindLabel: 'Demanda registrada',
   }
 }
@@ -49,7 +45,7 @@ function fromLocalDemand(demand: LocalDemandCapture): LinkedDemand {
     status: demand.status,
     updatedAt: demand.updatedAt,
     topics: demand.enrichment.topics,
-    hasPositioning: Boolean(demand.finalPositioning),
+    hasPositioning: demand.interactions.some((item) => item.result === 'response_sent'),
     kindLabel: 'Demanda local',
   }
 }

@@ -1,254 +1,273 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
-import { userEvent } from '@testing-library/user-event'
+import { useState } from 'react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+
 import type { Journalist } from '@/domain/Journalist/journalist.entity'
 import type { NewLocalDemandCapture } from '@/application/modules/Demand/stores/local-demand.store'
 import { DemandCreateDrawer } from './DemandCreateDrawer'
 
-const mockJournalists: Journalist[] = [
-  {
-    id: 'j-1',
-    name: 'Maria Silva',
-    email: 'maria@exemplo.com',
-    phone: '11999999999',
-    outletName: 'Jornal Exemplo',
-    desk: 'Política',
-    relationshipStatus: 'active',
-    evaluations: [],
-    createdAt: new Date('2026-01-01'),
-    updatedAt: new Date('2026-01-01'),
+const journalist: Journalist = {
+  id: 'j-carolina',
+  name: 'Carolina Montenegro',
+  roleTitle: 'Repórter',
+  outletName: 'Valor Econômico',
+  desk: 'Economia',
+  email: 'c.montenegro@valor.com.br',
+  phone: '+55 11 90000-0000',
+  preferredChannel: 'email',
+  bestContactWindow: 'Manhã',
+  topics: ['Economia'],
+  isActive: true,
+  objectiveStats: {
+    totalDemands: 1,
+    solicitedCount: 1,
+    proactiveCount: 0,
+    successRate: 1,
+    positioningUsageRate: 1,
   },
-  {
-    id: 'j-2',
-    name: 'João Santos',
-    email: 'joao@teste.com',
-    phone: '11888888888',
-    outletName: 'TV Teste',
-    desk: 'Economia',
-    relationshipStatus: 'active',
-    evaluations: [],
-    createdAt: new Date('2026-01-01'),
-    updatedAt: new Date('2026-01-01'),
-  },
-]
+  demandHistory: [],
+  relationshipEvaluations: [],
+}
 
-describe('DemandCreateDrawer', () => {
-  const defaultProps = {
-    open: true,
-    onOpenChange: vi.fn(),
-    onCapture: vi.fn<[NewLocalDemandCapture]>(),
-    journalists: mockJournalists,
-    journalistsLoading: false,
-  }
+const capture: NewLocalDemandCapture = {
+  subject: 'Resultados do Q1 2024',
+  factContext: 'Envio de release com resultados do primeiro trimestre.',
+  pressRequest: 'Pedido de posicionamento sobre o trimestre.',
+  requestedDeadline: '2026-03-12',
+  channel: 'E-mail',
+  contactMode: 'known',
+  contactName: 'Carolina Montenegro',
+  contactOutlet: 'Valor Econômico',
+  journalistId: 'j-carolina',
+  journalistName: 'Carolina Montenegro',
+  outletName: 'Valor Econômico',
+}
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
+function EditSession({ onCapture = vi.fn() }: { onCapture?: (capture: NewLocalDemandCapture) => void }) {
+  const [open, setOpen] = useState(true)
+  const [mode, setMode] = useState<'create' | 'edit'>('edit')
 
-  it('renderiza o drawer quando aberto', () => {
-    render(<DemandCreateDrawer {...defaultProps} />)
-    expect(screen.getByText('Nova demanda')).toBeInTheDocument()
-    expect(screen.getByLabelText('Quem entrou em contato?')).toBeInTheDocument()
-  })
+  return (
+    <DemandCreateDrawer
+      open={open}
+      mode={mode}
+      initialCapture={capture}
+      journalists={[journalist]}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen) return
+        setOpen(false)
+        setMode('create')
+      }}
+      onCapture={(next) => {
+        onCapture(next)
+        setOpen(false)
+        setMode('create')
+      }}
+    />
+  )
+}
 
-  it('não renderiza quando fechado', () => {
-    render(<DemandCreateDrawer {...defaultProps} open={false} />)
-    expect(screen.queryByText('Nova demanda')).not.toBeInTheDocument()
-  })
-
-  it('permite pular o cadastro de contato e completar a captura sem jornalista', async () => {
+describe('DemandCreateDrawer edit close', () => {
+  it('fecha a edição salva sem virar Nova demanda nem pedir descarte da captura', async () => {
+    const onCapture = vi.fn()
     const user = userEvent.setup()
-    const onCapture = vi.fn<[NewLocalDemandCapture]>()
-    render(<DemandCreateDrawer {...defaultProps} onCapture={onCapture} />)
+    render(<EditSession onCapture={onCapture} />)
 
-    await user.click(screen.getByText('Receber sem contato cadastrado'))
-
-    expect(screen.getByText(/Recebimento sem contato cadastrado/)).toBeInTheDocument()
-
-    await user.click(screen.getByLabelText('Canal de entrada'))
-    await user.click(screen.getByText('E-mail'))
-
-    await user.click(screen.getByText('Continuar'))
-
-    const subjectInput = screen.getByLabelText('Assunto')
-    await user.type(subjectInput, 'Assunto teste')
-
-    const factInput = screen.getByLabelText('O que aconteceu?')
-    await user.type(factInput, 'Contexto do fato')
-
-    await user.click(screen.getByText('Continuar'))
-
-    const requestInput = screen.getByLabelText('O que foi pedido pela imprensa?')
-    await user.type(requestInput, 'Pedido da imprensa')
-
-    const deadlineInput = screen.getByLabelText('Prazo solicitado')
-    await user.type(deadlineInput, '2026-09-15')
-
-    await user.click(screen.getByText('Concluir captura'))
-
-    await waitFor(() => {
-      expect(onCapture).toHaveBeenCalledWith(
-        expect.objectContaining({
-          contactMode: 'local',
-          contactName: 'Sem contato cadastrado',
-          contactOutlet: '',
-          subject: 'Assunto teste',
-          factContext: 'Contexto do fato',
-          pressRequest: 'Pedido da imprensa',
-          requestedDeadline: '2026-09-15',
-          channel: 'E-mail',
-          journalistId: '',
-          tags: [],
-          receivedAt: expect.any(Date),
-        }),
-      )
+    const drawer = await screen.findByRole('dialog', { name: /Editar demanda/ })
+    await user.click(within(drawer).getByRole('button', { name: 'Continuar' }))
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'Assunto' }), {
+      target: { value: 'Resultados do Q1 corrigidos' },
     })
+    await user.click(within(drawer).getByRole('button', { name: 'Continuar' }))
+    await user.click(within(drawer).getByRole('button', { name: 'Salvar alterações' }))
+
+    expect(onCapture).toHaveBeenCalledWith(expect.objectContaining({
+      subject: 'Resultados do Q1 corrigidos',
+    }))
+    expect(screen.queryByRole('dialog', { name: /Descartar captura/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: /Descartar alterações/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: /Nova demanda/ })).not.toBeInTheDocument()
+  })
+})
+
+describe('DemandCreateDrawer edit session', () => {
+  it('não volta ao primeiro passo quando o initialCapture ganha nova identidade com o drawer aberto', async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(
+      <DemandCreateDrawer
+        open
+        mode="edit"
+        initialCapture={capture}
+        journalists={[journalist]}
+        onOpenChange={vi.fn()}
+        onCapture={vi.fn()}
+      />,
+    )
+
+    const drawer = await screen.findByRole('dialog', { name: /Editar demanda/ })
+    await user.click(within(drawer).getByRole('button', { name: 'Continuar' }))
+    expect(within(drawer).getByRole('textbox', { name: 'Assunto' })).toBeVisible()
+
+    rerender(
+      <DemandCreateDrawer
+        open
+        mode="edit"
+        initialCapture={{ ...capture }}
+        journalists={[journalist]}
+        onOpenChange={vi.fn()}
+        onCapture={vi.fn()}
+      />,
+    )
+
+    expect(within(drawer).getByRole('textbox', { name: 'Assunto' })).toBeVisible()
+    expect(within(drawer).queryByRole('combobox', { name: 'Canal de entrada' })).not.toBeInTheDocument()
+  })
+})
+
+describe('DemandCreateDrawer capture fields', () => {
+  it('organiza três decisões: contato com prioridade, pedido e classificação opcional, sem apuração', async () => {
+    const onCapture = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <DemandCreateDrawer
+        open
+        journalists={[journalist]}
+        tagSuggestions={['operação', 'urgente']}
+        onOpenChange={vi.fn()}
+        onCapture={onCapture}
+      />,
+    )
+
+    const drawer = await screen.findByRole('dialog', { name: /Nova demanda/ })
+    expect(within(drawer).getByRole('tab', { name: 'Contato' })).toBeVisible()
+    expect(within(drawer).getByRole('tab', { name: 'Pedido' })).toBeVisible()
+    expect(within(drawer).getByRole('tab', { name: 'Classificação' })).toBeVisible()
+    expect(within(drawer).queryByRole('tab', { name: 'Caso' })).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole('combobox', { name: 'Responsável' })).not.toBeInTheDocument()
+
+    await user.click(within(drawer).getByRole('combobox', { name: 'Quem entrou em contato?' }))
+    await user.click(await screen.findByRole('option', { name: 'Carolina Montenegro' }))
+    expect(within(drawer).queryByText('Nome do contato')).not.toBeInTheDocument()
+    expect(within(drawer).queryByText('Redação ou veículo')).not.toBeInTheDocument()
+    expect(within(drawer).getByRole('region', { name: 'Contexto do contato' }).querySelector('.pf-card, [class*="card"]')).toBeNull()
+    await user.click(within(drawer).getByRole('combobox', { name: 'Canal de entrada' }))
+    await user.click(await screen.findByRole('option', { name: 'E-mail' }))
+    await user.click(within(drawer).getByRole('combobox', { name: 'Prioridade' }))
+    expect(await screen.findByRole('option', { name: 'Crítica' })).toBeVisible()
+    expect(screen.queryByRole('option', { name: 'Urgente' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Normal' })).not.toBeInTheDocument()
+    await user.click(await screen.findByRole('option', { name: 'Alta' }))
+    await user.click(within(drawer).getByRole('button', { name: 'Continuar' }))
+
+    expect(within(drawer).getByRole('textbox', { name: 'Assunto' })).toBeVisible()
+    expect(within(drawer).getByRole('textbox', { name: 'O que aconteceu?' })).toBeVisible()
+    expect(within(drawer).getByRole('textbox', { name: 'O que foi pedido pela imprensa?' })).toBeVisible()
+    expect(within(drawer).queryByRole('group', { name: 'Apuração' })).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole('textbox', { name: 'Fatos confirmados' })).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole('textbox', { name: 'Pendências' })).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole('textbox', { name: 'Tags' })).not.toBeInTheDocument()
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'Assunto' }), { target: { value: 'Entrevista' } })
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'O que aconteceu?' }), { target: { value: 'Pedido de pauta.' } })
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'O que foi pedido pela imprensa?' }), { target: { value: 'Entrevista exclusiva.' } })
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'Prazo solicitado' }), { target: { value: '12/03/2026' } })
+    await user.click(within(drawer).getByRole('button', { name: 'Continuar' }))
+
+    expect(within(drawer).getByRole('textbox', { name: 'Tags' })).toBeVisible()
+    expect(within(drawer).getByRole('textbox', { name: 'Tema' })).toBeVisible()
+    expect(within(drawer).getByRole('textbox', { name: 'Áreas ou entidades' })).toBeVisible()
+    expect(within(drawer).queryByRole('textbox', { name: 'Próximo passo' })).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole('group', { name: 'Apuração' })).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole('group', { name: 'Acompanhamento' })).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole('combobox', { name: 'Prioridade' })).not.toBeInTheDocument()
+    await user.type(within(drawer).getByRole('textbox', { name: 'Tags' }), 'operação{Enter}')
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'Tema' }), { target: { value: 'Governança' } })
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'Áreas ou entidades' }), { target: { value: 'Jurídico' } })
+    await user.click(within(drawer).getByRole('button', { name: 'Concluir captura' }))
+
+    expect(onCapture).toHaveBeenCalledWith(expect.objectContaining({
+      subject: 'Entrevista',
+      priority: 'high',
+      enrichment: expect.objectContaining({
+        tags: ['operação'],
+        topics: ['Governança'],
+        relatedAreas: ['Jurídico'],
+        confirmedFacts: [],
+        pendingFacts: [],
+        nextStep: null,
+      }),
+    }))
   })
 
-  it('permite adicionar tags sugeridas e tags personalizadas', async () => {
+  it('preserva fatos, pendências e próximo passo já gravados ao editar só a classificação', async () => {
+    const onCapture = vi.fn()
     const user = userEvent.setup()
-    const onCapture = vi.fn<[NewLocalDemandCapture]>()
-    render(<DemandCreateDrawer {...defaultProps} onCapture={onCapture} initialJournalistId="j-1" />)
+    render(
+      <DemandCreateDrawer
+        open
+        mode="edit"
+        initialCapture={{
+          ...capture,
+          enrichment: {
+            tags: ['original'],
+            topics: ['Tecnologia'],
+            relatedAreas: ['Presidência'],
+            confirmedFacts: ['Hub anunciado.'],
+            pendingFacts: ['Confirmar data da entrevista.'],
+            nextStep: 'Preparar briefing.',
+          },
+        }}
+        journalists={[journalist]}
+        onOpenChange={vi.fn()}
+        onCapture={onCapture}
+      />,
+    )
 
-    await user.click(screen.getByLabelText('Canal de entrada'))
-    await user.click(screen.getByText('E-mail'))
-    await user.click(screen.getByText('Continuar'))
+    const drawer = await screen.findByRole('dialog', { name: /Editar demanda/ })
+    expect(within(drawer).queryByRole('group', { name: 'Apuração' })).not.toBeInTheDocument()
+    await user.click(within(drawer).getByRole('tab', { name: 'Classificação' }))
+    expect(within(drawer).queryByRole('textbox', { name: 'Próximo passo' })).not.toBeInTheDocument()
+    await user.click(within(drawer).getByRole('button', { name: 'Salvar alterações' }))
 
-    await user.type(screen.getByLabelText('Assunto'), 'Teste')
-    await user.type(screen.getByLabelText('O que aconteceu?'), 'Fato teste')
-    await user.click(screen.getByText('Continuar'))
-
-    await user.type(screen.getByLabelText('O que foi pedido pela imprensa?'), 'Pedido teste')
-    await user.type(screen.getByLabelText('Prazo solicitado'), '2026-09-15')
-
-    await user.click(screen.getByRole('button', { name: 'acidente' }))
-    await user.click(screen.getByRole('button', { name: 'operação' }))
-
-    const tagInput = screen.getByPlaceholderText('Digite uma tag e pressione Enter')
-    await user.type(tagInput, 'tag-personalizada{Enter}')
-
-    await user.click(screen.getByText('Concluir captura'))
-
-    await waitFor(() => {
-      expect(onCapture).toHaveBeenCalledWith(
-        expect.objectContaining({
-          tags: ['acidente', 'operação', 'tag-personalizada'],
-        }),
-      )
-    })
+    expect(onCapture).toHaveBeenCalledWith(expect.objectContaining({
+      enrichment: expect.objectContaining({
+        tags: ['original'],
+        confirmedFacts: ['Hub anunciado.'],
+        pendingFacts: ['Confirmar data da entrevista.'],
+        nextStep: 'Preparar briefing.',
+      }),
+    }))
   })
 
-  it('permite remover tags adicionadas', async () => {
+  it('não bloqueia a captura quando a classificação fica vazia', async () => {
+    const onCapture = vi.fn()
     const user = userEvent.setup()
-    render(<DemandCreateDrawer {...defaultProps} initialJournalistId="j-1" />)
+    render(
+      <DemandCreateDrawer
+        open
+        journalists={[journalist]}
+        onOpenChange={vi.fn()}
+        onCapture={onCapture}
+      />,
+    )
+    const drawer = await screen.findByRole('dialog', { name: /Nova demanda/ })
+    await user.click(within(drawer).getByRole('combobox', { name: 'Quem entrou em contato?' }))
+    await user.click(await screen.findByRole('option', { name: 'Carolina Montenegro' }))
+    await user.click(within(drawer).getByRole('combobox', { name: 'Canal de entrada' }))
+    await user.click(await screen.findByRole('option', { name: 'Telefone' }))
+    await user.click(within(drawer).getByRole('button', { name: 'Continuar' }))
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'Assunto' }), { target: { value: 'Caso rápido' } })
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'O que aconteceu?' }), { target: { value: 'Fato inicial.' } })
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'O que foi pedido pela imprensa?' }), { target: { value: 'Nota.' } })
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'Prazo solicitado' }), { target: { value: '12/03/2026' } })
+    await user.click(within(drawer).getByRole('button', { name: 'Continuar' }))
+    expect(within(drawer).getByRole('textbox', { name: 'Tags' })).toBeVisible()
+    await user.click(within(drawer).getByRole('button', { name: 'Concluir captura' }))
 
-    await user.click(screen.getByLabelText('Canal de entrada'))
-    await user.click(screen.getByText('E-mail'))
-    await user.click(screen.getByText('Continuar'))
-
-    await user.type(screen.getByLabelText('Assunto'), 'Teste')
-    await user.type(screen.getByLabelText('O que aconteceu?'), 'Fato')
-    await user.click(screen.getByText('Continuar'))
-
-    await user.click(screen.getByRole('button', { name: 'acidente' }))
-    await user.click(screen.getByRole('button', { name: 'operação' }))
-
-    expect(screen.getByText('acidente')).toBeInTheDocument()
-    expect(screen.getByText('operação')).toBeInTheDocument()
-
-    const chips = screen.getAllByRole('button', { name: /remover/i })
-    await user.click(chips[0])
-
-    expect(screen.queryByText('acidente')).not.toBeInTheDocument()
-    expect(screen.getByText('operação')).toBeInTheDocument()
-  })
-
-  it('permite registrar contato local quando nenhum jornalista é encontrado', async () => {
-    const user = userEvent.setup()
-    const onCapture = vi.fn<[NewLocalDemandCapture]>()
-    render(<DemandCreateDrawer {...defaultProps} onCapture={onCapture} />)
-
-    const searchInput = screen.getByPlaceholderText('Buscar contato ou redação')
-    await user.type(searchInput, 'Novo Contato')
-
-    await user.click(screen.getByText(/Adicionar Novo Contato como novo contato/))
-
-    expect(screen.getByLabelText('Quem entrou em contato?')).toHaveValue('Novo Contato')
-
-    await user.type(screen.getByLabelText('Redação ou veículo'), 'Nova Redação')
-
-    await user.click(screen.getByLabelText('Canal de entrada'))
-    await user.click(screen.getByText('Telefone'))
-
-    await user.click(screen.getByText('Continuar'))
-
-    await user.type(screen.getByLabelText('Assunto'), 'Teste contato local')
-    await user.type(screen.getByLabelText('O que aconteceu?'), 'Fato')
-    await user.click(screen.getByText('Continuar'))
-
-    await user.type(screen.getByLabelText('O que foi pedido pela imprensa?'), 'Pedido')
-    await user.type(screen.getByLabelText('Prazo solicitado'), '2026-09-15')
-    await user.click(screen.getByText('Concluir captura'))
-
-    await waitFor(() => {
-      expect(onCapture).toHaveBeenCalledWith(
-        expect.objectContaining({
-          contactMode: 'local',
-          contactName: 'Novo Contato',
-          contactOutlet: 'Nova Redação',
-          journalistId: '',
-        }),
-      )
-    })
-  })
-
-  it('valida campos obrigatórios em cada etapa', async () => {
-    const user = userEvent.setup()
-    render(<DemandCreateDrawer {...defaultProps} />)
-
-    await user.click(screen.getByText('Continuar'))
-
-    expect(screen.getByText('Informe o canal de entrada.')).toBeInTheDocument()
-
-    await user.click(screen.getByLabelText('Canal de entrada'))
-    await user.click(screen.getByText('E-mail'))
-
-    await user.click(screen.getByText('Receber sem contato cadastrado'))
-
-    await user.click(screen.getByText('Continuar'))
-
-    expect(screen.queryByText('Informe o contato ou registre-o localmente.')).not.toBeInTheDocument()
-  })
-
-  it('exibe confirmação ao tentar descartar com alterações', async () => {
-    const user = userEvent.setup()
-    render(<DemandCreateDrawer {...defaultProps} />)
-
-    await user.type(screen.getByPlaceholderText('Buscar contato ou redação'), 'Teste')
-
-    await user.click(screen.getByText('Cancelar'))
-
-    expect(screen.getByText('Descartar captura?')).toBeInTheDocument()
-    expect(screen.getByText('As informações preenchidas nesta entrada serão perdidas.')).toBeInTheDocument()
-  })
-
-  it('mantém separação clara entre fato e pedido', async () => {
-    const user = userEvent.setup()
-    render(<DemandCreateDrawer {...defaultProps} initialJournalistId="j-1" />)
-
-    await user.click(screen.getByLabelText('Canal de entrada'))
-    await user.click(screen.getByText('E-mail'))
-    await user.click(screen.getByText('Continuar'))
-
-    expect(screen.getByLabelText('Assunto')).toBeInTheDocument()
-    expect(screen.getByLabelText('O que aconteceu?')).toBeInTheDocument()
-    expect(screen.getByText('Registre o fato recebido.')).toBeInTheDocument()
-
-    await user.type(screen.getByLabelText('Assunto'), 'Assunto')
-    await user.type(screen.getByLabelText('O que aconteceu?'), 'Fato')
-    await user.click(screen.getByText('Continuar'))
-
-    expect(screen.getByLabelText('O que foi pedido pela imprensa?')).toBeInTheDocument()
-    expect(screen.getByLabelText('Prazo solicitado')).toBeInTheDocument()
+    expect(onCapture).toHaveBeenCalledWith(expect.objectContaining({
+      subject: 'Caso rápido',
+      priority: null,
+      enrichment: expect.objectContaining({ tags: [], topics: [], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null }),
+    }))
   })
 })

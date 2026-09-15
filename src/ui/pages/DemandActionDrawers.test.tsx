@@ -1,109 +1,122 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { DemandClosureDrawer } from './DemandClosureDrawer'
-import { DemandDecisionDrawer } from './DemandDecisionDrawer'
-import { DemandEnrichmentDrawer } from './DemandEnrichmentDrawer'
-import { DemandPositioningDrawer } from './DemandPositioningDrawer'
-import { DemandReviewDrawer } from './DemandReviewDrawer'
-import { DemandVersionDrawer } from './DemandVersionDrawer'
+import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
+import { DemandInteractionDrawer } from './DemandInteractionDrawer'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  useLocalDemandStore.getState().reset()
+})
 
-describe('Demand action drawers', () => {
-  it('normaliza listas e registra todo o enriquecimento da demanda', async () => {
-    const onSave = vi.fn()
-    render(<DemandEnrichmentDrawer open onOpenChange={vi.fn()} onSave={onSave} responsibleOptions={[{ value: 'ana', label: 'Ana Paula' }]} />)
+function renderDrawer(positioningBody = '', onOpenChange = vi.fn()) {
+  const demand = useLocalDemandStore.getState().add({
+    subject: 'Caso local',
+    factContext: 'Fato.',
+    pressRequest: 'Pedido.',
+    requestedDeadline: '2026-08-28',
+    channel: 'Telefone',
+    contactMode: 'local',
+    contactName: 'Contato',
+    contactOutlet: 'Redação',
+    journalistId: '',
+    journalistName: 'Contato',
+    outletName: 'Redação',
+  })
+  if (positioningBody) useLocalDemandStore.getState().savePositioning(demand.id, { body: positioningBody })
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+  render(
+    <QueryClientProvider client={client}>
+      <DemandInteractionDrawer
+        demandId={demand.id}
+        demandCode={demand.code}
+        demandTitle={demand.subject}
+        positioningBody={useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.positioning.versions.at(-1)?.body ?? ''}
+        open
+        onOpenChange={onOpenChange}
+      />
+    </QueryClientProvider>,
+  )
+  return { demand, onOpenChange }
+}
+
+describe('DemandInteractionDrawer', () => {
+  it('não pede versão ao registrar encaminhamento', async () => {
+    renderDrawer()
     const user = userEvent.setup()
+    const drawer = screen.getByRole('dialog', { name: 'Registrar interação' })
 
-    await user.type(screen.getByRole('textbox', { name: 'Tags' }), 'Urgente, imprensa, urgente')
-    await user.type(screen.getByRole('textbox', { name: 'Tema' }), 'Mobilidade')
-    await user.type(screen.getByRole('textbox', { name: 'Área' }), 'Transportes')
-    await user.type(screen.getByRole('textbox', { name: 'Fatos confirmados' }), 'Linha interditada')
-    await user.type(screen.getByRole('textbox', { name: 'Pendências' }), 'Confirmar horário')
-    await user.click(screen.getByRole('combobox', { name: 'Responsável' }))
-    await user.click(await screen.findByRole('option', { name: 'Ana Paula' }))
-    await user.click(screen.getByRole('combobox', { name: 'Prioridade' }))
-    await user.click(await screen.findByRole('option', { name: 'Urgente' }))
-    await user.type(screen.getByRole('textbox', { name: 'Próximo passo' }), 'Validar com a área')
-    await user.click(screen.getByRole('button', { name: 'Salvar enriquecimento' }))
+    await user.click(within(drawer).getByRole('combobox', { name: 'Resultado da interação' }))
+    await user.click(await screen.findByRole('option', { name: 'Encaminhado' }))
 
-    expect(onSave).toHaveBeenCalledWith({
-      tags: ['Urgente', 'imprensa'], topic: 'Mobilidade', area: 'Transportes',
-      confirmedFacts: 'Linha interditada', pendingItems: 'Confirmar horário',
-      responsibleId: 'ana', priority: 'urgent', nextStep: 'Validar com a área',
-    })
+    expect(within(drawer).queryByRole('textbox', { name: /versão/i })).not.toBeInTheDocument()
+    expect(within(drawer).getByLabelText('Para quem/qual área?')).toBeVisible()
+    expect(within(drawer).getByLabelText('O que foi encaminhado?')).toBeVisible()
+    expect(within(drawer).getByLabelText('Próximo passo')).toBeVisible()
   })
 
-  it('solicita review identificando revisor e versão', async () => {
-    const onSubmit = vi.fn()
-    render(<DemandReviewDrawer open onOpenChange={vi.fn()} onSubmit={onSubmit} reviewerOptions={[{ value: 'bia', label: 'Beatriz Lima' }]} />)
+  it('exige quem aprovou e o parecer para Aprovado, e recusa sem texto salvo', async () => {
+    const { demand } = renderDrawer()
     const user = userEvent.setup()
+    const drawer = screen.getByRole('dialog', { name: 'Registrar interação' })
 
-    await user.click(screen.getByRole('combobox', { name: 'Revisor' }))
-    await user.click(await screen.findByRole('option', { name: 'Beatriz Lima' }))
-    await user.type(screen.getByRole('textbox', { name: 'Versão para review' }), 'v2')
-    await user.click(screen.getByRole('button', { name: 'Solicitar review' }))
+    await user.click(within(drawer).getByRole('combobox', { name: 'Resultado da interação' }))
+    await user.click(await screen.findByRole('option', { name: 'Aprovado' }))
+    await user.click(within(drawer).getByRole('button', { name: 'Salvar' }))
+    expect(within(drawer).getByText('Informe quem aprovou ou a área.')).toBeVisible()
 
-    expect(onSubmit).toHaveBeenCalledWith({ reviewerId: 'bia', version: 'v2' })
+    await user.type(within(drawer).getByLabelText('Quem aprovou / área'), 'Coordenação')
+    await user.type(within(drawer).getByLabelText('Parecer'), 'Liberado internamente.')
+    await user.click(within(drawer).getByRole('button', { name: 'Salvar' }))
+    expect(await within(drawer).findByText('Salve o texto do posicionamento antes de registrar a aprovação.')).toBeVisible()
+    expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.interactions).toEqual([])
+
+    useLocalDemandStore.getState().savePositioning(demand.id, { body: 'Nota da sessão.' })
+    await user.click(within(drawer).getByRole('button', { name: 'Salvar' }))
+
+    await waitFor(() => expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.positioning.state).toBe('approved'))
+    expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.status).toBe('in_progress')
+    expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.interactions.at(-1)?.result).toBe('approved')
   })
 
-  it.each([
-    ['Aprovar', 'approve'],
-    ['Pedir ajustes', 'request_changes'],
-    ['Reprovar', 'reject'],
-  ] as const)('registra a decisão %s separada de estado e posicionamento', async (label, decision) => {
-    const onSubmit = vi.fn()
-    render(<DemandDecisionDrawer open onOpenChange={vi.fn()} onSubmit={onSubmit} />)
+  it('exige canal, destinatário e texto na resposta enviada, pré-preenche o corpo e fecha o caso', async () => {
+    const { demand, onOpenChange } = renderDrawer('Nota oficial.')
     const user = userEvent.setup()
+    const drawer = screen.getByRole('dialog', { name: 'Registrar interação' })
 
-    await user.click(screen.getByRole('radio', { name: label }))
-    await user.type(screen.getByRole('textbox', { name: 'Responsável pela decisão' }), 'Ana Paula')
-    await user.type(screen.getByRole('textbox', { name: 'Justificativa' }), 'Texto validado com a diretoria')
-    await user.click(screen.getByRole('button', { name: 'Registrar decisão' }))
+    await user.click(within(drawer).getByRole('combobox', { name: 'Resultado da interação' }))
+    await user.click(await screen.findByRole('option', { name: 'Resposta enviada' }))
+    expect(within(drawer).queryByRole('combobox', { name: 'Tipo de interação' })).not.toBeInTheDocument()
+    expect(within(drawer).queryByLabelText('Próximo passo')).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole('button', { name: 'Salvar e registrar outra' })).not.toBeInTheDocument()
+    expect(within(drawer).getByLabelText('Texto enviado')).toHaveValue('Nota oficial.')
+    await user.type(within(drawer).getByLabelText('Canal'), 'E-mail')
+    await user.type(within(drawer).getByLabelText('Destinatário'), 'redacao@exemplo.com')
+    await user.click(within(drawer).getByRole('button', { name: 'Salvar' }))
 
-    expect(onSubmit).toHaveBeenCalledWith({ decision, decider: 'Ana Paula', rationale: 'Texto validado com a diretoria' })
+    await waitFor(() => expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.status).toBe('sent'))
+    expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.positioning.state).toBe('sent')
+    expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 
-  it('registra o posicionamento final como artefato com versão, canal, destinatário e data', async () => {
-    const onSubmit = vi.fn()
-    render(<DemandPositioningDrawer open onOpenChange={vi.fn()} onSubmit={onSubmit} />)
+  it('só encerra sem resposta depois da confirmação explícita', async () => {
+    const { demand, onOpenChange } = renderDrawer()
     const user = userEvent.setup()
+    const drawer = screen.getByRole('dialog', { name: 'Registrar interação' })
 
-    await user.type(screen.getByRole('textbox', { name: 'Versão final' }), 'v3')
-    await user.click(screen.getByRole('combobox', { name: 'Canal de envio' }))
-    await user.click(await screen.findByRole('option', { name: 'E-mail' }))
-    await user.type(screen.getByRole('textbox', { name: 'Destinatário' }), 'repórter@jornal.com')
-    await user.type(screen.getByRole('textbox', { name: 'Data do posicionamento' }), '28082026')
-    await user.type(screen.getByRole('textbox', { name: 'Posicionamento final' }), 'Nota oficial aprovada.')
-    await user.click(screen.getByRole('button', { name: 'Registrar posicionamento' }))
+    await user.click(within(drawer).getByRole('combobox', { name: 'Resultado da interação' }))
+    await user.click(await screen.findByRole('option', { name: 'Encerrado sem resposta' }))
+    await user.type(within(drawer).getByLabelText('Motivo do encerramento'), 'A pauta perdeu atualidade.')
+    await user.click(within(drawer).getByRole('button', { name: 'Salvar' }))
+    expect(within(drawer).getByText('Confirme o encerramento sem resposta enviada.')).toBeVisible()
+    expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.status).toBe('in_progress')
 
-    expect(onSubmit).toHaveBeenCalledWith({ version: 'v3', channel: 'email', recipient: 'repórter@jornal.com', date: '2026-08-28', body: 'Nota oficial aprovada.' })
-  })
+    await user.click(within(drawer).getByRole('checkbox', { name: 'Confirmo o encerramento sem resposta enviada' }))
+    await user.click(within(drawer).getByRole('button', { name: 'Salvar' }))
 
-  it('registra nova versão como artefato próprio com conteúdo e data', async () => {
-    const onSubmit = vi.fn()
-    render(<DemandVersionDrawer open onOpenChange={vi.fn()} onSubmit={onSubmit} />)
-    const user = userEvent.setup()
-    await user.type(screen.getByRole('textbox', { name: 'Identificação da versão' }), 'v2')
-    await user.type(screen.getByRole('textbox', { name: 'Data da versão' }), '28082026')
-    await user.type(screen.getByRole('textbox', { name: 'Conteúdo da nova versão' }), 'Texto revisado com a fonte dos indicadores.')
-    await user.click(screen.getByRole('button', { name: 'Salvar nova versão' }))
-
-    expect(onSubmit).toHaveBeenCalledWith({ version: 'v2', date: '2026-08-28', body: 'Texto revisado com a fonte dos indicadores.' })
-  })
-
-  it('só permite encerrar sem envio após confirmação explícita', async () => {
-    const onConfirm = vi.fn()
-    render(<DemandClosureDrawer open onOpenChange={vi.fn()} onConfirm={onConfirm} />)
-    const user = userEvent.setup()
-
-    await user.type(screen.getByRole('textbox', { name: 'Motivo do encerramento' }), 'A pauta perdeu atualidade.')
-    expect(screen.getByRole('button', { name: 'Encerrar sem envio' })).toBeDisabled()
-    await user.click(screen.getByRole('checkbox', { name: 'Confirmo o encerramento sem envio' }))
-    await user.click(screen.getByRole('button', { name: 'Encerrar sem envio' }))
-
-    expect(onConfirm).toHaveBeenCalledWith({ reason: 'A pauta perdeu atualidade.' })
+    await waitFor(() => expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.status).toBe('closed_without_send'))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 })

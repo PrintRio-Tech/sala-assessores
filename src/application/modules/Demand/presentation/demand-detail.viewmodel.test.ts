@@ -5,7 +5,7 @@ import { buildDemandDetailViewModel, buildLocalDemandDetailViewModel } from './d
 import { useLocalDemandStore } from '../stores/local-demand.store'
 
 describe('Demand detail presentation contract', () => {
-  it('exposes the complete, attributed inventory for the canonical detail', async () => {
+  it('expõe o inventário atribuído do detalhe canônico via interações', async () => {
     const demand = await demandService.getById('d-regulacao')
     const viewModel = buildDemandDetailViewModel(demand!)
 
@@ -15,31 +15,41 @@ describe('Demand detail presentation contract', () => {
       journalistName: 'Carolina Montenegro',
       outletName: 'Valor Econômico',
       priorityLabel: 'Alta',
-      statusLabel: 'Em review',
+      statusLabel: 'Em andamento',
       responsibleName: 'Ana Paula',
     }))
     expect(viewModel.requestSummary).toContain('nova regulamentação ambiental')
-    expect(viewModel.interactions).toHaveLength(2)
+    expect(viewModel.factContext).toBeFalsy()
+    expect(viewModel.timeline.find((event) => event.kind === 'request')).toEqual(expect.objectContaining({
+      title: 'Demanda registrada',
+      description: null,
+    }))
+    expect(viewModel.identity.deadline.shortDate).toMatch(/^\d{2}\/\d{2}\/\d{2}$/)
+    expect(viewModel.interactions).toHaveLength(3)
     expect(viewModel.interactions.every((item) => item.originLabel === 'Fora da plataforma')).toBe(true)
-    expect(viewModel.interactions.at(-1)?.resultLabel).toBe('Resolvido')
-    expect(viewModel.decisions).toEqual([
-      expect.objectContaining({
-        consultedParty: 'Marina Sousa (Coordenação)',
-        outcomeLabel: 'Ajustes solicitados',
-      }),
+    expect(viewModel.interactions.at(-1)?.resultLabel).toBe('Faltou informação ou ajustes')
+    expect(viewModel.currentState.latestRecordedNextStep).toBe('Atualizar o material com a fonte e a ressalva regulatória.')
+    expect(viewModel.currentState.latestInteractionResult).toBe('Faltou informação ou ajustes')
+    expect(viewModel.timeline[0]?.kind).toBe('current')
+    expect(viewModel.timeline.map((event) => event.kind).slice(0, 3)).toEqual([
+      'current', 'positioning_version', 'interaction',
     ])
-    expect(viewModel.positioning).toEqual({ state: 'missing', label: 'Sem posicionamento final registrado' })
-    expect(viewModel.currentState.latestRecordedNextStep).toBe('Consolidar dados com Sustentabilidade e preparar posicionamento.')
-    expect(viewModel.currentState.latestInteractionResult).toBe('Resolvido')
-    expect(viewModel.currentState.latestDecisionSummary).toContain('Detalhar a fonte dos indicadores')
-    expect('attention' in viewModel.currentState).toBe(false)
-    expect('recordedNextStep' in viewModel.currentState).toBe(false)
-    expect(viewModel.lifecycle.createdAt.iso).toBe('2026-10-20T14:32:05.000Z')
-    expect(viewModel.lifecycle.updatedAt.iso).toBe('2026-10-21T10:15:22.000Z')
-    expect(viewModel.timeline.map((event) => event.kind)).toEqual([
-      'request', 'interaction', 'interaction', 'decision', 'current',
-    ])
-    expect(viewModel.timeline.find((event) => event.id === 'int-5')?.title).toBe('Resolvido')
+    expect(viewModel.timeline.filter((event) => event.kind === 'positioning_version')).toHaveLength(1)
+    expect(viewModel.timeline.filter((event) => event.kind === 'interaction')).toHaveLength(3)
+    expect(viewModel.timeline.find((event) => event.id === 'int-5')?.title).toBe('Aguardando retorno')
+    expect(viewModel.positioning).toEqual(expect.objectContaining({
+      state: 'draft',
+      stateLabel: 'Rascunho',
+      isEmpty: false,
+      writeLabel: 'Atualizar posicionamento',
+      primaryAction: 'register_interaction',
+    }))
+    expect(viewModel.timeline.some((event) => event.kind === 'positioning_version' && event.title === 'Versão salva')).toBe(true)
+    expect(viewModel.timeline.find((event) => event.id === 'int-regulacao-ajustes')).toEqual(expect.objectContaining({
+      title: 'Faltou informação ou ajustes',
+      actor: 'Ana Paula',
+      participants: 'Marina Sousa (Coordenação)',
+    }))
   })
 
   it('ordena interações pela ocorrência e usa o próximo passo mais recente', async () => {
@@ -53,9 +63,9 @@ describe('Demand detail presentation contract', () => {
 
     expect(viewModel.interactions.map((item) => item.id)).toEqual(['older', 'newer'])
     expect(viewModel.currentState.latestRecordedNextStep).toBe('Passo mais recente.')
-    expect(viewModel.timeline.map((event) => event.iso)).toEqual(
-      [...viewModel.timeline.map((event) => event.iso)].sort(),
-    )
+    expect(viewModel.timeline[0]).toEqual(expect.objectContaining({ kind: 'current', isCurrent: true }))
+    const rest = viewModel.timeline.slice(1)
+    expect(rest.map((event) => event.iso)).toEqual([...rest.map((event) => event.iso)].sort().reverse())
   })
 
   it('atribui a interação ao autor do registro e mantém participantes externos separados', async () => {
@@ -76,58 +86,96 @@ describe('Demand detail presentation contract', () => {
     }))
   })
 
-  it('apresenta interação Resolvido sem tipo ou textos e preserva o último próximo passo preenchido', async () => {
+  it('apresenta interação sem próximo passo e preserva o último próximo passo preenchido', async () => {
     const demand = await demandService.getById('d-regulacao')
     demand!.interactions = [
       { ...demand!.interactions[0]!, id: 'with-step', occurredAt: new Date('2026-10-22T12:00:00.000Z'), nextStep: 'Aguardar publicação.' },
       {
-        id: 'resolved-minimal',
+        id: 'waiting-minimal',
         occurredAt: new Date('2026-10-23T12:00:00.000Z'),
-        result: 'resolved',
+        result: 'waiting_response',
         type: null,
         participants: null,
         summary: null,
         nextStep: null,
+        channel: null,
+        recipient: null,
+        body: null,
         origin: 'off_platform',
       },
     ]
 
     const viewModel = buildDemandDetailViewModel(demand!)
-    const event = viewModel.timeline.find((item) => item.id === 'resolved-minimal')
+    const event = viewModel.timeline.find((item) => item.id === 'waiting-minimal')
 
     expect(event).toEqual(expect.objectContaining({
-      title: 'Resolvido',
+      title: 'Aguardando retorno',
       actor: 'Autoria não informada',
       description: null,
       nextStep: null,
     }))
-    expect(viewModel.currentState.latestInteractionResult).toBe('Resolvido')
+    expect(viewModel.currentState.latestInteractionResult).toBe('Aguardando retorno')
     expect(viewModel.currentState.latestRecordedNextStep).toBe('Aguardar publicação.')
   })
 
-  it('expõe enriquecimento, ações válidas e artefatos com autoria no histórico local', () => {
+  it('expõe enriquecimento, ações válidas e captura no histórico local', () => {
     useLocalDemandStore.getState().reset()
     const record = useLocalDemandStore.getState().add({
       subject: 'Caso urgente sem jornalista', factContext: 'Fato em apuração.', pressRequest: 'Nota até 18h',
       requestedDeadline: '2026-08-28', channel: 'Telefone', contactMode: 'local', contactName: 'Plantão',
       contactOutlet: 'Redação', journalistId: '', journalistName: 'Plantão', outletName: 'Redação',
+      priority: 'critical',
+      enrichment: { tags: ['urgente'], topics: ['Operação'], relatedAreas: ['Jurídico'], confirmedFacts: ['Ocorrência confirmada'], pendingFacts: ['Aguardar laudo'], nextStep: 'Solicitar laudo.' },
     })
-    useLocalDemandStore.getState().enrich(record.id, {
-      tags: ['urgente'], topics: ['Operação'], relatedAreas: ['Jurídico'], confirmedFacts: ['Ocorrência confirmada'],
-      pendingFacts: ['Aguardar laudo'], responsibleId: 'r-noel', responsibleName: 'Noel Ferreira', priority: 'critical', nextStep: 'Solicitar laudo.',
-    })
-    useLocalDemandStore.getState().requestReview(record.id, { reviewer: 'Coordenação', requestedBy: 'Noel Ferreira', versionLabel: 'v1' })
-    const current = useLocalDemandStore.getState().records[0]!
 
-    const view = buildLocalDemandDetailViewModel(current)
+    const view = buildLocalDemandDetailViewModel(record)
 
     expect(view.enrichment).toEqual(expect.objectContaining({ tags: ['urgente'], confirmedFacts: ['Ocorrência confirmada'], pendingFacts: ['Aguardar laudo'] }))
-    expect(view.validNextActions).toEqual(['register_interaction', 'record_decision'])
-    expect(view.timeline).toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'review', actor: 'Noel Ferreira', title: 'Review solicitado · v1' })]))
     expect(view.timeline).toEqual(expect.arrayContaining([
-      expect.objectContaining({ kind: 'state_change', title: 'Em andamento', actor: 'Noel Ferreira' }),
-      expect.objectContaining({ kind: 'state_change', title: 'Em review', actor: 'Noel Ferreira' }),
+      expect.objectContaining({
+        kind: 'enrichment',
+        title: 'Apuração registrada',
+        description: expect.stringContaining('Ocorrência confirmada'),
+        nextStep: 'Solicitar laudo.',
+      }),
     ]))
-    expect(view.identity.statusLabel).toBe('Em review')
+    expect(view.validNextActions).toEqual(['write_positioning', 'register_interaction'])
+    expect(view.positioning.isEmpty).toBe(true)
+    expect(view.positioning.primaryAction).toBe('write_positioning')
+    expect(view.identity.statusLabel).toBe('Em andamento')
+    expect(view.factContext).toBe('Fato em apuração.')
+    expect(view.requestSummary).toBe('Nota até 18h')
+    expect(view.timeline.find((event) => event.kind === 'request')?.title).toBe('Demanda registrada')
+  })
+
+  it('expõe pedido e fato separados nos três cenários de interação fora da plataforma', async () => {
+    const coletiva = buildDemandDetailViewModel((await demandService.getById('d-coletiva-prazo'))!)
+    const juridico = buildDemandDetailViewModel((await demandService.getById('d-juridico-frase'))!)
+    const adiada = buildDemandDetailViewModel((await demandService.getById('d-entrevista-adiada'))!)
+
+    expect(coletiva.identity.statusLabel).toBe('Em andamento')
+    expect(coletiva.identity.journalistName).toBe('Maria Clara')
+    expect(coletiva.identity.responsibleName).toBe('Ana Paula')
+    expect(coletiva.factContext.length).toBeGreaterThan(80)
+    expect(coletiva.requestSummary.length).toBeGreaterThan(80)
+    expect(coletiva.factContext).not.toBe(coletiva.requestSummary)
+    expect(coletiva.validNextActions).toEqual(['write_positioning', 'register_interaction'])
+    expect(coletiva.interactions[0]).toEqual(expect.objectContaining({
+      typeLabel: 'Telefonema',
+      originLabel: 'Fora da plataforma',
+    }))
+
+    expect(juridico.identity.statusLabel).toBe('Em andamento')
+    expect(juridico.identity.journalistName).toBe('Carolina Montenegro')
+    expect(juridico.validNextActions).toEqual(['write_positioning', 'register_interaction'])
+    expect(juridico.interactions.some((item) => item.typeLabel === 'Consulta jurídica')).toBe(true)
+    expect(juridico.timeline.filter((event) => event.kind === 'interaction').every((event) => event.attribution.startsWith('Fora da plataforma'))).toBe(true)
+
+    expect(adiada.identity.statusLabel).toBe('Em andamento')
+    expect(adiada.interactions.some((item) => item.resultLabel === 'Aprovado')).toBe(true)
+    expect(adiada.validNextActions).toEqual(['write_positioning', 'register_interaction'])
+    expect(adiada.positioning.state).toBe('approved')
+    expect(adiada.positioning.body).toContain('fala já liberada')
+    expect(adiada.interactions[0]?.originLabel).toBe('Fora da plataforma')
   })
 })

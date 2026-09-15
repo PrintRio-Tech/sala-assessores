@@ -1,3 +1,6 @@
+@use '@print/ui/tokens' as *;
+@use '@print/ui/mixins' as *;
+
 $ink: var(--pf-on-surface, #252525);
 $muted: var(--pf-on-surface-variant, #6a655f);
 $line: var(--pf-outline-variant, #ded8d0);
@@ -5,46 +8,42 @@ $cream: var(--pf-o-white, #f0ebe4);
 $paper: var(--pf-surface-bright, #fff);
 $forest: var(--pf-primary, #2c412a);
 $sage: #e9efe6;
-$gold: #a38a43;
 $red: #c3322d;
 
 .page { width: 100%; max-width: 1600px; margin: 0 auto; padding: 32px 40px 72px; color: $ink; }
-.detailHeader { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; align-items: center; gap: 18px; margin-bottom: 28px; }
-.backButton { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid $line; border-radius: 10px; background: $paper; color: $ink; box-shadow: 0 4px 10px rgba(18,39,31,.08); }
-.backButton svg { width: 19px; }
+.detailHeader {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  margin-bottom: $space-4;
+}
+.toolbar { width: 100%; }
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-1;
+  color: $on-surface-variant;
+  font-size: $label-md-size;
+  font-weight: $font-weight-semibold;
+  text-decoration: none;
+  transition: $transition-colors;
+  &:hover { color: $primary; }
+  @include focus-visible;
+}
 .headerIdentity { min-width: 0; }
-.headerIdentity h1 { max-width: 780px; margin: 2px 0 8px; color: $ink; font-size: clamp(31px, 2.4vw, 39px); line-height: 1.05; letter-spacing: -.045em; text-wrap: balance; }
-.eyebrow { margin: 0 0 8px; color: $forest; font-size: 10px !important; font-weight: 750; letter-spacing: .13em; text-transform: uppercase; }
-.headerMeta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; color: $muted; font-size: 12px; }
-.actions { display: flex; gap: 10px; }
-.actions button { white-space: nowrap; }
-.owner { min-width: 0; display: flex; align-items: center; gap: 10px; }
-.owner > span { min-width: 0; display: flex; flex-direction: column; }
-.owner small { color: $muted; font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.owner strong { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
-.owner button { margin-left: auto; }
-.owner svg { width: 15px; }
-
-.historyLayout { display: grid; grid-template-columns: minmax(300px, .58fr) minmax(660px, 1.42fr); align-items: start; gap: 24px; }
+.supportLine { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.historyLayout { display: grid; grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr); align-items: start; gap: 24px; }
+.mainStack { display: grid; gap: 16px; min-width: 0; }
+.infoCard { display: grid; gap: 12px; }
+.positioningHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: $space-3; }
+.positioningBody { white-space: pre-wrap; }
+.positioningActions { display: flex; justify-content: flex-start; }
+.stackedFields { display: grid; gap: 16px; }
+.stackedField { display: grid; gap: 4px; }
+.personDetail,
+.personDetail * { overflow: visible; text-overflow: unset; white-space: normal; }
 .summaryRail { display: grid; gap: 16px; }
-.summaryRail > div, .timelinePanel { border: 1px solid $line; background: rgba(255,254,250,.9); }
-.summaryRail h2 { margin: 0 0 18px; font-size: 19px; }
-.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 20px 0 0; border-top: 1px solid $line; }
-.facts > div { padding: 16px 8px 0 0; }
-.facts dt { color: $muted; font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.facts dd { margin: 5px 0 0; font-size: 13px; font-weight: 650; }
-.facts dd small { display: block; color: $muted; font-size: 10px; font-weight: 450; }
-.context { margin: 12px 0 0; color: #3f4944; font-size: 14px; line-height: 1.62; }
-.enrichmentBlock { display: flex; flex-direction: column; gap: 5px; margin-top: 14px; color: #3f4944; font-size: 12px; line-height: 1.5; }
-.enrichmentBlock > b { color: $muted; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
 .tagList { display: flex; flex-wrap: wrap; gap: 6px; }
-.tagList > span { padding: 4px 8px; border: 1px solid #cad6c8; border-radius: 999px; background: $sage; color: $forest; font-size: 10px; font-weight: 650; }
-.tagList > small { color: $muted; }
-.railSection { margin-top: 14px; }
-.sectionHeading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
-.sectionHeading p { margin: 0 0 5px; font-size: 9px !important; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
-.sectionHeading h2 { margin: 0; font-size: 22px; letter-spacing: -.03em; }
-.timelinePanel { padding: 28px 30px !important; }
 .timeline { position: relative; margin-left: 12px; padding-left: 36px; }
 .timeline::before { content: ''; position: absolute; left: 7px; top: 20px; bottom: 26px; width: 1px; background: #cfd5d0; }
 .timelineEvent { position: relative; display: grid; grid-template-columns: minmax(0,1fr) 120px; padding: 18px 8px 22px; border-bottom: 1px solid #e2e5e1; }
@@ -64,18 +63,21 @@ $red: #c3322d;
 .timelineEvent footer b { display: block; margin-bottom: 3px; color: $forest; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
 .current .timelineMeta small, .current time small, .current p { color: #d9e7e1; }
 
-.gapState { display: flex; gap: 10px; margin-top: 18px; padding: 14px; border: 1px dashed #c9c5ba; border-radius: 12px; background: #f5f2ec; }
-.gapState svg { width: 18px; flex: 0 0 auto; color: $gold; }
-.gapState span { display: flex; flex-direction: column; gap: 3px; }
-.gapState strong { font-size: 12px; }
-.gapState small { color: $muted; font-size: 10px; }
 .positioning p { color: $muted; font-size: 13px; line-height: 1.5; }
 .positioning small { color: $muted; }
 .statePage { min-height: 500px; display: grid; place-items: center; }
 
 @media (max-width: 1350px) {
   .page { padding-left: 32px; padding-right: 32px; }
-  .detailHeader { grid-template-columns: 42px minmax(0,1fr); }
-  .actions { grid-column: 2; }
-  .historyLayout { grid-template-columns: minmax(290px,.55fr) minmax(590px,1.35fr); }
+  .historyLayout { grid-template-columns: minmax(16rem, 18rem) minmax(0, 1fr); }
+}
+
+@media (max-width: 760px) {
+  .page { padding: 20px 16px 48px; }
+  .detailHeader { gap: $space-3; }
+  .historyLayout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .timeline { margin-left: 8px; padding-left: 28px; }
+  .timelineEvent { grid-template-columns: minmax(0,1fr); padding: 16px 4px 20px; }
+  .timelineEvent time { align-items: flex-start; margin-top: 6px; }
+  .timelineDot { left: -27px; }
 }

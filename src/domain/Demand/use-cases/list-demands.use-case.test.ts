@@ -18,8 +18,6 @@ function demand(partial: Partial<Demand> & Pick<Demand, 'id' | 'status' | 'title
     createdAt: new Date('2026-08-01T12:00:00.000Z'),
     updatedAt: new Date('2026-08-01T12:00:00.000Z'),
     interactions: [],
-    decisions: [],
-    finalPositioning: null,
     ...partial,
   }
 }
@@ -33,6 +31,9 @@ function createRepo(items: Demand[]): DemandRepository {
       return items.find((item) => item.id === id) ?? null
     },
     async registerInteraction() {
+      return null
+    },
+    async savePositioning() {
       return null
     },
   }
@@ -56,9 +57,10 @@ describe('ListDemands', () => {
     }),
     demand({
       id: '3',
-      status: 'pending_review',
+      status: 'in_progress',
       title: 'Relatório ESG: Setor de Energia',
       journalistName: 'Fernanda Rocha',
+      responsibleId: 'r-bruno',
       responsibleName: 'Bruno Costa',
     }),
   ]
@@ -88,6 +90,16 @@ describe('ListDemands', () => {
     const useCase = new ListDemands(createRepo(items))
 
     const result = await useCase.execute({ lifecycle: 'history' })
+
+    expect(result.items.map((d) => d.id)).toEqual(['2'])
+    expect(result.activeCount).toBe(2)
+    expect(result.historyCount).toBe(1)
+  })
+
+  it('conta ativas e histórico sem o status contextual da aba', async () => {
+    const useCase = new ListDemands(createRepo(items))
+
+    const result = await useCase.execute({ lifecycle: 'history', status: 'sent' })
 
     expect(result.items.map((d) => d.id)).toEqual(['2'])
     expect(result.activeCount).toBe(2)

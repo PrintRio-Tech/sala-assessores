@@ -11,11 +11,12 @@ export function useDemand(id: string | undefined) {
     enabled: Boolean(id),
   })
   const localRecord = useLocalDemandStore((state) => state.records.find((record) => record.id === id))
+  const isHidden = useLocalDemandStore((state) => Boolean(id && state.hiddenIds.includes(id)))
 
   return {
-    data: localRecord ?? query.data ?? null,
-    isLoading: localRecord ? false : query.isLoading,
-    localRecord,
+    data: isHidden ? null : localRecord ?? query.data ?? null,
+    isLoading: isHidden || localRecord ? false : query.isLoading,
+    localRecord: isHidden ? undefined : localRecord,
     error: query.error,
     reload: query.refetch,
   }

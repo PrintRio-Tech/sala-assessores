@@ -33,9 +33,8 @@ export class ListDemands {
     const responsibleId = params.responsibleId ?? 'all'
     const search = params.search ?? ''
 
-    const filtered = items.filter((demand) => {
+    const filteredByCommon = items.filter((demand) => {
       if (!matchesSearch(demand, search)) return false
-      if (status !== 'all' && demand.status !== status) return false
       if (responsibleId !== 'all' && demand.responsibleId !== responsibleId) {
         return false
       }
@@ -46,8 +45,12 @@ export class ListDemands {
       return true
     })
 
-    const activeCount = filtered.filter((d) => isActiveDemandStatus(d.status)).length
-    const historyCount = filtered.length - activeCount
+    const activeCount = filteredByCommon.filter((d) => isActiveDemandStatus(d.status)).length
+    const historyCount = filteredByCommon.length - activeCount
+
+    const filtered = filteredByCommon.filter((demand) => (
+      status === 'all' || demand.status === status
+    ))
 
     const scoped =
       lifecycle === 'all'

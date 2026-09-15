@@ -1,12 +1,19 @@
-import { EXTERNAL_INTERACTION_RESULT_RULES, getDemandNextActions, type Demand, type DemandStatus, type DemandPriority, type ExternalInteractionType, type DecisionOutcome } from '@/domain/Demand/demand.entity'
+import {
+  EXTERNAL_INTERACTION_RESULT_RULES,
+  POSITIONING_STATE_LABELS,
+  currentPositioningBody,
+  emptyPositioning,
+  getDemandNextActions,
+  type Demand,
+  type DemandPositioning,
+  type DemandStatus,
+  type DemandPriority,
+  type ExternalInteractionType,
+} from '@/domain/Demand/demand.entity'
 import type { LocalDemandCapture } from '../stores/local-demand.store'
 
 const statusLabels: Record<DemandStatus, string> = {
-  draft: 'Rascunho',
   in_progress: 'Em andamento',
-  pending_review: 'Em review',
-  changes_requested: 'Ajustes solicitados',
-  approved: 'Aprovada',
   sent: 'Enviada',
   closed_without_send: 'Encerrada sem envio',
 }
@@ -19,10 +26,6 @@ const interactionLabels: Record<ExternalInteractionType, string> = {
   phone: 'Telefonema', email: 'E-mail', meeting: 'Reunião', legal_consult: 'Consulta jurídica', other: 'Outro contato',
 }
 
-const decisionLabels: Record<DecisionOutcome, string> = {
-  approved: 'Aprovado', changes_requested: 'Ajustes solicitados', rejected: 'Reprovado',
-}
-
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(value)
 }
@@ -31,13 +34,57 @@ function formatTime(value: Date) {
   return new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(value)
 }
 
+function formatCompactDate(value: Date) {
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' }).format(value)
+}
+
 function dateTime(value: Date) {
-  return { iso: value.toISOString(), dateLabel: formatDate(value), timeLabel: formatTime(value) }
+  return { iso: value.toISOString(), dateLabel: formatDate(value), timeLabel: formatTime(value), shortDate: formatCompactDate(value) }
+}
+
+type DemandEnrichmentView = {
+  tags: string[]
+  topics: string[]
+  relatedAreas: string[]
+  confirmedFacts: string[]
+  pendingFacts: string[]
+  nextStep: string | null
+}
+
+function enrichmentTimelineEvent(
+  id: string,
+  enrichment: DemandEnrichmentView,
+  occurredAt: Date,
+  actor: string,
+): DemandDetailTimelineEvent | null {
+  const confirmed = enrichment.confirmedFacts.filter(Boolean)
+  const pending = enrichment.pendingFacts.filter(Boolean)
+  if (!confirmed.length && !pending.length && !enrichment.nextStep) return null
+  return {
+    id: `${id}-enrichment`,
+    kind: 'enrichment',
+    title: 'Apuração registrada',
+    actor,
+    attribution: 'Registro da assessoria',
+    description: [
+      confirmed.length ? `Fatos confirmados: ${confirmed.join(' · ')}` : null,
+      pending.length ? `Pendências: ${pending.join(' · ')}` : null,
+    ].filter(Boolean).join(' ') || null,
+    nextStep: enrichment.nextStep,
+    isAttention: false,
+    isCurrent: false,
+    ...dateTime(occurredAt),
+  }
+}
+
+function compareTimeline(left: DemandDetailTimelineEvent, right: DemandDetailTimelineEvent) {
+  if (left.isCurrent !== right.isCurrent) return Number(right.isCurrent) - Number(left.isCurrent)
+  return right.iso.localeCompare(left.iso)
 }
 
 export type DemandDetailTimelineEvent = {
   id: string
-  kind: 'request' | 'interaction' | 'review' | 'version' | 'decision' | 'positioning' | 'closure' | 'state_change' | 'current'
+  kind: 'request' | 'interaction' | 'state_change' | 'current' | 'enrichment' | 'positioning_version'
   title: string
   actor: string | null
   participants?: string | null
@@ -51,88 +98,127 @@ export type DemandDetailTimelineEvent = {
   timeLabel: string
 }
 
-export function buildDemandDetailViewModel(demand: Demand) {
-  const interactions = [...demand.interactions]
+function positioningView(positioning: DemandPositioning | undefined, status: DemandStatus) {
+  const artifact = positioning ?? emptyPositioning()
+  const body = currentPositioningBody(artifact)
+  return {
+    state: artifact.state,
+    stateLabel: POSITIONING_STATE_LABELS[artifact.state],
+    body,
+    isEmpty: artifact.state === 'empty' || !body,
+    canEdit: status === 'in_progress',
+    writeLabel: body ? 'Atualizar posicionamento' : 'Escrever posicionamento',
+    primaryAction: (!body ? 'write_positioning' : 'register_interaction') as 'write_positioning' | 'register_interaction',
+    approval: artifact.approval,
+    versions: artifact.versions,
+  }
+}
+
+function positioningTimelineEvents(positioning: DemandPositioning | undefined): DemandDetailTimelineEvent[] {
+  return (positioning ?? emptyPositioning()).versions.map((item) => ({
+    id: item.id,
+    kind: 'positioning_version' as const,
+    title: 'Versão salva',
+    actor: item.author,
+    attribution: 'Posicionamento',
+    description: item.body,
+    isAttention: false,
+    isCurrent: false,
+    ...dateTime(item.savedAt),
+  }))
+}
+
+function mapInteractions(
+  items: Demand['interactions'] | LocalDemandCapture['interactions'],
+  positioning?: DemandPositioning,
+) {
+  return [...items]
     .sort((left, right) => left.occurredAt.getTime() - right.occurredAt.getTime())
-    .map((item) => ({
-    id: item.id,
-    typeLabel: item.type ? interactionLabels[item.type] : null,
-    resultLabel: EXTERNAL_INTERACTION_RESULT_RULES[item.result].label,
-    recordedBy: item.recordedBy ?? 'Autoria não informada',
-    participants: item.participants,
-    summary: item.summary,
-    nextStep: item.nextStep,
-    originLabel: 'Fora da plataforma' as const,
-    ...dateTime(item.occurredAt),
-    }))
-  const decisions = demand.decisions.map((item) => ({
-    id: item.id,
-    consultedParty: item.consultedParty,
-    outcomeLabel: decisionLabels[item.decision],
-    rationale: item.rationale,
-    ...dateTime(item.decidedAt),
-  }))
-  const positioning = demand.finalPositioning
-    ? {
-        state: 'recorded' as const,
-        label: `Posicionamento final ${demand.finalPositioning.versionLabel}`,
-        channel: demand.finalPositioning.channel,
-        recipient: demand.finalPositioning.recipient,
-        body: demand.finalPositioning.body,
-        ...dateTime(demand.finalPositioning.sentAt),
+    .map((item) => {
+      const mapped = {
+        id: item.id,
+        typeLabel: item.type ? interactionLabels[item.type] : null,
+        resultLabel: EXTERNAL_INTERACTION_RESULT_RULES[item.result].label,
+        recordedBy: item.recordedBy ?? 'Autoria não informada',
+        participants: item.participants,
+        summary: item.summary ?? item.body,
+        nextStep: item.nextStep,
+        channel: item.channel,
+        recipient: item.recipient,
+        body: item.body,
+        originLabel: 'Fora da plataforma' as const,
+        closesCase: item.result === 'response_sent' || item.result === 'closed_without_send',
+        positioningVersionId: item.positioningVersionId ?? null,
+        ...dateTime(item.occurredAt),
       }
-    : { state: 'missing' as const, label: 'Sem posicionamento final registrado' }
-  const latestDecision = decisions.at(-1)
+      return { ...mapped, description: describeInteraction(mapped, positioning) }
+    })
+}
+
+function interactionTitle(item: ReturnType<typeof mapInteractions>[number]) {
+  if (item.resultLabel === 'Resposta enviada' && item.channel) return `Resposta enviada · ${item.channel}`
+  return [item.typeLabel, item.resultLabel].filter(Boolean).join(' · ')
+}
+
+function describeInteraction(
+  item: {
+    resultLabel: string
+    channel: string | null
+    recipient: string | null
+    body: string | null
+    summary: string | null
+    positioningVersionId: string | null
+  },
+  positioning?: DemandPositioning,
+): string | null {
+  if (item.resultLabel === 'Resposta enviada') {
+    return [item.recipient ? `Destinatário: ${item.recipient}` : null, item.body].filter(Boolean).join('\n') || item.summary
+  }
+  if (item.resultLabel === 'Aprovado') {
+    const tied = positioning?.versions.find((version) => version.id === item.positioningVersionId)?.body
+      ?? currentPositioningBody(positioning ?? emptyPositioning())
+    return [item.summary, tied].filter(Boolean).join('\n') || null
+  }
+  return item.summary
+}
+
+export function buildDemandDetailViewModel(demand: Demand) {
+  const interactions = mapInteractions(demand.interactions, demand.positioning)
   const latestInteraction = interactions.at(-1)
-  const recordedNextStep = [...interactions].reverse().find((item) => item.nextStep)?.nextStep ?? null
-  const reviewEvents: DemandDetailTimelineEvent[] = (demand.reviewRequests ?? []).map((item) => ({
-    id: item.id, kind: 'review', title: `Review solicitado · ${item.versionLabel}`, actor: item.requestedBy,
-    attribution: `Solicitação registrada · revisão por ${item.reviewer}`, description: `Artefato ${item.versionLabel} encaminhado para review.`,
-    isAttention: false, isCurrent: false, ...dateTime(item.requestedAt),
-  }))
-  const versionEvents: DemandDetailTimelineEvent[] = (demand.versions ?? []).map((item) => ({
-    id: item.id, kind: 'version', title: `Nova versão · ${item.versionLabel}`, actor: item.createdBy,
-    attribution: 'Artefato registrado · conteúdo versionado', description: item.body,
-    isAttention: false, isCurrent: false, ...dateTime(item.createdAt),
-  }))
+  const enrichment = demand.enrichment ?? { tags: [], topics: [], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null }
+  const recordedNextStep = [...interactions].reverse().find((item) => item.nextStep)?.nextStep ?? enrichment.nextStep
   const stateEvents: DemandDetailTimelineEvent[] = (demand.stateTransitions ?? []).map((item) => ({
     id: item.id, kind: 'state_change', title: statusLabels[item.to], actor: item.recordedBy,
     attribution: `Mudança de estado · ${statusLabels[item.from]} → ${statusLabels[item.to]}`, description: null,
-    isAttention: item.to === 'changes_requested', isCurrent: false, ...dateTime(item.occurredAt),
+    isAttention: item.to === 'closed_without_send', isCurrent: false, ...dateTime(item.occurredAt),
   }))
 
   const timeline: DemandDetailTimelineEvent[] = [
     {
-      id: 'request', kind: 'request' as const, title: 'Pedido original', actor: demand.journalistName,
-      attribution: `${demand.outletName} · solicitação registrada`, description: demand.requestSummary,
+      id: 'request', kind: 'request' as const, title: 'Demanda registrada', actor: demand.journalistName,
+      attribution: `${demand.outletName} · solicitação registrada`, description: null,
       isAttention: false, isCurrent: false, ...dateTime(demand.createdAt),
     },
     ...interactions.map((item) => ({
-      id: item.id, kind: 'interaction' as const, title: [item.typeLabel, item.resultLabel].filter(Boolean).join(' · '), actor: item.recordedBy,
+      id: item.id, kind: 'interaction' as const, title: interactionTitle(item), actor: item.recordedBy,
       participants: item.participants,
-      attribution: interactionAttribution(item.originLabel, item.participants), description: item.summary, nextStep: item.nextStep,
-      isAttention: false, isCurrent: false, iso: item.iso, dateLabel: item.dateLabel, timeLabel: item.timeLabel,
+      attribution: interactionAttribution(item.originLabel, item.participants),
+      description: item.description,
+      nextStep: item.nextStep,
+      isAttention: item.closesCase && item.resultLabel === 'Encerrado sem resposta',
+      isCurrent: false, iso: item.iso, dateLabel: item.dateLabel, timeLabel: item.timeLabel,
     })),
-    ...reviewEvents,
-    ...versionEvents,
-    ...decisions.map((item) => ({
-      id: item.id, kind: 'decision' as const, title: item.outcomeLabel, actor: item.consultedParty,
-      attribution: 'Decisão atribuída e registrada', description: item.rationale,
-      isAttention: item.outcomeLabel !== 'Aprovado', isCurrent: false,
-      iso: item.iso, dateLabel: item.dateLabel, timeLabel: item.timeLabel,
-    })),
-    ...(positioning.state === 'recorded' ? [{
-      id: 'positioning', kind: 'positioning' as const, title: positioning.label, actor: positioning.recipient,
-      attribution: `Envio registrado · ${positioning.channel}`, description: positioning.body,
-      isAttention: false, isCurrent: false, iso: positioning.iso, dateLabel: positioning.dateLabel, timeLabel: positioning.timeLabel,
-    }] : []),
     ...stateEvents,
+    ...positioningTimelineEvents(demand.positioning),
+    ...[enrichmentTimelineEvent(demand.id, enrichment, demand.updatedAt, demand.responsibleName)].filter(
+      (event): event is DemandDetailTimelineEvent => event !== null,
+    ),
     {
       id: 'current', kind: 'current' as const, title: statusLabels[demand.status], actor: demand.responsibleName,
       attribution: 'Estado atual · última atualização do registro · responsável atribuído', description: `Estado atual registrado: ${statusLabels[demand.status]}.`,
       isAttention: false, isCurrent: true, ...dateTime(demand.updatedAt),
     },
-  ].sort((left, right) => left.iso.localeCompare(right.iso))
+  ].sort(compareTimeline)
 
   return {
     id: demand.id,
@@ -148,15 +234,16 @@ export function buildDemandDetailViewModel(demand: Demand) {
       deadline: dateTime(demand.deadlineAt),
     },
     requestSummary: demand.requestSummary,
-    enrichment: demand.enrichment ?? { tags: [], topics: [], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null },
+    factContext: demand.factContext ?? '',
+    sourceChannel: demand.channel?.trim() ?? '',
+    createdByName: null,
+    enrichment,
     validNextActions: getDemandNextActions(demand.status),
+    positioning: positioningView(demand.positioning, demand.status),
     interactions,
-    decisions,
-    positioning,
     currentState: {
       statusLabel: statusLabels[demand.status],
       responsibleName: demand.responsibleName,
-      latestDecisionSummary: latestDecision ? `${latestDecision.outcomeLabel}: ${latestDecision.rationale}` : 'Sem decisão registrada.',
       latestRecordedNextStep: recordedNextStep,
       latestInteractionResult: latestInteraction?.resultLabel ?? null,
       updatedAt: dateTime(demand.updatedAt),
@@ -176,57 +263,26 @@ export function buildLocalDemandDetailViewModel(record: LocalDemandCapture) {
   const localDeadline = /^\d{4}-\d{2}-\d{2}$/.test(record.requestedDeadline)
     ? record.requestedDeadline.split('-').reverse().join('/')
     : record.requestedDeadline
-  const interactions = [...record.interactions]
-    .sort((left, right) => left.occurredAt.getTime() - right.occurredAt.getTime())
-    .map((item) => ({
-      id: item.id,
-      typeLabel: item.type ? interactionLabels[item.type] : null,
-      resultLabel: EXTERNAL_INTERACTION_RESULT_RULES[item.result].label,
-      recordedBy: item.recordedBy ?? 'Autoria não informada',
-      participants: item.participants,
-      summary: item.summary,
-      nextStep: item.nextStep,
-      originLabel: 'Fora da plataforma' as const,
-      ...dateTime(item.occurredAt),
-    }))
-  const reviewEvents: DemandDetailTimelineEvent[] = record.reviewRequests.map((item) => ({
-    id: item.id, kind: 'review', title: `Review solicitado · ${item.versionLabel}`, actor: item.requestedBy,
-    attribution: `Solicitação registrada · revisão por ${item.reviewer}`, description: `Artefato ${item.versionLabel} encaminhado para review.`,
-    isAttention: false, isCurrent: false, ...dateTime(item.requestedAt),
-  }))
-  const versionEvents: DemandDetailTimelineEvent[] = record.versions.map((item) => ({
-    id: item.id, kind: 'version', title: `Nova versão · ${item.versionLabel}`, actor: item.createdBy,
-    attribution: 'Artefato registrado · conteúdo versionado', description: item.body,
-    isAttention: false, isCurrent: false, ...dateTime(item.createdAt),
-  }))
+  const brDate = record.requestedDeadline.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+  const localDeadlineShort = /^\d{4}-\d{2}-\d{2}$/.test(record.requestedDeadline)
+    ? `${record.requestedDeadline.slice(8, 10)}/${record.requestedDeadline.slice(5, 7)}/${record.requestedDeadline.slice(2, 4)}`
+    : brDate
+      ? `${brDate[1]}/${brDate[2]}/${brDate[3].slice(2)}`
+      : localDeadline
+  const interactions = mapInteractions(record.interactions, record.positioning)
   const stateEvents: DemandDetailTimelineEvent[] = record.stateTransitions.map((item) => ({
     id: item.id, kind: 'state_change', title: statusLabels[item.to], actor: item.recordedBy,
     attribution: `Mudança de estado · ${statusLabels[item.from]} → ${statusLabels[item.to]}`, description: null,
-    isAttention: item.to === 'changes_requested', isCurrent: false, ...dateTime(item.occurredAt),
+    isAttention: item.to === 'closed_without_send', isCurrent: false, ...dateTime(item.occurredAt),
   }))
-  const decisionEvents: DemandDetailTimelineEvent[] = record.decisions.map((item) => ({
-    id: item.id, kind: 'decision', title: decisionLabels[item.decision], actor: item.decidedBy ?? item.consultedParty,
-    attribution: 'Decisão atribuída e registrada', description: item.rationale,
-    isAttention: item.decision !== 'approved', isCurrent: false, ...dateTime(item.decidedAt),
-  }))
-  const positioningEvent: DemandDetailTimelineEvent[] = record.finalPositioning ? [{
-    id: `${record.id}-positioning`, kind: 'positioning', title: `Posicionamento final ${record.finalPositioning.versionLabel}`,
-    actor: record.finalPositioning.recordedBy ?? record.responsibleName, attribution: `Envio registrado · ${record.finalPositioning.channel}`,
-    description: record.finalPositioning.body, isAttention: false, isCurrent: false, ...dateTime(record.finalPositioning.sentAt),
-  }] : []
-  const closureEvent: DemandDetailTimelineEvent[] = record.closure ? [{
-    id: `${record.id}-closure`, kind: 'closure', title: 'Encerrada sem envio', actor: record.closure.closedBy,
-    attribution: 'Encerramento registrado · sem posicionamento enviado', description: record.closure.reason,
-    isAttention: true, isCurrent: false, ...dateTime(record.closure.closedAt),
-  }] : []
   const timeline: DemandDetailTimelineEvent[] = [
     {
       id: `${record.id}-received`,
       kind: 'request' as const,
-      title: 'Entrada recebida',
+      title: 'Demanda registrada',
       actor: sourceLabel,
       attribution: `${record.channel} · registro local`,
-      description: `${record.factContext} Pedido: ${record.pressRequest}`,
+      description: null,
       isAttention: false,
       isCurrent: false,
       ...capturedAt,
@@ -234,24 +290,23 @@ export function buildLocalDemandDetailViewModel(record: LocalDemandCapture) {
     ...interactions.map((item) => ({
       id: item.id,
       kind: 'interaction' as const,
-      title: [item.typeLabel, item.resultLabel].filter(Boolean).join(' · '),
+      title: interactionTitle(item),
       actor: item.recordedBy,
       participants: item.participants,
       attribution: interactionAttribution(item.originLabel, item.participants),
-      description: item.summary,
+      description: item.description,
       nextStep: item.nextStep,
-      isAttention: false,
+      isAttention: item.closesCase && item.resultLabel === 'Encerrado sem resposta',
       isCurrent: false,
       iso: item.iso,
       dateLabel: item.dateLabel,
       timeLabel: item.timeLabel,
     })),
-    ...reviewEvents,
-    ...versionEvents,
-    ...decisionEvents,
-    ...positioningEvent,
-    ...closureEvent,
     ...stateEvents,
+    ...positioningTimelineEvents(record.positioning),
+    ...[enrichmentTimelineEvent(record.id, record.enrichment, record.updatedAt, record.responsibleName)].filter(
+      (event): event is DemandDetailTimelineEvent => event !== null,
+    ),
     {
       id: `${record.id}-local`,
       kind: 'current' as const,
@@ -259,11 +314,11 @@ export function buildLocalDemandDetailViewModel(record: LocalDemandCapture) {
       actor: record.responsibleName,
       attribution: 'Estado atual · registro local desta sessão',
       description: `Estado atual registrado: ${statusLabels[record.status]}.`,
-      isAttention: record.status === 'changes_requested',
+      isAttention: false,
       isCurrent: true,
       ...updatedAt,
     },
-  ].sort((left, right) => left.iso.localeCompare(right.iso))
+  ].sort(compareTimeline)
 
   return {
     id: record.id,
@@ -275,27 +330,27 @@ export function buildLocalDemandDetailViewModel(record: LocalDemandCapture) {
       journalistName: record.journalistName,
       outletName: record.outletName,
       responsibleName: record.responsibleName,
-      priorityLabel: record.priority ? priorityLabels[record.priority] : 'Ainda não definida',
+      priorityLabel: record.priority ? priorityLabels[record.priority] : null,
       statusLabel: statusLabels[record.status],
-      deadline: { dateLabel: 'Prazo solicitado', timeLabel: localDeadline },
+      deadline: { dateLabel: 'Prazo solicitado', timeLabel: localDeadline, shortDate: localDeadlineShort, iso: '' },
     },
     requestSummary: record.pressRequest,
+    factContext: record.factContext,
+    createdByName: record.createdBy && record.createdBy.name !== record.responsibleName ? record.createdBy.name : null,
     enrichment: record.enrichment,
     validNextActions: getDemandNextActions(record.status),
-    factContext: record.factContext,
+    positioning: positioningView(record.positioning, record.status),
     sourceChannel: record.channel,
     localCapture: {
       requestedDeadline: localDeadline,
       journalistName: record.contactName || record.journalistName,
       outletName: record.contactOutlet || record.outletName,
+      responsibleId: record.responsibleId,
     },
     interactions,
-    decisions: record.decisions.map((item) => ({ id: item.id, consultedParty: item.consultedParty, outcomeLabel: decisionLabels[item.decision], rationale: item.rationale, ...dateTime(item.decidedAt) })),
-    positioning: record.finalPositioning ? { state: 'recorded' as const, label: `Posicionamento final ${record.finalPositioning.versionLabel}`, channel: record.finalPositioning.channel, recipient: record.finalPositioning.recipient, body: record.finalPositioning.body, ...dateTime(record.finalPositioning.sentAt) } : { state: 'missing' as const, label: 'Sem posicionamento final registrado' },
     currentState: {
       statusLabel: statusLabels[record.status],
       responsibleName: record.responsibleName,
-      latestDecisionSummary: record.decisions.at(-1) ? `${decisionLabels[record.decisions.at(-1)!.decision]}: ${record.decisions.at(-1)!.rationale}` : 'Nenhuma decisão registrada.',
       latestRecordedNextStep: record.enrichment.nextStep ?? [...interactions].reverse().find((item) => item.nextStep)?.nextStep ?? null,
       latestInteractionResult: interactions.at(-1)?.resultLabel ?? null,
       updatedAt,

@@ -17,7 +17,7 @@ describe('GetDemandById', () => {
     responsibleName: 'Ana Paula',
     deadlineAt: new Date('2026-10-24T12:00:00.000Z'),
     priority: 'high',
-    status: 'pending_review',
+    status: 'in_progress',
     createdAt: new Date('2026-10-20T14:32:05.000Z'),
     updatedAt: new Date('2026-10-21T10:15:22.000Z'),
     interactions: [
@@ -29,22 +29,15 @@ describe('GetDemandById', () => {
         participants: 'J. Doe (Cliente)',
         summary: 'Solicitação inicial registrada fora da plataforma.',
         nextStep: 'Preparar posicionamento',
+        channel: null,
+        recipient: null,
+        body: null,
         origin: 'off_platform',
       },
     ],
-    decisions: [
-      {
-        id: 'dec1',
-        decidedAt: new Date('2026-10-21T09:00:00.000Z'),
-        consultedParty: 'S. Smith (Coordenação)',
-        decision: 'changes_requested',
-        rationale: 'Ajustar cláusulas de indenização.',
-      },
-    ],
-    finalPositioning: null,
   }
 
-  it('retorna a demanda com interações e decisões', async () => {
+  it('retorna a demanda com interações registradas', async () => {
     const useCase = new GetDemandById({
       async list() {
         return { items: [], total: 0 }
@@ -55,6 +48,9 @@ describe('GetDemandById', () => {
       async registerInteraction() {
         return null
       },
+      async savePositioning() {
+        return null
+      },
     })
 
     const result = await useCase.execute('d1')
@@ -62,7 +58,7 @@ describe('GetDemandById', () => {
     expect(result.code).toBe('DEM-992-B')
     expect(result.interactions).toHaveLength(1)
     expect(result.interactions[0]?.origin).toBe('off_platform')
-    expect(result.decisions[0]?.decision).toBe('changes_requested')
+    expect(result.status).toBe('in_progress')
   })
 
   it('lança erro tipado quando a demanda não existe', async () => {
@@ -74,6 +70,9 @@ describe('GetDemandById', () => {
         return null
       },
       async registerInteraction() {
+        return null
+      },
+      async savePositioning() {
         return null
       },
     })

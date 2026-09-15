@@ -36,10 +36,8 @@ Compartilhar com Print, neste momento:
 
 Agregados do frontend já modelados e substituíveis:
 
-- `Demand` — jornada `draft → in_progress → pending_review → changes_requested → approved → sent`
-- `ExternalInteraction` — sempre `origin: off_platform`
-- `DemandDecision` — parecer registrado (não execução de workflow interno)
-- `FinalPositioning` — artefato de envio
+- `Demand` — ciclo `in_progress` → `sent` | `closed_without_send`. Tem `positioning` (texto atual + versões + aprovação opcional do texto).
+- `ExternalInteraction` — `origin: off_platform`. `approved` marca o posicionamento atual. `response_sent` / `closed_without_send` fecham o caso. Sem resultado `resolved`.
 - `Journalist` — cadastro + histórico objetivo
 - `RelationshipEvaluation` — **exige autor + data**; nunca inferida
 

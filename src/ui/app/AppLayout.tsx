@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AppShell, Avatar, Icon, ICONS, Text, type AppNavItem } from '@print/ui'
+import { AppShell, Avatar, BrandLogo, Icon, ICONS, Text, type AppNavItem } from '@print/ui'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { mockAuthService } from '@/application/services/mock-auth-service'
@@ -32,9 +32,28 @@ export function AppLayout() {
 
   return (
     <AppShell
-      logo={<button className={styles.brand} type="button" onClick={() => navigate(ROUTES.home)}><span className={styles.brandMark}>S</span><span>Sala de Assessores</span></button>}
-      logoCollapsed={<button className={styles.brandCollapsed} type="button" aria-label="Sala de Assessores" onClick={() => navigate(ROUTES.home)}>S</button>}
-      mobileLogo={<Text as="span" variant="labelMd">Sala de Assessores</Text>}
+      logo={
+        <button className={styles.brandHome} type="button" onClick={() => navigate(ROUTES.home)}>
+          <BrandLogo variant="sidebarExpanded" />
+        </button>
+      }
+      logoCollapsed={
+        <button className={styles.brandHome} type="button" aria-label="Print" onClick={() => navigate(ROUTES.home)}>
+          <BrandLogo variant="sidebarCollapsed" />
+        </button>
+      }
+      mobileLogo={
+        <img
+          className={styles.mobileHeaderLogo}
+          src="/logos/wordmark-chumbo.png"
+          alt="Print"
+          width={120}
+          height={32}
+          loading="eager"
+          decoding="async"
+          translate="no"
+        />
+      }
       navItems={navItems}
       footerSlot={
         <div className={styles.footerWrapper}>

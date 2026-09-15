@@ -8,7 +8,7 @@ export function useDemandDetailView(id: string | undefined) {
     source: demandQuery.data,
     data: demandQuery.localRecord
       ? buildLocalDemandDetailViewModel(demandQuery.localRecord)
-      : demandQuery.data && !('factContext' in demandQuery.data)
+      : demandQuery.data && !('pressRequest' in demandQuery.data)
         ? buildDemandDetailViewModel(demandQuery.data)
         : null,
   }

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import type { DemandStatus } from '@/domain/Demand/demand.entity'
+import { sanitizeDemandListStatus, type DemandStatus } from '@/domain/Demand/demand.entity'
 
 interface DemandFiltersState {
   search: string
@@ -37,7 +37,10 @@ export const useDemandFilters = create<DemandFiltersState>((set) => ({
   setSearch: (search) => set(firstPageState({ search })),
   setStatus: (status) => set(firstPageState({ status })),
   setResponsibleId: (responsibleId) => set(firstPageState({ responsibleId })),
-  setLifecycle: (lifecycle) => set(firstPageState({ lifecycle })),
+  setLifecycle: (lifecycle) => set((state) => firstPageState({
+    lifecycle,
+    status: sanitizeDemandListStatus(state.status, lifecycle),
+  })),
   setDeadlineOn: (deadlineOn) => set(firstPageState({ deadlineOn })),
   setPage: (page) => set({ page }),
   clearFilters: () => set((state) => ({

@@ -1,0 +1,78 @@
+@use '@print/ui/tokens' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.field {
+  position: relative;
+}
+
+.suggestions {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + $space-1);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: $space-1;
+  list-style: none;
+  border: $border-default;
+  border-radius: $radius-md;
+  background: $surface-bright;
+}
+
+.suggestion {
+  display: block;
+  width: 100%;
+  padding: $space-2 $space-3;
+  border: 0;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: $on-surface;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: $surface-container-low;
+    color: $primary;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-1;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-1;
+}
+
+.chipRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: $radius-full;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  line-height: 1;
+
+  &:hover:not(:disabled) {
+    background: $surface-container-low;
+  }
+}

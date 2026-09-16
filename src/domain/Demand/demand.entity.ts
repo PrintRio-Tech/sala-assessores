@@ -329,7 +329,8 @@ export const DEMAND_OUTCOME_SCORE_MAX = 5
 export interface DemandOutcome {
   toneScore: number
   published: DemandOutcomePublished
-  usageScore: number
+  /** Só faz sentido quando `published === 'yes'`. */
+  usageScore: number | null
   resultSummary: string
   recordedBy: string
   recordedAt: Date
@@ -339,6 +340,10 @@ export type NewDemandOutcome = DemandOutcome
 
 export function canRegisterDemandOutcome(status: DemandStatus): boolean {
   return status === 'sent' || status === 'closed_without_send'
+}
+
+export function demandOutcomeRequiresUsage(published: DemandOutcomePublished): boolean {
+  return published === 'yes'
 }
 
 function isOutcomeScore(value: number): boolean {
@@ -360,8 +365,12 @@ export function assertDemandOutcome(
   if (!(DEMAND_OUTCOME_PUBLISHED as readonly string[]).includes(outcome.published)) {
     throw new InvalidDemandOutcomeError('Informe se foi publicado.')
   }
-  if (!isOutcomeScore(outcome.usageScore)) {
-    throw new InvalidDemandOutcomeError('Informe como o material foi aproveitado (1 a 5).')
+  if (demandOutcomeRequiresUsage(outcome.published)) {
+    if (outcome.usageScore == null || !isOutcomeScore(outcome.usageScore)) {
+      throw new InvalidDemandOutcomeError('Informe como o material foi aproveitado (1 a 5).')
+    }
+  } else if (outcome.usageScore != null) {
+    throw new InvalidDemandOutcomeError('Aproveitamento só se aplica quando a pauta foi publicada.')
   }
   if (!outcome.resultSummary.trim()) {
     throw new InvalidDemandOutcomeError('Descreva o que aconteceu nesta pauta.')
@@ -382,7 +391,7 @@ export function registerDemandOutcome(
   const normalized: DemandOutcome = {
     toneScore: input.toneScore,
     published: input.published,
-    usageScore: input.usageScore,
+    usageScore: demandOutcomeRequiresUsage(input.published) ? input.usageScore : null,
     resultSummary: input.resultSummary.trim(),
     recordedBy: input.recordedBy.trim(),
     recordedAt: input.recordedAt,
@@ -396,6 +405,7 @@ export function registerDemandOutcome(
 }
 
 export function demandOutcomeCaseScore(outcome: DemandOutcome): number {
+  if (outcome.usageScore == null) return outcome.toneScore
   return (outcome.toneScore + outcome.usageScore) / 2
 }
 
@@ -403,8 +413,9 @@ export function demandOutcomeHistoryLabel(outcome: DemandOutcome): string {
   const parts: string[] = []
   if (outcome.published === 'yes') parts.push('Publicado')
   else if (outcome.published === 'no') parts.push('Não publicado')
+  else parts.push('Publicação indefinida')
   parts.push(`Tom ${outcome.toneScore}/5`)
-  parts.push(`Uso ${outcome.usageScore}/5`)
+  if (outcome.usageScore != null) parts.push(`Uso ${outcome.usageScore}/5`)
   return parts.join(' · ')
 }
 

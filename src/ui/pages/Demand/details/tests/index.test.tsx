@@ -540,8 +540,7 @@ describe('detalhe canônico da demanda', () => {
     await user.click(within(toneGroup).getByRole('radio', { name: '5 de 5' }))
     await user.click(within(drawer).getByRole('combobox', { name: 'Foi publicado?' }))
     await user.click(await screen.findByRole('option', { name: 'Não' }))
-    const usageGroup = within(drawer).getByRole('radiogroup', { name: 'Como o material foi aproveitado?' })
-    await user.click(within(usageGroup).getByRole('radio', { name: '1 de 5' }))
+    expect(within(drawer).queryByRole('radiogroup', { name: 'Como o material foi aproveitado?' })).not.toBeInTheDocument()
     fireEvent.change(within(drawer).getByRole('textbox', { name: 'O que aconteceu nesta pauta?' }), {
       target: { value: 'Pauta perdeu o objeto; nenhum material foi publicado.' },
     })
@@ -553,7 +552,7 @@ describe('detalhe canônico da demanda', () => {
     expect(within(page).getByTestId('demand-outcome-card')).toBeVisible()
     expect(within(page).getByTestId('stacked-outcome-tone')).toHaveTextContent('5/5')
     expect(within(page).getByTestId('stacked-outcome-published')).toHaveTextContent('Não')
-    expect(within(page).getByTestId('stacked-outcome-usage')).toHaveTextContent('1/5')
+    expect(within(page).queryByTestId('stacked-outcome-usage')).not.toBeInTheDocument()
     expect(within(page).getByRole('button', { name: 'Editar avaliação' })).toBeVisible()
     expect(within(page).queryByRole('button', { name: 'Avaliar resultado' })).not.toBeInTheDocument()
   })

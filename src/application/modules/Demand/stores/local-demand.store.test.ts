@@ -288,13 +288,13 @@ describe('LocalDemandStore interactions', () => {
     const first = useLocalDemandStore.getState().registerOutcome(demand.id, {
       toneScore: 1,
       published: 'no',
-      usageScore: 1,
+      usageScore: null,
       resultSummary: 'Redação não retornou.',
     })
     expect(first?.outcome).toEqual(expect.objectContaining({
       toneScore: 1,
       published: 'no',
-      usageScore: 1,
+      usageScore: null,
       resultSummary: 'Redação não retornou.',
       recordedBy: currentUser.name,
     }))

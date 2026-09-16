@@ -14,16 +14,16 @@ import {
 
 import { useJournalist } from "@/application/modules/Journalist/hooks/use-journalist";
 import { getJournalistDemandStatusLabel } from "@/application/modules/Journalist/presentation/journalist-profile.viewmodel";
-import { useRegisterRelationshipEvaluation } from "@/application/modules/Journalist/hooks/use-register-relationship-evaluation";
 import { useUpdateJournalist } from "@/application/modules/Journalist/hooks/use-update-journalist";
 import { useJournalists } from "@/application/modules/Journalist/hooks/use-journalists";
 import { useLocalDemandActions } from "@/application/modules/Demand/hooks/use-local-demand-actions";
+import { useRegisterDemandOutcome } from "@/application/modules/Demand/hooks/use-register-demand-outcome";
 import { formatPercent, formatScore } from "@/shared/format";
 import { ROUTES } from "@/ui/routes/paths";
 import { Icon } from "@/ui/components/Icon";
 import { DemandCreateDrawer } from "@/ui/pages/Demand/components/DemandCreateDrawer";
+import { DemandOutcomeDrawer } from "@/ui/pages/Demand/components/DemandOutcomeDrawer";
 import { JournalistCreateDrawer } from "../components/JournalistCreateDrawer";
-import { JournalistEvaluationDrawer } from "../components/JournalistEvaluationDrawer";
 import styles from "@/ui/styles/design.module.scss";
 
 function shortDate(value: Date) {
@@ -65,7 +65,7 @@ export function JournalistPage() {
   const updateMutation = useUpdateJournalist(id, {
     onSuccess: () => setEditOpen(false),
   });
-  const evaluationMutation = useRegisterRelationshipEvaluation(id, {
+  const outcomeMutation = useRegisterDemandOutcome("", {
     onSuccess: () => setEvaluationOpen(false),
   });
 
@@ -96,6 +96,13 @@ export function JournalistPage() {
     journalist.relationshipScore == null
       ? null
       : Math.max(1, Math.min(5, Math.round(journalist.relationshipScore)));
+  const evaluableDemands = journalist.demandHistory.filter(
+    (item) => item.status === "sent" || item.status === "closed_without_send",
+  );
+  const demandOptions = evaluableDemands.map((item) => ({
+    value: item.demandId,
+    label: item.title,
+  }));
 
   return (
     <main className={`${styles.page} ${styles.journalistPage}`}>
@@ -308,19 +315,20 @@ export function JournalistPage() {
           <div>
             <h2>Avaliações registradas</h2>
             <Text tone="muted" variant="labelSm">
-              Percepções documentadas manualmente, sempre com autor e data.
+              Resultados de pauta registrados manualmente, ligados a cada demanda.
             </Text>
           </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
+            disabled={demandOptions.length === 0}
             onClick={() => {
-              evaluationMutation.reset();
+              outcomeMutation.reset();
               setEvaluationOpen(true);
             }}
           >
-            Registrar avaliação
+            Avaliar resultado
           </Button>
         </div>
         {journalist.caseOutcomes.length || evaluation ? (
@@ -349,10 +357,12 @@ export function JournalistPage() {
                   </span>
                 </div>
                 <div className={styles.behaviorTop}>
-                  <span>
-                    <small>Aproveitamento</small>
-                    <strong>{item.usageScore}/5</strong>
-                  </span>
+                  {item.usageScore != null ? (
+                    <span>
+                      <small>Aproveitamento</small>
+                      <strong>{item.usageScore}/5</strong>
+                    </span>
+                  ) : null}
                   <span>
                     <small>Nota da pauta</small>
                     <strong>{item.caseScoreLabel} / 5</strong>
@@ -420,7 +430,7 @@ export function JournalistPage() {
             <EmptyState
               variant="empty"
               title="Nenhuma avaliação registrada"
-              description="Registre uma percepção observada com autor e data; ela não será tratada como fato objetivo."
+              description="Avalie o resultado de uma pauta enviada ou encerrada; o registro aparece aqui ligado ao caso."
             />
           </div>
         )}
@@ -437,12 +447,25 @@ export function JournalistPage() {
         isPending={updateMutation.isPending}
         error={updateMutation.error}
       />
-      <JournalistEvaluationDrawer
+      <DemandOutcomeDrawer
         open={evaluationOpen}
         onOpenChange={setEvaluationOpen}
-        onRegister={evaluationMutation.register}
-        isPending={evaluationMutation.isPending}
-        error={evaluationMutation.error}
+        onRegister={outcomeMutation.register}
+        demandOptions={demandOptions}
+        resolveInitialValues={(demandId) => {
+          const outcome = journalist.caseOutcomes.find((item) => item.demandId === demandId);
+          if (!outcome) return null;
+          return {
+            toneScore: outcome.toneScore,
+            published: outcome.published,
+            usageScore: outcome.usageScore,
+            resultSummary: outcome.resultSummary,
+            demandId,
+          };
+        }}
+        hasJournalistLink
+        isPending={outcomeMutation.isPending}
+        error={outcomeMutation.error}
       />
       <DemandCreateDrawer
         open={demandCreateOpen}

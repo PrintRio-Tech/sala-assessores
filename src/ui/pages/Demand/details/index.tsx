@@ -249,12 +249,14 @@ export function DemandDetailPage() {
                 >
                   {demand.outcome.publishedLabel}
                 </StackedField>
-                <StackedField
-                  label="Aproveitamento"
-                  testId="stacked-outcome-usage"
-                >
-                  {demand.outcome.usageScore}/5
-                </StackedField>
+                {demand.outcome.usageScore != null ? (
+                  <StackedField
+                    label="Aproveitamento"
+                    testId="stacked-outcome-usage"
+                  >
+                    {demand.outcome.usageScore}/5
+                  </StackedField>
+                ) : null}
                 <StackedField
                   label="O que aconteceu"
                   testId="stacked-outcome-summary"

@@ -25,8 +25,9 @@ export type JournalistCaseOutcomeView = {
   demandId: string
   demandTitle: string
   toneScore: number
+  published: DemandOutcome['published']
   publishedLabel: string
-  usageScore: number
+  usageScore: number | null
   caseScore: number
   caseScoreLabel: string
   resultSummary: string
@@ -109,6 +110,7 @@ function toCaseOutcomeView(demand: LinkedDemand): JournalistCaseOutcomeView | nu
     demandId: demand.id,
     demandTitle: demand.title,
     toneScore: demand.outcome.toneScore,
+    published: demand.outcome.published,
     publishedLabel: DEMAND_OUTCOME_PUBLISHED_LABELS[demand.outcome.published],
     usageScore: demand.outcome.usageScore,
     caseScore,

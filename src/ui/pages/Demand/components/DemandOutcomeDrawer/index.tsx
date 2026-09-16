@@ -13,12 +13,14 @@ import {
   DEMAND_OUTCOME_PUBLISHED_LABELS,
   DEMAND_OUTCOME_SCORE_MAX,
   DEMAND_OUTCOME_SCORE_MIN,
+  demandOutcomeRequiresUsage,
   type DemandOutcomePublished,
 } from '@/domain/Demand/demand.entity'
 import type { RegisterDemandOutcomeInput } from '@/application/modules/Demand/hooks/use-register-demand-outcome'
 import styles from './styles.module.scss'
 
 type OutcomeValues = {
+  demandId: string
   toneScore: number | null
   published: DemandOutcomePublished | ''
   usageScore: number | null
@@ -27,30 +29,42 @@ type OutcomeValues = {
 
 type OutcomeErrors = Partial<Record<keyof OutcomeValues, string>>
 
+export type DemandOutcomeDemandOption = {
+  value: string
+  label: string
+}
+
 const publishedOptions = DEMAND_OUTCOME_PUBLISHED.map((value) => ({
   value,
   label: DEMAND_OUTCOME_PUBLISHED_LABELS[value],
 }))
 
-function emptyValues(): OutcomeValues {
-  return { toneScore: null, published: '', usageScore: null, resultSummary: '' }
+function emptyValues(demandId = ''): OutcomeValues {
+  return { demandId, toneScore: null, published: '', usageScore: null, resultSummary: '' }
 }
 
-function valuesFromInitial(initial?: RegisterDemandOutcomeInput | null): OutcomeValues {
-  if (!initial) return emptyValues()
+function valuesFromInitial(
+  initial?: RegisterDemandOutcomeInput | null,
+  demandId = '',
+): OutcomeValues {
+  if (!initial) return emptyValues(demandId)
   return {
+    demandId: initial.demandId ?? demandId,
     toneScore: initial.toneScore,
     published: initial.published,
-    usageScore: initial.usageScore,
+    usageScore: demandOutcomeRequiresUsage(initial.published) ? initial.usageScore : null,
     resultSummary: initial.resultSummary,
   }
 }
 
-function validate(values: OutcomeValues): OutcomeErrors {
+function validate(values: OutcomeValues, requireDemand: boolean): OutcomeErrors {
   const errors: OutcomeErrors = {}
+  if (requireDemand && !values.demandId) errors.demandId = 'Selecione a pauta avaliada.'
   if (values.toneScore == null) errors.toneScore = 'Informe o tom da matéria (1 a 5).'
   if (!values.published) errors.published = 'Informe se foi publicado.'
-  if (values.usageScore == null) errors.usageScore = 'Informe como o material foi aproveitado (1 a 5).'
+  if (values.published && demandOutcomeRequiresUsage(values.published) && values.usageScore == null) {
+    errors.usageScore = 'Informe como o material foi aproveitado (1 a 5).'
+  }
   if (!values.resultSummary.trim()) errors.resultSummary = 'Descreva o que aconteceu nesta pauta.'
   return errors
 }
@@ -60,6 +74,10 @@ export type DemandOutcomeDrawerProps = {
   onOpenChange: (open: boolean) => void
   onRegister: (input: RegisterDemandOutcomeInput) => void
   initialValues?: RegisterDemandOutcomeInput | null
+  /** Quando informado, o form exige escolher a pauta (fluxo do perfil do jornalista). */
+  demandOptions?: DemandOutcomeDemandOption[]
+  /** Resolve valores iniciais ao trocar a pauta selecionada. */
+  resolveInitialValues?: (demandId: string) => RegisterDemandOutcomeInput | null
   hasJournalistLink?: boolean
   isPending?: boolean
   error?: Error | null
@@ -70,15 +88,19 @@ export function DemandOutcomeDrawer({
   onOpenChange,
   onRegister,
   initialValues = null,
+  demandOptions,
+  resolveInitialValues,
   hasJournalistLink = true,
   isPending = false,
   error,
 }: DemandOutcomeDrawerProps) {
   const formId = useId()
   const formRef = useRef<HTMLFormElement>(null)
+  const requireDemand = Boolean(demandOptions?.length)
   const [values, setValues] = useState<OutcomeValues>(() => valuesFromInitial(initialValues))
   const [errors, setErrors] = useState<OutcomeErrors>({})
-  const isEdit = Boolean(initialValues)
+  const isEdit = Boolean(initialValues) && !requireDemand
+  const showUsage = values.published !== '' && demandOutcomeRequiresUsage(values.published)
 
   const reset = useCallback(() => {
     setValues(valuesFromInitial(initialValues))
@@ -94,11 +116,26 @@ export function DemandOutcomeDrawer({
     setErrors((current) => ({ ...current, [key]: undefined }))
   }
 
+  function selectPublished(value: DemandOutcomePublished | '') {
+    setValues((current) => ({
+      ...current,
+      published: value,
+      usageScore: value && demandOutcomeRequiresUsage(value) ? current.usageScore : null,
+    }))
+    setErrors((current) => ({ ...current, published: undefined, usageScore: undefined }))
+  }
+
+  function selectDemand(demandId: string) {
+    const fromDemand = demandId && resolveInitialValues ? resolveInitialValues(demandId) : null
+    setValues(valuesFromInitial(fromDemand, demandId))
+    setErrors({})
+  }
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const nextErrors = validate(values)
+    const nextErrors = validate(values, requireDemand)
     setErrors(nextErrors)
-    const firstError = (['toneScore', 'published', 'usageScore', 'resultSummary'] as const)
+    const firstError = (['demandId', 'toneScore', 'published', 'usageScore', 'resultSummary'] as const)
       .find((key) => nextErrors[key])
     if (firstError) {
       window.setTimeout(() => {
@@ -113,13 +150,19 @@ export function DemandOutcomeDrawer({
       return
     }
 
+    const published = values.published as DemandOutcomePublished
     onRegister({
+      ...(requireDemand ? { demandId: values.demandId } : {}),
       toneScore: values.toneScore!,
-      published: values.published as DemandOutcomePublished,
-      usageScore: values.usageScore!,
+      published,
+      usageScore: demandOutcomeRequiresUsage(published) ? values.usageScore : null,
       resultSummary: values.resultSummary.trim(),
     })
   }
+
+  const title = requireDemand
+    ? 'Avaliar resultado'
+    : isEdit ? 'Editar avaliação' : 'Avaliar resultado'
 
   return (
     <DrawerShell
@@ -128,8 +171,8 @@ export function DemandOutcomeDrawer({
         if (!nextOpen) reset()
         onOpenChange(nextOpen)
       }}
-      title={isEdit ? 'Editar avaliação' : 'Avaliar resultado'}
-      description="Registre o tom, a publicação e o aproveitamento do material nesta pauta."
+      title={title}
+      description="Registre o tom, a publicação e — se houver matéria — o aproveitamento do material."
       size="lg"
       contentLayout="scroll"
       presentation="layer"
@@ -156,6 +199,18 @@ export function DemandOutcomeDrawer({
         </div>
         <fieldset className={styles.section}>
           <legend>Resultado observado</legend>
+          {requireDemand ? (
+            <SelectField
+              label="Pauta"
+              name="demandId"
+              contained
+              required
+              value={values.demandId}
+              options={[{ value: '', label: 'Selecione' }, ...(demandOptions ?? [])]}
+              error={errors.demandId}
+              onValueChange={selectDemand}
+            />
+          ) : null}
           <Rating
             label="Qual foi o tom da matéria?"
             name="toneScore"
@@ -179,23 +234,25 @@ export function DemandOutcomeDrawer({
             value={values.published}
             options={[{ value: '', label: 'Selecione' }, ...publishedOptions]}
             error={errors.published}
-            onValueChange={(value) => update('published', value as DemandOutcomePublished | '')}
+            onValueChange={(value) => selectPublished(value as DemandOutcomePublished | '')}
           />
-          <Rating
-            label="Como o material foi aproveitado?"
-            name="usageScore"
-            required
-            max={DEMAND_OUTCOME_SCORE_MAX}
-            minLabel="Distorceu / não usou"
-            maxLabel="Uso positivo"
-            value={values.usageScore}
-            error={errors.usageScore}
-            onValueChange={(value) => {
-              if (value >= DEMAND_OUTCOME_SCORE_MIN && value <= DEMAND_OUTCOME_SCORE_MAX) {
-                update('usageScore', value)
-              }
-            }}
-          />
+          {showUsage ? (
+            <Rating
+              label="Como o material foi aproveitado?"
+              name="usageScore"
+              required
+              max={DEMAND_OUTCOME_SCORE_MAX}
+              minLabel="Distorceu / não usou"
+              maxLabel="Uso positivo"
+              value={values.usageScore}
+              error={errors.usageScore}
+              onValueChange={(value) => {
+                if (value >= DEMAND_OUTCOME_SCORE_MIN && value <= DEMAND_OUTCOME_SCORE_MAX) {
+                  update('usageScore', value)
+                }
+              }}
+            />
+          ) : null}
           <Textarea
             label="O que aconteceu nesta pauta?"
             name="resultSummary"

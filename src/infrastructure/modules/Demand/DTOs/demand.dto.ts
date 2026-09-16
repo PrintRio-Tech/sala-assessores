@@ -81,7 +81,7 @@ export const demandDtoSchema = z.object({
   outcome: z.object({
     tone_score: z.number().int().min(1).max(5),
     published: z.enum(['yes', 'no', 'unknown']),
-    usage_score: z.number().int().min(1).max(5),
+    usage_score: z.number().int().min(1).max(5).nullable(),
     result_summary: z.string(),
     recorded_by: z.string(),
     recorded_at: z.string(),

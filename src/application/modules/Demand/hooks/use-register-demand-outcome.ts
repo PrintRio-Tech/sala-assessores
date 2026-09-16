@@ -10,8 +10,10 @@ import { useLocalDemandStore } from '../stores/local-demand.store'
 export type RegisterDemandOutcomeInput = {
   toneScore: number
   published: DemandOutcomePublished
-  usageScore: number
+  usageScore: number | null
   resultSummary: string
+  /** Quando omitido, usa o `demandId` passado ao hook. */
+  demandId?: string
 }
 
 type RegisterDemandOutcomeOptions = {
@@ -19,27 +21,34 @@ type RegisterDemandOutcomeOptions = {
   onError?: (error: Error) => void
 }
 
-export function useRegisterDemandOutcome(demandId: string, options: RegisterDemandOutcomeOptions = {}) {
+export function useRegisterDemandOutcome(
+  defaultDemandId: string = '',
+  options: RegisterDemandOutcomeOptions = {},
+) {
   const queryClient = useQueryClient()
-  const isLocal = useLocalDemandStore((state) => state.records.some((record) => record.id === demandId))
   const mutation = useMutation({
     mutationFn: async (input: RegisterDemandOutcomeInput): Promise<Demand | null> => {
+      const demandId = input.demandId ?? defaultDemandId
+      if (!demandId) throw new DemandNotFoundError()
       const authored = {
-        ...input,
+        toneScore: input.toneScore,
+        published: input.published,
+        usageScore: input.usageScore,
+        resultSummary: input.resultSummary,
         recordedBy: currentUser.name,
         recordedAt: new Date(),
       }
+      const isLocal = useLocalDemandStore.getState().records.some((record) => record.id === demandId)
       if (!isLocal) return demandService.registerOutcome(demandId, authored)
       const record = useLocalDemandStore.getState().registerOutcome(demandId, authored)
       if (!record) throw new DemandNotFoundError()
       return null
     },
-    onSuccess: (demand) => {
+    onSuccess: (demand, input) => {
+      const demandId = demand?.id ?? input.demandId ?? defaultDemandId
       if (demand) queryClient.setQueryData(queryKeys.demand(demandId), demand)
-      if (!isLocal) {
-        void queryClient.invalidateQueries({ queryKey: ['demands'] })
-        void queryClient.invalidateQueries({ queryKey: queryKeys.demand(demandId) })
-      }
+      void queryClient.invalidateQueries({ queryKey: ['demands'] })
+      if (demandId) void queryClient.invalidateQueries({ queryKey: queryKeys.demand(demandId) })
       options.onSuccess?.()
     },
     onError: (error) => options.onError?.(error),

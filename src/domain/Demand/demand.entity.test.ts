@@ -341,7 +341,7 @@ describe('Demand domain', () => {
     const first = registerDemandOutcome(demand({ id: '2', status: 'sent' }), {
       toneScore: 3,
       published: 'unknown',
-      usageScore: 1,
+      usageScore: null,
       resultSummary: 'Ainda sem retorno da redação.',
       recordedBy: 'Noel Ferreira',
       recordedAt,
@@ -350,7 +350,7 @@ describe('Demand domain', () => {
     expect(first.outcome).toEqual({
       toneScore: 3,
       published: 'unknown',
-      usageScore: 1,
+      usageScore: null,
       resultSummary: 'Ainda sem retorno da redação.',
       recordedBy: 'Noel Ferreira',
       recordedAt,
@@ -389,6 +389,25 @@ describe('Demand domain', () => {
       published: 'yes',
       usageScore: 5,
       resultSummary: 'Resumo',
+      recordedBy: 'Noel Ferreira',
+      recordedAt,
+    })).toThrow(InvalidDemandOutcomeError)
+
+    const unpublished = registerDemandOutcome(demand({ id: '5', status: 'closed_without_send' }), {
+      toneScore: 2,
+      published: 'no',
+      usageScore: 5,
+      resultSummary: 'Não saiu no veículo.',
+      recordedBy: 'Noel Ferreira',
+      recordedAt,
+    })
+    expect(unpublished.outcome?.usageScore).toBeNull()
+
+    expect(() => registerDemandOutcome(demand({ id: '6', status: 'sent' }), {
+      toneScore: 4,
+      published: 'yes',
+      usageScore: null,
+      resultSummary: 'Publicou sem nota de uso.',
       recordedBy: 'Noel Ferreira',
       recordedAt,
     })).toThrow(InvalidDemandOutcomeError)

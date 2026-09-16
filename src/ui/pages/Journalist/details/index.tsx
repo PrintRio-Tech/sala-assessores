@@ -5,6 +5,7 @@ import {
   Badge,
   Button,
   Card,
+  DrawerShell,
   EmptyState,
   Heading,
   Rating,
@@ -13,7 +14,14 @@ import {
 } from "@print/ui";
 
 import { useJournalist } from "@/application/modules/Journalist/hooks/use-journalist";
-import { getJournalistDemandStatusLabel } from "@/application/modules/Journalist/presentation/journalist-profile.viewmodel";
+import {
+  getJournalistDemandStatusLabel,
+  type JournalistCaseOutcomeView,
+} from "@/application/modules/Journalist/presentation/journalist-profile.viewmodel";
+import type {
+  JournalistDemandHistoryItem,
+  RelationshipEvaluation,
+} from "@/domain/Journalist/journalist.entity";
 import { useUpdateJournalist } from "@/application/modules/Journalist/hooks/use-update-journalist";
 import { useJournalists } from "@/application/modules/Journalist/hooks/use-journalists";
 import { useLocalDemandActions } from "@/application/modules/Demand/hooks/use-local-demand-actions";
@@ -25,6 +33,8 @@ import { DemandCreateDrawer } from "@/ui/pages/Demand/components/DemandCreateDra
 import { DemandOutcomeDrawer } from "@/ui/pages/Demand/components/DemandOutcomeDrawer";
 import { JournalistCreateDrawer } from "../components/JournalistCreateDrawer";
 import styles from "@/ui/styles/design.module.scss";
+
+const LIST_PREVIEW_LIMIT = 3;
 
 function shortDate(value: Date) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -43,6 +53,134 @@ function recordedDate(value: Date) {
   }).format(value);
 }
 
+
+type EvaluationEntry =
+  | {
+      kind: "case";
+      key: string;
+      recordedAt: Date;
+      item: JournalistCaseOutcomeView;
+    }
+  | {
+      kind: "relationship";
+      key: string;
+      recordedAt: Date;
+      item: RelationshipEvaluation;
+    };
+
+function HistoryList({ items }: { items: JournalistDemandHistoryItem[] }) {
+  return (
+    <div className={styles.historyPanel}>
+      {items.map((item) => (
+        <Link key={item.demandId} to={ROUTES.demand(item.demandId)}>
+          <i />
+          <span>
+            <small>{item.kindLabel}</small>
+            <strong>{item.title}</strong>
+            <em>
+              {getJournalistDemandStatusLabel(item.status)}
+              {item.outcomeLabel ? ` · ${item.outcomeLabel}` : ""}
+            </em>
+          </span>
+          <time dateTime={item.occurredAt.toISOString()}>
+            {shortDate(item.occurredAt)}
+          </time>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function EvaluationCard({ entry }: { entry: EvaluationEntry }) {
+  if (entry.kind === "case") {
+    return (
+      <article className={styles.behaviorPanel}>
+        <Text
+          as="p"
+          variant="labelSm"
+          tone="muted"
+          className={styles.evaluationDisclaimer}
+        >
+          Registro datado — não é fato inferido pelo sistema.
+        </Text>
+        <div className={styles.behaviorTop}>
+          <span>
+            <small>Tom da matéria</small>
+            <strong>{entry.item.toneScore}/5</strong>
+          </span>
+          <span>
+            <small>Publicado</small>
+            <strong>{entry.item.publishedLabel}</strong>
+          </span>
+        </div>
+        <div className={styles.behaviorTop}>
+          {entry.item.usageScore != null ? (
+            <span>
+              <small>Aproveitamento</small>
+              <strong>{entry.item.usageScore}/5</strong>
+            </span>
+          ) : null}
+          <span>
+            <small>Nota da pauta</small>
+            <strong>{entry.item.caseScoreLabel} / 5</strong>
+          </span>
+        </div>
+        <p>
+          <small>Pauta</small> <strong>{entry.item.demandTitle}</strong>
+        </p>
+        {entry.item.resultSummary ? (
+          <p>{entry.item.resultSummary}</p>
+        ) : (
+          <p>Sem observações adicionais.</p>
+        )}
+        <footer>
+          Registrada por <strong>{entry.item.recordedBy}</strong> em{" "}
+          <time dateTime={entry.item.recordedAt.toISOString()}>
+            {recordedDate(entry.item.recordedAt)}
+          </time>
+          {" · "}
+          <Link to={ROUTES.demand(entry.item.demandId)}>Ver demanda</Link>
+        </footer>
+      </article>
+    );
+  }
+
+  return (
+    <article className={styles.behaviorPanel}>
+      <Text
+        as="p"
+        variant="labelSm"
+        tone="muted"
+        className={styles.evaluationDisclaimer}
+      >
+        Registro datado — não é fato inferido pelo sistema.
+      </Text>
+      <div className={styles.behaviorTop}>
+        <span>
+          <small>Tom editorial registrado</small>
+          <strong>{entry.item.editorialToneLabel}</strong>
+        </span>
+        <span>
+          <small>Nota de relacionamento</small>
+          <strong>{formatScore(entry.item.score)} / 5</strong>
+        </span>
+      </div>
+      <div className={styles.traits}>
+        {entry.item.traits.map((trait) => (
+          <span key={trait}>{trait}</span>
+        ))}
+      </div>
+      {entry.item.notes ? <p>{entry.item.notes}</p> : <p>Sem observações adicionais.</p>}
+      <footer>
+        Registrada por <strong>{entry.item.authorName}</strong> em{" "}
+        <time dateTime={entry.item.recordedAt.toISOString()}>
+          {recordedDate(entry.item.recordedAt)}
+        </time>
+      </footer>
+    </article>
+  );
+}
+
 function BackToJournalists() {
   return (
     <Link className={styles.backLink} to={ROUTES.journalists}>
@@ -59,6 +197,8 @@ export function JournalistPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [evaluationOpen, setEvaluationOpen] = useState(false);
   const [demandCreateOpen, setDemandCreateOpen] = useState(false);
+  const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
+  const [evaluationsDrawerOpen, setEvaluationsDrawerOpen] = useState(false);
   const { data: journalist, isLoading } = useJournalist(journalistId);
   const { data: journalists, isLoading: journalistsLoading } = useJournalists();
   const { capture } = useLocalDemandActions();
@@ -91,7 +231,6 @@ export function JournalistPage() {
         </div>
       </main>
     );
-  const evaluation = journalist.relationshipEvaluations[0];
   const roundedRelationshipScore =
     journalist.relationshipScore == null
       ? null
@@ -103,6 +242,24 @@ export function JournalistPage() {
     value: item.demandId,
     label: item.title,
   }));
+  const visibleHistory = journalist.demandHistory.slice(0, LIST_PREVIEW_LIMIT);
+  const evaluationEntries: EvaluationEntry[] = [
+    ...journalist.caseOutcomes.map((item) => ({
+      kind: "case" as const,
+      key: `case-${item.demandId}`,
+      recordedAt: item.recordedAt,
+      item,
+    })),
+    ...journalist.relationshipEvaluations.map((item) => ({
+      kind: "relationship" as const,
+      key: item.id,
+      recordedAt: item.recordedAt,
+      item,
+    })),
+  ].sort((left, right) => right.recordedAt.getTime() - left.recordedAt.getTime());
+  const visibleEvaluations = evaluationEntries.slice(0, LIST_PREVIEW_LIMIT);
+  const hasMoreHistory = journalist.demandHistory.length > LIST_PREVIEW_LIMIT;
+  const hasMoreEvaluations = evaluationEntries.length > LIST_PREVIEW_LIMIT;
 
   return (
     <main className={`${styles.page} ${styles.journalistPage}`}>
@@ -286,24 +443,19 @@ export function JournalistPage() {
 
         <section className={styles.historySection}>
           <h2>Histórico recente</h2>
-          <div className={styles.historyPanel}>
-            {journalist.demandHistory.map((item) => (
-              <Link key={item.demandId} to={ROUTES.demand(item.demandId)}>
-                <i />
-                <span>
-                  <small>{item.kindLabel}</small>
-                  <strong>{item.title}</strong>
-                  <em>
-                    {getJournalistDemandStatusLabel(item.status)}
-                    {item.outcomeLabel ? ` · ${item.outcomeLabel}` : ""}
-                  </em>
-                </span>
-                <time dateTime={item.occurredAt.toISOString()}>
-                  {shortDate(item.occurredAt)}
-                </time>
-              </Link>
-            ))}
-          </div>
+          <HistoryList items={visibleHistory} />
+          {hasMoreHistory ? (
+            <div className={styles.listReveal}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setHistoryDrawerOpen(true)}
+              >
+                Ver todo o histórico
+              </Button>
+            </div>
+          ) : null}
         </section>
       </section>
 
@@ -331,100 +483,26 @@ export function JournalistPage() {
             Avaliar resultado
           </Button>
         </div>
-        {journalist.caseOutcomes.length || evaluation ? (
-          <div className={styles.evaluationList}>
-            {journalist.caseOutcomes.map((item) => (
-              <article
-                className={styles.behaviorPanel}
-                key={`case-${item.demandId}`}
-              >
-                <Text
-                  as="p"
-                  variant="labelSm"
-                  tone="muted"
-                  className={styles.evaluationDisclaimer}
+        {evaluationEntries.length ? (
+          <>
+            <div className={styles.evaluationList}>
+              {visibleEvaluations.map((entry) => (
+                <EvaluationCard key={entry.key} entry={entry} />
+              ))}
+            </div>
+            {hasMoreEvaluations ? (
+              <div className={styles.listReveal}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEvaluationsDrawerOpen(true)}
                 >
-                  Registro datado — não é fato inferido pelo sistema.
-                </Text>
-                <div className={styles.behaviorTop}>
-                  <span>
-                    <small>Tom da matéria</small>
-                    <strong>{item.toneScore}/5</strong>
-                  </span>
-                  <span>
-                    <small>Publicado</small>
-                    <strong>{item.publishedLabel}</strong>
-                  </span>
-                </div>
-                <div className={styles.behaviorTop}>
-                  {item.usageScore != null ? (
-                    <span>
-                      <small>Aproveitamento</small>
-                      <strong>{item.usageScore}/5</strong>
-                    </span>
-                  ) : null}
-                  <span>
-                    <small>Nota da pauta</small>
-                    <strong>{item.caseScoreLabel} / 5</strong>
-                  </span>
-                </div>
-                <p>
-                  <small>Pauta</small> <strong>{item.demandTitle}</strong>
-                </p>
-                {item.resultSummary ? (
-                  <p>{item.resultSummary}</p>
-                ) : (
-                  <p>Sem observações adicionais.</p>
-                )}
-                <footer>
-                  Registrada por <strong>{item.recordedBy}</strong> em{" "}
-                  <time dateTime={item.recordedAt.toISOString()}>
-                    {recordedDate(item.recordedAt)}
-                  </time>
-                  {" · "}
-                  <Link to={ROUTES.demand(item.demandId)}>Ver demanda</Link>
-                </footer>
-              </article>
-            ))}
-            {journalist.relationshipEvaluations.map((item) => (
-              <article className={styles.behaviorPanel} key={item.id}>
-                <Text
-                  as="p"
-                  variant="labelSm"
-                  tone="muted"
-                  className={styles.evaluationDisclaimer}
-                >
-                  Registro datado — não é fato inferido pelo sistema.
-                </Text>
-                <div className={styles.behaviorTop}>
-                  <span>
-                    <small>Tom editorial registrado</small>
-                    <strong>{item.editorialToneLabel}</strong>
-                  </span>
-                  <span>
-                    <small>Nota de relacionamento</small>
-                    <strong>{formatScore(item.score)} / 5</strong>
-                  </span>
-                </div>
-                <div className={styles.traits}>
-                  {item.traits.map((trait) => (
-                    <span key={trait}>{trait}</span>
-                  ))}
-                </div>
-                {item.notes ? (
-                  <p>{item.notes}</p>
-                ) : (
-                  <p>Sem observações adicionais.</p>
-                )}
-                <footer>
-                  Registrada por <strong>{item.authorName}</strong> em{" "}
-                  <time dateTime={item.recordedAt.toISOString()}>
-                    {recordedDate(item.recordedAt)}
-                  </time>
-                </footer>
-              </article>
-            ))}
-          </div>
+                  Ver todas as avaliações
+                </Button>
+              </div>
+            ) : null}
+          </>
         ) : (
           <div className={styles.behaviorPanel}>
             <EmptyState
@@ -436,6 +514,38 @@ export function JournalistPage() {
         )}
       </section>
 
+      <DrawerShell
+        open={historyDrawerOpen}
+        onOpenChange={setHistoryDrawerOpen}
+        title="Histórico recente"
+        description={`${journalist.demandHistory.length} demandas vinculadas a este perfil.`}
+        size="lg"
+        contentLayout="scroll"
+        presentation="layer"
+        origin="end"
+        responsiveOrigin="bottom"
+        closeLabel="Fechar histórico"
+      >
+        <HistoryList items={journalist.demandHistory} />
+      </DrawerShell>
+      <DrawerShell
+        open={evaluationsDrawerOpen}
+        onOpenChange={setEvaluationsDrawerOpen}
+        title="Avaliações registradas"
+        description={`${evaluationEntries.length} registros manuais ligados a este perfil.`}
+        size="lg"
+        contentLayout="scroll"
+        presentation="layer"
+        origin="end"
+        responsiveOrigin="bottom"
+        closeLabel="Fechar avaliações"
+      >
+        <div className={styles.evaluationList}>
+          {evaluationEntries.map((entry) => (
+            <EvaluationCard key={entry.key} entry={entry} />
+          ))}
+        </div>
+      </DrawerShell>
       <JournalistCreateDrawer
         mode="edit"
         open={editOpen}

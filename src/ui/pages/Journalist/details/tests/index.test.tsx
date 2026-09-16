@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
@@ -60,12 +61,17 @@ describe('perfil do jornalista', () => {
     )
 
     expect(await screen.findByRole('heading', { name: 'Carolina Montenegro' })).toBeVisible()
-    const activeDemand = screen.getByRole('link', { name: /Crise Logística: Impacto nos Portos/ })
-    expect(activeDemand).toBeVisible()
-    expect(activeDemand).toHaveTextContent('Em andamento')
+    expect(screen.getByRole('link', { name: /Impactos da nova regulamentação no setor/ })).toBeVisible()
+    expect(screen.queryByRole('link', { name: /Crise Logística: Impacto nos Portos/ })).not.toBeInTheDocument()
     expect(screen.getByText(/6 solicitadas · 0 proativas/)).toBeVisible()
     expect(screen.getByText('Matéria saiu no Valor com o recorte alinhado ao posicionamento enviado.')).toBeVisible()
     expect(screen.getByRole('link', { name: 'Ver demanda' })).toHaveAttribute('href', '/demandas/d-q1')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ver todo o histórico' }))
+    const historyDrawer = await screen.findByRole('dialog', { name: /Histórico recente/i })
+    const activeDemand = within(historyDrawer).getByRole('link', { name: /Crise Logística: Impacto nos Portos/ })
+    expect(activeDemand).toBeVisible()
+    expect(activeDemand).toHaveTextContent('Em andamento')
   })
 
   it('mantém os fatos objetivos de Maria ao abrir o detalhe pela lista', async () => {

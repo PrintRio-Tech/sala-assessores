@@ -64,6 +64,8 @@ describe('perfil do jornalista', () => {
     expect(activeDemand).toBeVisible()
     expect(activeDemand).toHaveTextContent('Em andamento')
     expect(screen.getByText(/6 solicitadas · 0 proativas/)).toBeVisible()
+    expect(screen.getByText('Matéria saiu no Valor com o recorte alinhado ao posicionamento enviado.')).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Ver demanda' })).toHaveAttribute('href', '/demandas/d-q1')
   })
 
   it('mantém os fatos objetivos de Maria ao abrir o detalhe pela lista', async () => {

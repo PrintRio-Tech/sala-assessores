@@ -1,28 +1,27 @@
 import {
+  DEMAND_OUTCOME_PUBLISHED_LABELS,
   EXTERNAL_INTERACTION_RESULT_RULES,
   POSITIONING_STATE_LABELS,
+  canRegisterDemandOutcome,
   currentPositioningAttachment,
   currentPositioningBody,
   emptyPositioning,
   getDemandNextActions,
   hasPositioningContent,
   type Demand,
+  type DemandOutcome,
   type DemandPositioning,
   type DemandStatus,
-  type DemandPriority,
   type ExternalInteractionType,
   type PositioningAttachment,
 } from '@/domain/Demand/demand.entity'
 import type { LocalDemandCapture } from '../stores/local-demand.store'
+import { DEMAND_PRIORITY_LABELS } from './demand-priority'
 
 const statusLabels: Record<DemandStatus, string> = {
   in_progress: 'Em andamento',
   sent: 'Enviada',
   closed_without_send: 'Encerrada sem envio',
-}
-
-const priorityLabels: Record<DemandPriority, string> = {
-  critical: 'Crítica', high: 'Alta', medium: 'Média', low: 'Baixa',
 }
 
 const interactionLabels: Record<ExternalInteractionType, string> = {
@@ -112,6 +111,19 @@ export type DemandDetailTimelineEvent = {
   hasBody?: boolean
   isTruncated?: boolean
   attachment?: PositioningAttachment | null
+}
+
+function outcomeView(outcome: DemandOutcome | null | undefined) {
+  if (!outcome) return null
+  return {
+    toneScore: outcome.toneScore,
+    published: outcome.published,
+    publishedLabel: DEMAND_OUTCOME_PUBLISHED_LABELS[outcome.published],
+    usageScore: outcome.usageScore,
+    resultSummary: outcome.resultSummary,
+    recordedBy: outcome.recordedBy,
+    recordedAt: dateTime(outcome.recordedAt),
+  }
 }
 
 function positioningView(positioning: DemandPositioning | undefined, status: DemandStatus) {
@@ -260,7 +272,7 @@ export function buildDemandDetailViewModel(demand: Demand) {
       journalistName: demand.journalistName,
       outletName: demand.outletName,
       responsibleName: demand.responsibleName,
-      priorityLabel: priorityLabels[demand.priority],
+      priorityLabel: DEMAND_PRIORITY_LABELS[demand.priority],
       statusLabel: statusLabels[demand.status],
       deadline: dateTime(demand.deadlineAt),
     },
@@ -272,6 +284,8 @@ export function buildDemandDetailViewModel(demand: Demand) {
     validNextActions,
     canWritePositioning: validNextActions.includes('write_positioning') && positioning.canEdit,
     canRegisterInteraction: validNextActions.includes('register_interaction'),
+    canRegisterOutcome: canRegisterDemandOutcome(demand.status),
+    outcome: outcomeView(demand.outcome),
     positioning,
     interactions,
     currentState: {
@@ -365,7 +379,7 @@ export function buildLocalDemandDetailViewModel(record: LocalDemandCapture) {
       journalistName: record.journalistName,
       outletName: record.outletName,
       responsibleName: record.responsibleName,
-      priorityLabel: record.priority ? priorityLabels[record.priority] : null,
+      priorityLabel: record.priority ? DEMAND_PRIORITY_LABELS[record.priority] : null,
       statusLabel: statusLabels[record.status],
       deadline: { dateLabel: 'Prazo solicitado', timeLabel: localDeadline, shortDate: localDeadlineShort, iso: '' },
     },
@@ -376,6 +390,8 @@ export function buildLocalDemandDetailViewModel(record: LocalDemandCapture) {
     validNextActions,
     canWritePositioning: validNextActions.includes('write_positioning') && positioning.canEdit,
     canRegisterInteraction: validNextActions.includes('register_interaction'),
+    canRegisterOutcome: canRegisterDemandOutcome(record.status),
+    outcome: outcomeView(record.outcome),
     positioning,
     sourceChannel: record.channel,
     localCapture: {

@@ -39,3 +39,19 @@ export class PositioningNotEditableError extends DomainError {
     super(message)
   }
 }
+
+export class DemandOutcomeNotAllowedError extends DomainError {
+  readonly code = 'DEMAND_OUTCOME_NOT_ALLOWED'
+
+  constructor(message = 'Só é possível avaliar o resultado depois que o caso for enviado ou encerrado.') {
+    super(message)
+  }
+}
+
+export class InvalidDemandOutcomeError extends DomainError {
+  readonly code = 'DEMAND_OUTCOME_INVALID'
+
+  constructor(message: string) {
+    super(message)
+  }
+}

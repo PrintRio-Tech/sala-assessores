@@ -369,6 +369,14 @@ export const mockDemandDtos: DemandDto[] = [
         version_id: 'pos-q1-1',
       },
     },
+    outcome: {
+      tone_score: 5,
+      published: 'yes',
+      usage_score: 5,
+      result_summary: 'Matéria saiu no Valor com o recorte alinhado ao posicionamento enviado.',
+      recorded_by: 'Ana Paula',
+      recorded_at: '2026-03-13T10:00:00.000Z',
+    },
   },
   {
     id: 'd-sem-jornalista', code: 'OPS-204', title: 'Ocorrência operacional em apuração',

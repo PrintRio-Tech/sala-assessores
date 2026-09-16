@@ -7,18 +7,19 @@ import styles from '../styles.module.scss'
 
 export function DetailHeader({
   demand,
-  onWritePositioning,
   onRegisterInteraction,
+  onRegisterOutcome,
   onEdit,
   onDelete,
 }: {
   demand: DemandDetailViewModel
-  onWritePositioning: () => void
   onRegisterInteraction: () => void
+  onRegisterOutcome: () => void
   onEdit: () => void
   onDelete: () => void
 }) {
-  const writeIsPrimary = demand.positioning.primaryAction === 'write_positioning'
+  const hasOutcome = Boolean(demand.outcome)
+
   return (
     <header className={styles.detailHeader}>
       <ActionGroup align="between" className={styles.toolbar}>
@@ -27,24 +28,34 @@ export function DetailHeader({
           Voltar para demandas
         </Link>
         <ActionGroup aria-label="Ações da demanda">
-          {demand.canWritePositioning ? (
-            <Button
-              type="button"
-              variant={writeIsPrimary ? 'primary' : 'outline'}
-              size="sm"
-              onClick={onWritePositioning}
-            >
-              {demand.positioning.writeLabel}
-            </Button>
-          ) : null}
           {demand.canRegisterInteraction ? (
             <Button
               type="button"
-              variant={writeIsPrimary ? 'outline' : 'primary'}
+              variant="primary"
               size="sm"
               onClick={onRegisterInteraction}
             >
               Registrar interação
+            </Button>
+          ) : null}
+          {demand.canRegisterOutcome && !hasOutcome ? (
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={onRegisterOutcome}
+            >
+              Avaliar resultado
+            </Button>
+          ) : null}
+          {demand.canRegisterOutcome && hasOutcome ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onRegisterOutcome}
+            >
+              Editar avaliação
             </Button>
           ) : null}
           <Button type="button" variant="outline" size="sm" iconOnly aria-label="Editar" onClick={onEdit}>

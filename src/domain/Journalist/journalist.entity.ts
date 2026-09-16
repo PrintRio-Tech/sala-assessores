@@ -14,6 +14,7 @@ export interface JournalistDemandHistoryItem {
   status: string
   occurredAt: Date
   kindLabel: string
+  outcomeLabel?: string | null
 }
 
 export interface RelationshipEvaluation {

@@ -166,6 +166,7 @@ describe('JournalistCreateDrawer', () => {
       name: 'Joana Ribeiro', outletName: 'Jornal da Cidade', roleTitle: 'Repórter', desk: 'Cidades',
       email: '', phone: '+55 11 99999-0000', preferredChannel: 'whatsapp',
       bestContactWindow: 'Das 9h às 11h', topics: ['Mobilidade', 'Cidades'], isActive: true,
+      initialScore: null, initialScoreAuthorName: 'Noel Ferreira',
     })
   })
 

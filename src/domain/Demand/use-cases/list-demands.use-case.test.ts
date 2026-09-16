@@ -36,6 +36,9 @@ function createRepo(items: Demand[]): DemandRepository {
     async savePositioning() {
       return null
     },
+    async registerOutcome() {
+      return null
+    },
   }
 }
 

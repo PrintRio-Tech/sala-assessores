@@ -1,2 +1,9 @@
+# Registry do GitHub Packages para @printrio-tech/*
 @printrio-tech:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN_HERE
+
+# Auth fica no ~/.npmrc do usuário (não commitar token):
+#   @printrio-tech:registry=https://npm.pkg.github.com
+#   //npm.pkg.github.com/:_authToken=YOUR_GITHUB_PAT_WITH_read:packages
+#
+# Ou exporte NPM_TOKEN e use:
+#   //npm.pkg.github.com/:_authToken=${NPM_TOKEN}

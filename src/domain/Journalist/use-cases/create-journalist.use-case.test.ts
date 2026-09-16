@@ -58,6 +58,34 @@ describe('CreateJournalist', () => {
     expect(create).toHaveBeenCalledOnce()
   })
 
+  it('persiste nota inicial opcional como primeira avaliação de relacionamento', async () => {
+    const create = vi.fn(async (input: NewJournalist): Promise<Journalist> => ({ id: 'j-local-scored', ...input }))
+    const useCase = new CreateJournalist(repository(create))
+
+    const journalist = await useCase.execute({
+      name: 'Joana Ribeiro',
+      outletName: 'Jornal da Cidade',
+      roleTitle: 'Repórter',
+      desk: 'Cotidiano',
+      email: 'joana@jornal.test',
+      phone: '',
+      preferredChannel: 'email',
+      bestContactWindow: '',
+      topics: ['Cidades'],
+      isActive: true,
+      initialScore: 4,
+      initialScoreAuthorName: 'Noel Ferreira',
+    })
+
+    expect(journalist.relationshipEvaluations).toHaveLength(1)
+    expect(journalist.relationshipEvaluations[0]).toEqual(expect.objectContaining({
+      score: 4,
+      authorName: 'Noel Ferreira',
+      editorialToneLabel: 'Nota inicial do cadastro',
+    }))
+    expect(create.mock.calls[0]?.[0]).not.toHaveProperty('initialScore')
+  })
+
   it.each([
     [{ name: '', outletName: 'Veículo', email: 'a@b.test', phone: '' }, 'Informe o nome completo.'],
     [{ name: 'Joana', outletName: '', email: 'a@b.test', phone: '' }, 'Informe o veículo ou redação.'],

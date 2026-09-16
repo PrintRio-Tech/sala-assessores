@@ -6,7 +6,7 @@
       "name": "sala-assessores",
       "dependencies": {
         "@base-ui-components/react": "^1.0.0-rc.0",
-        "@print/ui": "npm:@printrio-tech/print-ui@0.5.11",
+        "@print/ui": "npm:@printrio-tech/print-ui@^0.5.13",
         "@tanstack/react-query": "^5.101.0",
         "react": "^19.2.6",
         "react-dom": "^19.2.6",
@@ -200,7 +200,7 @@
 
     "@parcel/watcher-win32-x64": ["@parcel/watcher-win32-x64@2.6.0", "", { "os": "win32", "cpu": "x64" }, "sha512-cA+/pXV2YkfxlIcXOQ5fSWqAzzPyD78/x5qbK/I0vUkrlYHA8TIz+MXjAbGouguKVSI4bOmkTSJ1/poVSsgt+A=="],
 
-    "@print/ui": ["@printrio-tech/print-ui@0.5.11", "https://npm.pkg.github.com/download/@printrio-tech/print-ui/0.5.11/ed234ff0f2bb95db794a83449b560e8b0c9f535f", { "dependencies": { "@base-ui/react": "1.0.0" }, "peerDependencies": { "@base-ui-components/react": "^1.0.0-rc.0", "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-yysFeEYNx1mAhBeWkwQSknj+wMYLSa4C+lyDwGyWbvTDoSLlWHOaoBWiDu7xjwmAPlcDtQjpH7+4m9tMeMmG/g=="],
+    "@print/ui": ["@printrio-tech/print-ui@0.5.13", "https://npm.pkg.github.com/download/@printrio-tech/print-ui/0.5.13/12ae6f6680ecfd8f5b5bf3d8c3108a8f8012988c", { "dependencies": { "@base-ui/react": "1.0.0" }, "peerDependencies": { "@base-ui-components/react": "^1.0.0-rc.0", "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-Xda/xVQd6PWi9d/RplTPhvmQovD0w0kDAo5AgSjEGK4+7Jv8C8XNZKKPfFPOTgdsHySr6VpMfONAEmWTNW4MVw=="],
 
     "@rolldown/binding-android-arm64": ["@rolldown/binding-android-arm64@1.2.3", "", { "os": "android", "cpu": "arm64" }, "sha512-zrJtHDcaZJ1Fp7xf4hNl+7seH9Cn/N5TwLYkhgXREtBwAd/jaqW3uqeHxpDugJLVICWg4eW44kOQEGJ1r6jCGw=="],
 

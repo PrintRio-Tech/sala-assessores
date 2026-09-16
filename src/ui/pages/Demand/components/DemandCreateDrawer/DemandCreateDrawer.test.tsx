@@ -154,10 +154,10 @@ describe('DemandCreateDrawer capture fields', () => {
     await user.click(within(drawer).getByRole('combobox', { name: 'Canal de entrada' }))
     await user.click(await screen.findByRole('option', { name: 'E-mail' }))
     await user.click(within(drawer).getByRole('combobox', { name: 'Prioridade' }))
-    expect(await screen.findByRole('option', { name: 'Crítica' })).toBeVisible()
+    expect(await screen.findByRole('option', { name: 'P0 · Crítica' })).toBeVisible()
     expect(screen.queryByRole('option', { name: 'Urgente' })).not.toBeInTheDocument()
     expect(screen.queryByRole('option', { name: 'Normal' })).not.toBeInTheDocument()
-    await user.click(await screen.findByRole('option', { name: 'Alta' }))
+    await user.click(await screen.findByRole('option', { name: 'P1 · Alta' }))
     await user.click(within(drawer).getByRole('button', { name: 'Continuar' }))
 
     expect(within(drawer).getByRole('textbox', { name: 'Assunto' })).toBeVisible()

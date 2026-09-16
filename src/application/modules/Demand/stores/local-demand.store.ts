@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import { applyInteractionToPositioning, emptyPositioning, savePositioningVersion, transitionDemand, type Demand, type DemandEnrichment, type DemandPositioning, type DemandPriority, type DemandStateTransition, type DemandStatus, type ExternalInteraction, type PositioningAttachment } from '@/domain/Demand/demand.entity'
+import { applyInteractionToPositioning, emptyPositioning, registerDemandOutcome, savePositioningVersion, transitionDemand, type Demand, type DemandEnrichment, type DemandOutcome, type DemandPositioning, type DemandPriority, type DemandStateTransition, type DemandStatus, type ExternalInteraction, type NewDemandOutcome, type PositioningAttachment } from '@/domain/Demand/demand.entity'
 import { currentUser } from '@/application/current-user'
 import type { RegisterExternalInteractionInput } from '@/domain/Demand/demand.repository'
 import { prepareExternalInteraction } from '@/domain/Demand/use-cases/register-external-interaction.use-case'
@@ -37,12 +37,13 @@ export type LocalDemandCapture = {
   enrichment: DemandEnrichment
   stateTransitions: DemandStateTransition[]
   positioning: DemandPositioning
+  outcome: DemandOutcome | null
 }
 
 export type NewLocalDemandCapture = Omit<LocalDemandCapture,
   | 'id' | 'code' | 'createdAt' | 'updatedAt' | 'interactions' | 'status'
   | 'responsibleId' | 'responsibleName' | 'createdBy' | 'priority' | 'enrichment'
-  | 'stateTransitions' | 'positioning'
+  | 'stateTransitions' | 'positioning' | 'outcome'
 > & {
   priority?: DemandPriority | null
   enrichment?: DemandEnrichment
@@ -58,6 +59,7 @@ type LocalDemandState = {
   isHidden: (id: string) => boolean
   registerInteraction: (id: string, input: RegisterExternalInteractionInput) => LocalDemandCapture | null
   savePositioning: (id: string, input: { body: string; attachment?: PositioningAttachment | null }) => LocalDemandCapture | null
+  registerOutcome: (id: string, input: Omit<NewDemandOutcome, 'recordedBy' | 'recordedAt'> & { recordedBy?: string; recordedAt?: Date }) => LocalDemandCapture | null
   updateEnrichment: (id: string, input: Partial<DemandEnrichment> & { responsibleId?: string; responsibleName?: string; priority?: DemandPriority }) => LocalDemandCapture | null
   linkJournalist: (id: string, input: { journalistId: string; journalistName: string; outletName: string }) => LocalDemandCapture | null
   reset: () => void
@@ -97,6 +99,7 @@ export const useLocalDemandStore = create<LocalDemandState>((set, get) => ({
       enrichment: capture.enrichment ?? EMPTY_DEMAND_ENRICHMENT,
       stateTransitions: [],
       positioning: emptyPositioning(),
+      outcome: null,
     }
     set((state) => ({ records: [record, ...state.records] }))
     return record
@@ -115,6 +118,7 @@ export const useLocalDemandStore = create<LocalDemandState>((set, get) => ({
       enrichment: demand.enrichment ?? EMPTY_DEMAND_ENRICHMENT,
       stateTransitions: demand.stateTransitions ?? [],
       positioning: demand.positioning ?? emptyPositioning(),
+      outcome: demand.outcome ?? null,
     }
     set((state) => ({ records: [record, ...state.records] }))
     return record
@@ -204,6 +208,54 @@ export const useLocalDemandStore = create<LocalDemandState>((set, get) => ({
       records: state.records.map((record) => {
         if (record.id !== id) return record
         updated = { ...record, positioning: nextPositioning, updatedAt: savedAt }
+        return updated
+      }),
+    }))
+    return updated
+  },
+  registerOutcome: (id, input) => {
+    const current = get().records.find((record) => record.id === id)
+    if (!current) return null
+    const asDemand: Demand = {
+      id: current.id,
+      code: current.code,
+      title: current.subject,
+      requestSummary: current.pressRequest,
+      factContext: current.factContext,
+      journalistId: current.journalistId,
+      journalistName: current.journalistName,
+      outletName: current.outletName,
+      responsibleId: current.responsibleId,
+      responsibleName: current.responsibleName,
+      deadlineAt: new Date(current.requestedDeadline),
+      channel: current.channel,
+      priority: current.priority ?? 'medium',
+      status: current.status,
+      createdAt: current.createdAt,
+      updatedAt: current.updatedAt,
+      interactions: current.interactions,
+      positioning: current.positioning,
+      enrichment: current.enrichment,
+      stateTransitions: current.stateTransitions,
+      outcome: current.outcome,
+    }
+    const next = registerDemandOutcome(asDemand, {
+      toneScore: input.toneScore,
+      published: input.published,
+      usageScore: input.usageScore,
+      resultSummary: input.resultSummary,
+      recordedBy: input.recordedBy ?? currentUser.name,
+      recordedAt: input.recordedAt ?? new Date(),
+    })
+    let updated: LocalDemandCapture | null = null
+    set((state) => ({
+      records: state.records.map((record) => {
+        if (record.id !== id) return record
+        updated = {
+          ...record,
+          outcome: next.outcome ?? null,
+          updatedAt: next.updatedAt,
+        }
         return updated
       }),
     }))

@@ -11,6 +11,7 @@ import {
   Textarea,
 } from '@print/ui'
 import type { DemandPriority } from '@/application/modules/Demand/stores/local-demand.store'
+import { DEMAND_PRIORITY_OPTIONS } from '@/application/modules/Demand/presentation/demand-priority'
 import type { Journalist } from '@/application/modules/Journalist/hooks/use-journalists'
 import type { NewLocalDemandCapture } from '@/application/modules/Demand/stores/local-demand.store'
 import { TagInput } from '@/ui/components/TagInput/TagInput'
@@ -58,13 +59,6 @@ const channelOptions = [
   { value: 'phone', label: 'Telefone' },
   { value: 'whatsapp', label: 'WhatsApp' },
   { value: 'other', label: 'Outro canal' },
-]
-
-const priorityOptions: Array<{ value: DemandPriority; label: string }> = [
-  { value: 'low', label: 'Baixa' },
-  { value: 'medium', label: 'Média' },
-  { value: 'high', label: 'Alta' },
-  { value: 'critical', label: 'Crítica' },
 ]
 
 function fieldError(key: keyof FormValues, values: FormValues) {
@@ -287,7 +281,7 @@ export function DemandCreateDrawer({
             </div>
           )}
           <SelectField label="Canal de entrada" name="channel" required value={values.channel} error={errors.channel} options={channelOptions} onValueChange={(value) => update('channel', value)} />
-          <SelectField label="Prioridade" name="priority" placeholder="Não informar" options={priorityOptions} value={values.priority} onValueChange={(value) => update('priority', value as DemandPriority)} />
+          <SelectField label="Prioridade" name="priority" placeholder="Não informar" options={DEMAND_PRIORITY_OPTIONS} value={values.priority} onValueChange={(value) => update('priority', value as DemandPriority)} />
           {(selectedJournalist || (values.contactMode === 'local' && values.contactName.trim())) && (
             <div className={styles.journalistContext} role="region" aria-label="Contexto do contato">
               {selectedJournalist ? (

@@ -13,6 +13,7 @@ import {
   ConfirmDialog,
   DrawerShell,
   FormField,
+  Rating,
   SelectField,
   Switch,
   Text,
@@ -21,6 +22,7 @@ import {
 
 import type { NewJournalistInput } from '@/application/modules/Journalist/hooks/use-create-journalist'
 import type { EditableJournalistProfile } from '@/application/modules/Journalist/hooks/use-update-journalist'
+import { currentUser } from '@/application/current-user'
 import styles from './styles.module.scss'
 
 type FormValues = {
@@ -34,6 +36,7 @@ type FormValues = {
   bestContactWindow: string
   topics: string[]
   isActive: boolean
+  initialScore: number | null
 }
 
 type FormErrors = Partial<Record<'name' | 'outletName' | 'email', string>>
@@ -49,6 +52,7 @@ const emptyValues: FormValues = {
   bestContactWindow: '',
   topics: [],
   isActive: true,
+  initialScore: null,
 }
 
 export type JournalistCreateInitialValue = Partial<Pick<FormValues, 'name' | 'outletName'>>
@@ -73,6 +77,7 @@ function profileToFormValues(profile: EditableJournalistProfile): FormValues {
     bestContactWindow: profile.bestContactWindow,
     topics: [...profile.topics],
     isActive: profile.isActive,
+    initialScore: null,
   }
 }
 
@@ -310,7 +315,11 @@ export function JournalistCreateDrawer({
       onSave?.(profile)
       return
     }
-    onCreate(profile)
+    onCreate({
+      ...profile,
+      initialScore: values.initialScore,
+      initialScoreAuthorName: currentUser.name,
+    })
   }
 
   return (
@@ -361,6 +370,24 @@ export function JournalistCreateDrawer({
             <legend>Cobertura</legend>
             <TopicTagInput topics={values.topics} suggestions={topicSuggestions} onChange={(topics) => update('topics', topics)} />
           </fieldset>
+
+          {mode === 'create' ? (
+            <fieldset className={styles.section}>
+              <legend>Relacionamento</legend>
+              <Text as="p" variant="labelSm" tone="muted" className={styles.sectionHint}>
+                Opcional. Conta como primeira amostra da média no perfil.
+              </Text>
+              <Rating
+                label="Nota inicial"
+                name="initialScore"
+                max={5}
+                minLabel="Difícil"
+                maxLabel="Colaborativo"
+                value={values.initialScore}
+                onValueChange={(value) => update('initialScore', value)}
+              />
+            </fieldset>
+          ) : null}
 
           <fieldset className={styles.section}>
             <legend>Status</legend>

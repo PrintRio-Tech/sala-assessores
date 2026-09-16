@@ -79,6 +79,14 @@ const adoptedLocalDemand: LocalDemandCapture = {
     body: 'Posicionamento',
     origin: 'off_platform',
   }],
+  outcome: {
+    toneScore: 5,
+    published: 'yes',
+    usageScore: 5,
+    resultSummary: 'Matéria alinhada ao posicionamento.',
+    recordedBy: 'Noel Ferreira',
+    recordedAt: new Date('2026-08-26T12:00:00.000Z'),
+  },
 }
 
 describe('buildJournalistProfileViewModel', () => {
@@ -94,9 +102,42 @@ describe('buildJournalistProfileViewModel', () => {
         title: 'Título atualizado localmente',
         status: 'sent',
         kindLabel: 'Demanda local',
+        outcomeLabel: 'Publicado · Tom 5/5 · Uso 5/5',
       }),
     ])
+    expect(profile.caseOutcomes).toEqual([
+      expect.objectContaining({
+        demandId: 'd-shared',
+        demandTitle: 'Título atualizado localmente',
+        toneScore: 5,
+        publishedLabel: 'Sim',
+        usageScore: 5,
+        caseScoreLabel: '5.0',
+        resultSummary: 'Matéria alinhada ao posicionamento.',
+      }),
+    ])
+    expect(profile.relationshipScore).toBe(5)
+    expect(profile.relationshipScoreLabel).toBe('5.0')
     expect(profile.topics).toContain('Tema local')
     expect(profile.topics).not.toContain('Tema antigo')
+  })
+
+  it('média mistura nota inicial do cadastro com notas das pautas', () => {
+    const withInitial: Journalist = {
+      ...journalist,
+      relationshipEvaluations: [{
+        id: 'ev-1',
+        authorName: 'Noel Ferreira',
+        recordedAt: new Date('2026-08-01T12:00:00.000Z'),
+        score: 3,
+        traits: [],
+        editorialToneLabel: 'Nota inicial do cadastro',
+        notes: '',
+      }],
+    }
+
+    const profile = buildJournalistProfileViewModel(withInitial, [], [adoptedLocalDemand])
+    expect(profile.relationshipScore).toBe(4)
+    expect(profile.relationshipScoreLabel).toBe('4.0')
   })
 })

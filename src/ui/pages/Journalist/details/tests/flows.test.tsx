@@ -23,6 +23,9 @@ const journalist = {
   objectiveStats: { totalDemands: 8, solicitedCount: 6, proactiveCount: 2, successRate: 0.75, positioningUsageRate: 0.5 },
   demandHistory: [],
   relationshipEvaluations: [{ id: 'e-1', authorName: 'Ana', recordedAt: new Date('2026-08-20T10:00:00.000Z'), score: 4, traits: ['Analítica'], editorialToneLabel: 'Imparcial / Analítico', notes: 'Registro manual.' }],
+  caseOutcomes: [],
+  relationshipScore: 4,
+  relationshipScoreLabel: '4.0',
 }
 
 const update = vi.fn()

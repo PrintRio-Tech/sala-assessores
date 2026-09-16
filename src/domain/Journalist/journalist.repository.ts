@@ -17,7 +17,10 @@ export type CreateJournalistInput = Pick<
   | 'bestContactWindow'
   | 'topics'
   | 'isActive'
->
+> & {
+  initialScore?: number | null
+  initialScoreAuthorName?: string
+}
 
 export type UpdateJournalistInput = Pick<
   Journalist,

@@ -1,4 +1,10 @@
-import { DemandInteractionNotAllowedError, PositioningNotEditableError, PositioningTextRequiredError } from './errors/demand.errors'
+import {
+  DemandInteractionNotAllowedError,
+  DemandOutcomeNotAllowedError,
+  InvalidDemandOutcomeError,
+  PositioningNotEditableError,
+  PositioningTextRequiredError,
+} from './errors/demand.errors'
 
 export const DEMAND_STATUSES = [
   'in_progress',
@@ -308,6 +314,100 @@ export interface DemandEnrichment {
   nextStep: string | null
 }
 
+export const DEMAND_OUTCOME_PUBLISHED = ['yes', 'no', 'unknown'] as const
+export type DemandOutcomePublished = (typeof DEMAND_OUTCOME_PUBLISHED)[number]
+
+export const DEMAND_OUTCOME_PUBLISHED_LABELS: Record<DemandOutcomePublished, string> = {
+  yes: 'Sim',
+  no: 'Não',
+  unknown: 'Ainda não sei',
+}
+
+export const DEMAND_OUTCOME_SCORE_MIN = 1
+export const DEMAND_OUTCOME_SCORE_MAX = 5
+
+export interface DemandOutcome {
+  toneScore: number
+  published: DemandOutcomePublished
+  usageScore: number
+  resultSummary: string
+  recordedBy: string
+  recordedAt: Date
+}
+
+export type NewDemandOutcome = DemandOutcome
+
+export function canRegisterDemandOutcome(status: DemandStatus): boolean {
+  return status === 'sent' || status === 'closed_without_send'
+}
+
+function isOutcomeScore(value: number): boolean {
+  return Number.isInteger(value)
+    && value >= DEMAND_OUTCOME_SCORE_MIN
+    && value <= DEMAND_OUTCOME_SCORE_MAX
+}
+
+export function assertDemandOutcome(
+  status: DemandStatus,
+  outcome: NewDemandOutcome,
+): void {
+  if (!canRegisterDemandOutcome(status)) {
+    throw new DemandOutcomeNotAllowedError()
+  }
+  if (!isOutcomeScore(outcome.toneScore)) {
+    throw new InvalidDemandOutcomeError('Informe o tom da matéria (1 a 5).')
+  }
+  if (!(DEMAND_OUTCOME_PUBLISHED as readonly string[]).includes(outcome.published)) {
+    throw new InvalidDemandOutcomeError('Informe se foi publicado.')
+  }
+  if (!isOutcomeScore(outcome.usageScore)) {
+    throw new InvalidDemandOutcomeError('Informe como o material foi aproveitado (1 a 5).')
+  }
+  if (!outcome.resultSummary.trim()) {
+    throw new InvalidDemandOutcomeError('Descreva o que aconteceu nesta pauta.')
+  }
+  if (!outcome.recordedBy.trim()) {
+    throw new InvalidDemandOutcomeError('A avaliação exige autor identificado.')
+  }
+  if (!(outcome.recordedAt instanceof Date) || Number.isNaN(outcome.recordedAt.getTime())) {
+    throw new InvalidDemandOutcomeError('A avaliação exige data de registro.')
+  }
+}
+
+export function registerDemandOutcome(
+  demand: Demand,
+  input: NewDemandOutcome,
+  now = new Date(),
+): Demand {
+  const normalized: DemandOutcome = {
+    toneScore: input.toneScore,
+    published: input.published,
+    usageScore: input.usageScore,
+    resultSummary: input.resultSummary.trim(),
+    recordedBy: input.recordedBy.trim(),
+    recordedAt: input.recordedAt,
+  }
+  assertDemandOutcome(demand.status, normalized)
+  return {
+    ...demand,
+    outcome: normalized,
+    updatedAt: now,
+  }
+}
+
+export function demandOutcomeCaseScore(outcome: DemandOutcome): number {
+  return (outcome.toneScore + outcome.usageScore) / 2
+}
+
+export function demandOutcomeHistoryLabel(outcome: DemandOutcome): string {
+  const parts: string[] = []
+  if (outcome.published === 'yes') parts.push('Publicado')
+  else if (outcome.published === 'no') parts.push('Não publicado')
+  parts.push(`Tom ${outcome.toneScore}/5`)
+  parts.push(`Uso ${outcome.usageScore}/5`)
+  return parts.join(' · ')
+}
+
 export interface Demand {
   id: string
   code: string
@@ -329,6 +429,7 @@ export interface Demand {
   positioning?: DemandPositioning
   enrichment?: DemandEnrichment
   stateTransitions?: DemandStateTransition[]
+  outcome?: DemandOutcome | null
 }
 
 export type DemandAction = 'write_positioning' | 'register_interaction'

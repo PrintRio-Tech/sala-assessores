@@ -1,3 +1,5 @@
+import { assertRelationshipEvaluation } from '../journalist.entity'
+import { InvalidRelationshipEvaluationError } from '../errors/journalist.errors'
 import { normalizeAndValidateJournalistProfile } from '../journalist-profile'
 import type {
   CreateJournalistInput,
@@ -13,7 +15,26 @@ export class CreateJournalist {
   }
 
   execute(input: CreateJournalistInput) {
-    const normalized = normalizeAndValidateJournalistProfile(input)
+    const { initialScore, initialScoreAuthorName, ...profileInput } = input
+    const normalized = normalizeAndValidateJournalistProfile(profileInput)
+    const relationshipEvaluations: NewJournalist['relationshipEvaluations'] = []
+
+    if (initialScore != null) {
+      if (!Number.isFinite(initialScore) || initialScore < 1 || initialScore > 5) {
+        throw new InvalidRelationshipEvaluationError('Informe uma nota entre 1 e 5.')
+      }
+      const evaluation = {
+        id: globalThis.crypto.randomUUID(),
+        authorName: (initialScoreAuthorName ?? '').trim() || 'Cadastro',
+        recordedAt: new Date(),
+        score: initialScore,
+        traits: [],
+        editorialToneLabel: 'Nota inicial do cadastro',
+        notes: '',
+      }
+      assertRelationshipEvaluation(evaluation)
+      relationshipEvaluations.push(evaluation)
+    }
 
     const journalist: NewJournalist = {
       ...normalized,
@@ -25,7 +46,7 @@ export class CreateJournalist {
         positioningUsageRate: 0,
       },
       demandHistory: [],
-      relationshipEvaluations: [],
+      relationshipEvaluations,
     }
 
     return this.repo.create(journalist)

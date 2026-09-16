@@ -12,6 +12,7 @@ import {
   getDemandStatusFilterValues,
   getExternalInteractionFieldErrors,
   isExternalInteractionResult,
+  registerDemandOutcome,
   sanitizeDemandListStatus,
   savePositioningVersion,
   transitionDemand,
@@ -22,6 +23,8 @@ import {
 import type { Demand } from './demand.entity'
 import {
   DemandInteractionNotAllowedError,
+  DemandOutcomeNotAllowedError,
+  InvalidDemandOutcomeError,
   PositioningNotEditableError,
   PositioningTextRequiredError,
 } from './errors/demand.errors'
@@ -319,5 +322,75 @@ describe('Demand domain', () => {
     expect(next.approval).toBeNull()
     expect(currentPositioningBody(next)).toBe('Nota 2.')
     expect(next.versions).toHaveLength(2)
+  })
+
+  it('rejeita avaliar resultado enquanto o caso está em andamento', () => {
+    expect(() => registerDemandOutcome(demand({ id: '1', status: 'in_progress' }), {
+      toneScore: 5,
+      published: 'yes',
+      usageScore: 5,
+      resultSummary: 'Matéria saiu no Valor.',
+      recordedBy: 'Noel Ferreira',
+      recordedAt: new Date('2026-09-15T12:00:00.000Z'),
+    })).toThrow(DemandOutcomeNotAllowedError)
+  })
+
+  it('registra o resultado em caso enviado ou encerrado e substitui o anterior', () => {
+    const recordedAt = new Date('2026-09-15T12:00:00.000Z')
+    const now = new Date('2026-09-15T13:00:00.000Z')
+    const first = registerDemandOutcome(demand({ id: '2', status: 'sent' }), {
+      toneScore: 3,
+      published: 'unknown',
+      usageScore: 1,
+      resultSummary: 'Ainda sem retorno da redação.',
+      recordedBy: 'Noel Ferreira',
+      recordedAt,
+    }, now)
+
+    expect(first.outcome).toEqual({
+      toneScore: 3,
+      published: 'unknown',
+      usageScore: 1,
+      resultSummary: 'Ainda sem retorno da redação.',
+      recordedBy: 'Noel Ferreira',
+      recordedAt,
+    })
+    expect(first.updatedAt).toEqual(now)
+
+    const second = registerDemandOutcome(first, {
+      toneScore: 5,
+      published: 'yes',
+      usageScore: 5,
+      resultSummary: '  Matéria publicada com o posicionamento.  ',
+      recordedBy: '  Noel Ferreira  ',
+      recordedAt: new Date('2026-09-16T10:00:00.000Z'),
+    }, new Date('2026-09-16T11:00:00.000Z'))
+
+    expect(second.outcome).toEqual({
+      toneScore: 5,
+      published: 'yes',
+      usageScore: 5,
+      resultSummary: 'Matéria publicada com o posicionamento.',
+      recordedBy: 'Noel Ferreira',
+      recordedAt: new Date('2026-09-16T10:00:00.000Z'),
+    })
+
+    expect(() => registerDemandOutcome(demand({ id: '3', status: 'closed_without_send' }), {
+      toneScore: 5,
+      published: 'yes',
+      usageScore: 5,
+      resultSummary: '',
+      recordedBy: 'Noel Ferreira',
+      recordedAt,
+    })).toThrow(InvalidDemandOutcomeError)
+
+    expect(() => registerDemandOutcome(demand({ id: '4', status: 'sent' }), {
+      toneScore: 0,
+      published: 'yes',
+      usageScore: 5,
+      resultSummary: 'Resumo',
+      recordedBy: 'Noel Ferreira',
+      recordedAt,
+    })).toThrow(InvalidDemandOutcomeError)
   })
 })

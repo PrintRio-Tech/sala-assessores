@@ -35,7 +35,7 @@ $red: #c3322d;
 .historyLayout { display: grid; grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr); align-items: start; gap: 24px; }
 .mainStack { display: grid; gap: 16px; min-width: 0; }
 .infoCard { display: grid; gap: 12px; }
-.positioningHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: $space-3; }
+.positioningHeader { display: flex; align-items: center; justify-content: space-between; gap: $space-3; }
 .positioningBody {
   display: -webkit-box;
   -webkit-box-orient: vertical;

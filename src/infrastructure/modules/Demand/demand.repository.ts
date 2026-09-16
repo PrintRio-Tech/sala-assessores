@@ -4,10 +4,11 @@ import type {
   NewExternalInteraction,
   Paginated,
 } from '@/domain/Demand/demand.repository'
-import type { Demand, PositioningAttachment } from '@/domain/Demand/demand.entity'
+import type { Demand, NewDemandOutcome, PositioningAttachment } from '@/domain/Demand/demand.entity'
 import {
   applyInteractionToPositioning,
   emptyPositioning,
+  registerDemandOutcome,
   savePositioningVersion,
   transitionDemand,
 } from '@/domain/Demand/demand.entity'
@@ -36,6 +37,17 @@ function fromPositioning(positioning: ReturnType<typeof emptyPositioning>): NonN
       approved_at: positioning.approval.approvedAt.toISOString(),
       version_id: positioning.approval.versionId,
     } : null,
+  }
+}
+
+function fromOutcome(outcome: NonNullable<Demand['outcome']>): NonNullable<DemandDto['outcome']> {
+  return {
+    tone_score: outcome.toneScore,
+    published: outcome.published,
+    usage_score: outcome.usageScore,
+    result_summary: outcome.resultSummary,
+    recorded_by: outcome.recordedBy,
+    recorded_at: outcome.recordedAt.toISOString(),
   }
 }
 
@@ -121,6 +133,16 @@ export class MockDemandRepository implements DemandRepository {
     }, current.status)
     dto.positioning = fromPositioning(next)
     dto.updated_at = input.savedAt.toISOString()
+    return toDomain(demandDtoSchema.parse(dto))
+  }
+
+  async registerOutcome(id: string, input: NewDemandOutcome): Promise<Demand | null> {
+    const dto = this.records.find((item) => item.id === id)
+    if (!dto) return null
+    const current = toDomain(demandDtoSchema.parse(dto))
+    const next = registerDemandOutcome(current, input)
+    dto.outcome = next.outcome ? fromOutcome(next.outcome) : null
+    dto.updated_at = next.updatedAt.toISOString()
     return toDomain(demandDtoSchema.parse(dto))
   }
 }

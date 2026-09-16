@@ -10,6 +10,7 @@ function repository(): DemandRepository {
     getById: vi.fn(),
     registerInteraction: vi.fn().mockResolvedValue({ id: 'd-1' }),
     savePositioning: vi.fn(),
+    registerOutcome: vi.fn(),
   }
 }
 

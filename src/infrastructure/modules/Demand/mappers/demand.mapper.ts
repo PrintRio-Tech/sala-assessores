@@ -63,5 +63,13 @@ export function toDomain(dto: DemandDto): Demand {
         versionId: dto.positioning.approval.version_id,
       } : null,
     } : emptyPositioning(),
+    outcome: dto.outcome ? {
+      toneScore: dto.outcome.tone_score,
+      published: dto.outcome.published,
+      usageScore: dto.outcome.usage_score,
+      resultSummary: dto.outcome.result_summary,
+      recordedBy: dto.outcome.recorded_by,
+      recordedAt: new Date(dto.outcome.recorded_at),
+    } : null,
   }
 }

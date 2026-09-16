@@ -77,7 +77,7 @@ describe('cabeçalho da lista de demandas', () => {
     expect(activeRow).not.toBeNull()
     expect(within(activeRow!).getByText('Em andamento')).toBeVisible()
     expect(within(activeRow!).getByText('Noel Ferreira')).toBeVisible()
-    expect(within(activeRow!).getByText('P1 · Crítica')).toBeVisible()
+    expect(within(activeRow!).getByText('P0 · Crítica')).toBeVisible()
     expect(within(activeRow!).queryByText('Rascunho local')).not.toBeInTheDocument()
 
     unmount()
@@ -92,7 +92,7 @@ describe('cabeçalho da lista de demandas', () => {
     expect(historyRow).not.toBeNull()
     expect(within(historyRow!).getByText('Encerrada sem envio')).toBeVisible()
     expect(within(historyRow!).getByText('Noel Ferreira')).toBeVisible()
-    expect(within(historyRow!).getByText('P1 · Crítica')).toBeVisible()
+    expect(within(historyRow!).getByText('P0 · Crítica')).toBeVisible()
   })
 
   it('usa reticências tipográficas no texto de apoio da busca', () => {

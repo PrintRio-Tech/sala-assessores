@@ -15,6 +15,7 @@ import {
   sanitizeDemandListStatus,
   toDemandCaptureRevision,
 } from '@/application/modules/Demand/presentation/demand-list-filters'
+import { DEMAND_PRIORITY_LABELS } from '@/application/modules/Demand/presentation/demand-priority'
 import { collectDemandTags } from '@/application/modules/Demand/presentation/demand-tags'
 import { ROUTES } from '@/ui/routes/paths'
 import { Icon } from '@/ui/components/Icon'
@@ -26,7 +27,6 @@ const statusLabels: Record<string, string> = {
   sent: 'Enviada',
   closed_without_send: 'Encerrada sem envio',
 }
-const priorityLabels: Record<string, string> = { critical: 'P1 · Crítica', high: 'P1 · Alta', medium: 'P2 · Média', low: 'P3 · Baixa' }
 const statusTones: Record<string, BadgeTone> = { in_progress: 'soft', sent: 'primary', closed_without_send: 'neutral' }
 const DEMANDS_PAGE_SIZE = 4
 const responsibleOptions = [
@@ -154,7 +154,7 @@ export function DemandsPage() {
     { id: 'status', header: 'Status', priority: { desktop: 2, tablet: 2, mobile: 3 }, size: 'sm', cell: (demand) => <Badge size="sm" tone={statusTones[demand.status] ?? 'neutral'}>{statusLabels[demand.status] ?? demand.status}</Badge> },
     { id: 'deadline', header: 'Prazo', priority: { desktop: 3, tablet: 3, mobile: 2 }, size: 'md', cell: (demand) => <span className={styles.deadline}><Icon name="calendar" />{isLocalDemand(demand) ? demand.requestedDeadline : deadlineLabel(demand.deadlineAt)}</span> },
     { id: 'responsible', header: 'Responsável', priority: { desktop: 4, tablet: 4, mobile: 4 }, size: 'md', cellType: 'personDetailed', cell: (demand) => ({ name: demand.responsibleName }) },
-    { id: 'priority', header: 'Prioridade', priority: { desktop: 5, tablet: 5, mobile: 5 }, size: 'sm', cell: (demand) => <span className={styles.priority}>{demand.priority ? priorityLabels[demand.priority] : 'Ainda não definida'}</span> },
+    { id: 'priority', header: 'Prioridade', priority: { desktop: 5, tablet: 5, mobile: 5 }, size: 'sm', cell: (demand) => <span className={styles.priority}>{demand.priority ? DEMAND_PRIORITY_LABELS[demand.priority] : 'Ainda não definida'}</span> },
   ], [])
 
   return (

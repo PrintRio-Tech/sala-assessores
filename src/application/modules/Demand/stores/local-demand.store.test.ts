@@ -276,4 +276,36 @@ describe('LocalDemandStore interactions', () => {
 
     expect(linked).toEqual(expect.objectContaining({ contactMode: 'known', journalistId: 'j-local-1' }))
   })
+
+  it('registra e substitui o resultado da pauta após o fechamento', () => {
+    const demand = useLocalDemandStore.getState().add(capture)
+    useLocalDemandStore.getState().registerInteraction(demand.id, {
+      occurredAt: new Date('2026-08-30T18:00:00.000Z'),
+      result: 'closed_without_send',
+      summary: 'Pedido perdeu a atualidade.',
+    })
+
+    const first = useLocalDemandStore.getState().registerOutcome(demand.id, {
+      toneScore: 1,
+      published: 'no',
+      usageScore: 1,
+      resultSummary: 'Redação não retornou.',
+    })
+    expect(first?.outcome).toEqual(expect.objectContaining({
+      toneScore: 1,
+      published: 'no',
+      usageScore: 1,
+      resultSummary: 'Redação não retornou.',
+      recordedBy: currentUser.name,
+    }))
+
+    const second = useLocalDemandStore.getState().registerOutcome(demand.id, {
+      toneScore: 5,
+      published: 'yes',
+      usageScore: 5,
+      resultSummary: 'Veículo publicou com o recorte alinhado.',
+    })
+    expect(second?.outcome?.resultSummary).toBe('Veículo publicou com o recorte alinhado.')
+    expect(second?.outcome?.toneScore).toBe(5)
+  })
 })

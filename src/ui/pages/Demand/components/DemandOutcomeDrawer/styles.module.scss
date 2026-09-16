@@ -1,0 +1,59 @@
+@use '@print/ui/tokens' as *;
+@use '@print/ui/mixins' as *;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+}
+
+.section {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+}
+
+.section legend {
+  margin-bottom: 0;
+  font-size: $body-md-size;
+  font-weight: $font-weight-semibold;
+}
+
+.footerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $space-2;
+  width: 100%;
+}
+
+.submitError {
+  margin: 0;
+}
+
+.evaluationNotice {
+  padding: $space-3;
+  border: $border-subtle;
+  border-radius: $radius-md;
+  background: $surface-container-low;
+  color: $on-surface-variant;
+}
+
+.evaluationNotice p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+@include mobile {
+  .footerActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .footerAction {
+    width: 100%;
+  }
+}

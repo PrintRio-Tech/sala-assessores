@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@base-ui-components/react": "^1.0.0-rc.0",
-    "@print/ui": "npm:@printrio-tech/print-ui@0.5.11",
+    "@print/ui": "npm:@printrio-tech/print-ui@^0.5.13",
     "@tanstack/react-query": "^5.101.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

@@ -51,6 +51,9 @@ describe('GetDemandById', () => {
       async savePositioning() {
         return null
       },
+      async registerOutcome() {
+        return null
+      },
     })
 
     const result = await useCase.execute('d1')
@@ -73,6 +76,9 @@ describe('GetDemandById', () => {
         return null
       },
       async savePositioning() {
+        return null
+      },
+      async registerOutcome() {
         return null
       },
     })

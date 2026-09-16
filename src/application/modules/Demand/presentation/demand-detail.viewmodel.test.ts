@@ -14,7 +14,7 @@ describe('Demand detail presentation contract', () => {
       title: 'Impactos da nova regulamentação no setor',
       journalistName: 'Carolina Montenegro',
       outletName: 'Valor Econômico',
-      priorityLabel: 'Alta',
+      priorityLabel: 'P1 · Alta',
       statusLabel: 'Em andamento',
       responsibleName: 'Ana Paula',
     }))
@@ -49,6 +49,21 @@ describe('Demand detail presentation contract', () => {
       title: 'Faltou informação ou ajustes',
       actor: 'Ana Paula',
       participants: 'Marina Sousa (Coordenação)',
+    }))
+    expect(viewModel.canRegisterOutcome).toBe(false)
+    expect(viewModel.outcome).toBeNull()
+  })
+
+  it('expõe o resultado da pauta em demanda enviada', async () => {
+    const demand = await demandService.getById('d-q1')
+    const viewModel = buildDemandDetailViewModel(demand!)
+
+    expect(viewModel.canRegisterOutcome).toBe(true)
+    expect(viewModel.outcome).toEqual(expect.objectContaining({
+      toneScore: 5,
+      publishedLabel: 'Sim',
+      usageScore: 5,
+      resultSummary: 'Matéria saiu no Valor com o recorte alinhado ao posicionamento enviado.',
     }))
   })
 

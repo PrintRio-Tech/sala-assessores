@@ -92,5 +92,32 @@ describe('demand.mapper', () => {
     expect(entity.interactions[0]).toEqual(expect.objectContaining({ result: 'closed_without_send', summary: 'Redação desistiu.' }))
     expect(entity.stateTransitions?.[0]).toEqual(expect.objectContaining({ from: 'in_progress', to: 'closed_without_send', trigger: 'closed_without_send' }))
     expect(entity.factContext).toBeUndefined()
+    expect(entity.outcome).toBeNull()
+  })
+
+  it('mapeia o resultado da pauta quando presente', () => {
+    const dto: DemandDto = {
+      id: 'd3', code: 'DEM-3', title: 'Com outcome', request_summary: 'Pedido', journalist_id: 'j1', journalist_name: 'Ana', outlet_name: 'Valor',
+      responsible_id: 'r1', responsible_name: 'Noel', deadline_at: '2026-08-28T18:00:00.000Z', priority: 'medium', status: 'sent',
+      created_at: '2026-08-01T10:00:00.000Z', updated_at: '2026-08-12T10:00:00.000Z',
+      interactions: [],
+      outcome: {
+        tone_score: 5,
+        published: 'yes',
+        usage_score: 5,
+        result_summary: 'Matéria alinhada.',
+        recorded_by: 'Ana Paula',
+        recorded_at: '2026-08-13T10:00:00.000Z',
+      },
+    }
+
+    expect(toDomain(dto).outcome).toEqual({
+      toneScore: 5,
+      published: 'yes',
+      usageScore: 5,
+      resultSummary: 'Matéria alinhada.',
+      recordedBy: 'Ana Paula',
+      recordedAt: new Date('2026-08-13T10:00:00.000Z'),
+    })
   })
 })

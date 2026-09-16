@@ -80,14 +80,12 @@ describe('detalhe canônico da demanda', () => {
     expect(back.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(actions.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(within(header).queryByRole('button', { name: 'Ações da demanda' })).not.toBeInTheDocument()
-    expect(within(actions).getByRole('button', { name: 'Escrever posicionamento' })).toHaveTextContent('Escrever posicionamento')
+    expect(within(actions).queryByRole('button', { name: 'Escrever posicionamento' })).not.toBeInTheDocument()
     expect(within(actions).getByRole('button', { name: 'Registrar interação' })).toHaveTextContent('Registrar interação')
-    const write = within(actions).getByRole('button', { name: 'Escrever posicionamento' })
     const interact = within(actions).getByRole('button', { name: 'Registrar interação' })
     const edit = within(actions).getByRole('button', { name: 'Editar' })
     const remove = within(actions).getByRole('button', { name: 'Excluir' })
     expect(within(header).queryByTestId('primary-workflow-action')).not.toBeInTheDocument()
-    expect(write.compareDocumentPosition(interact) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(interact.compareDocumentPosition(edit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(edit.compareDocumentPosition(remove) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(edit).toHaveAttribute('aria-label', 'Editar')
@@ -502,10 +500,10 @@ describe('detalhe canônico da demanda', () => {
   })
 
   it.each([
-    ['in_progress', true],
-    ['sent', false],
-    ['closed_without_send', false],
-  ] satisfies Array<[DemandStatus, boolean]>)('status %s %s registrar interação', async (status, canInteract) => {
+    ['in_progress', true, false],
+    ['sent', false, true],
+    ['closed_without_send', false, true],
+  ] satisfies Array<[DemandStatus, boolean, boolean]>)('status %s: interação=%s avaliação=%s', async (status, canInteract, canEvaluate) => {
     renderLocalDemandDetail(undefined, status)
     const page = await screen.findByTestId('demand-detail')
 
@@ -517,11 +515,58 @@ describe('detalhe canônico da demanda', () => {
     if (canInteract) {
       expect(within(page).getByRole('button', { name: 'Registrar interação' })).toBeVisible()
       expect(within(page).getAllByRole('button', { name: 'Escrever posicionamento' }).length).toBeGreaterThan(0)
+      expect(within(page).queryByRole('button', { name: 'Avaliar resultado' })).not.toBeInTheDocument()
     } else {
       expect(within(page).queryByRole('button', { name: 'Registrar interação' })).not.toBeInTheDocument()
       expect(within(page).queryByRole('button', { name: 'Escrever posicionamento' })).not.toBeInTheDocument()
       expect(within(page).queryByRole('button', { name: 'Atualizar posicionamento' })).not.toBeInTheDocument()
     }
+    if (canEvaluate) {
+      expect(within(page).getByRole('button', { name: 'Avaliar resultado' })).toBeVisible()
+    }
+  })
+
+  it('registra o resultado da pauta após o fechamento e troca o CTA para editar', async () => {
+    const user = userEvent.setup()
+    renderDemandDetail('d-encerrada')
+    const page = await screen.findByTestId('demand-detail')
+
+    expect(within(page).getByRole('button', { name: 'Avaliar resultado' })).toBeVisible()
+    expect(within(page).queryByTestId('demand-outcome-card')).not.toBeInTheDocument()
+
+    await user.click(within(page).getByRole('button', { name: 'Avaliar resultado' }))
+    const drawer = await screen.findByRole('dialog', { name: /Avaliar resultado/i })
+    const toneGroup = within(drawer).getByRole('radiogroup', { name: 'Qual foi o tom da matéria?' })
+    await user.click(within(toneGroup).getByRole('radio', { name: '5 de 5' }))
+    await user.click(within(drawer).getByRole('combobox', { name: 'Foi publicado?' }))
+    await user.click(await screen.findByRole('option', { name: 'Não' }))
+    const usageGroup = within(drawer).getByRole('radiogroup', { name: 'Como o material foi aproveitado?' })
+    await user.click(within(usageGroup).getByRole('radio', { name: '1 de 5' }))
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'O que aconteceu nesta pauta?' }), {
+      target: { value: 'Pauta perdeu o objeto; nenhum material foi publicado.' },
+    })
+    await user.click(within(drawer).getByRole('button', { name: 'Salvar avaliação' }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: /Avaliar resultado/i })).not.toBeInTheDocument()
+    })
+    expect(within(page).getByTestId('demand-outcome-card')).toBeVisible()
+    expect(within(page).getByTestId('stacked-outcome-tone')).toHaveTextContent('5/5')
+    expect(within(page).getByTestId('stacked-outcome-published')).toHaveTextContent('Não')
+    expect(within(page).getByTestId('stacked-outcome-usage')).toHaveTextContent('1/5')
+    expect(within(page).getByRole('button', { name: 'Editar avaliação' })).toBeVisible()
+    expect(within(page).queryByRole('button', { name: 'Avaliar resultado' })).not.toBeInTheDocument()
+  })
+
+  it('mostra o resultado seed de uma demanda enviada', async () => {
+    renderDemandDetail('d-q1')
+    const page = await screen.findByTestId('demand-detail')
+
+    expect(within(page).getByRole('button', { name: 'Editar avaliação' })).toBeVisible()
+    expect(within(page).getByTestId('demand-outcome-card')).toBeVisible()
+    expect(within(page).getByTestId('stacked-outcome-tone')).toHaveTextContent('5/5')
+    expect(within(page).getByTestId('stacked-outcome-published')).toHaveTextContent('Sim')
+    expect(within(page).getByTestId('stacked-outcome-usage')).toHaveTextContent('5/5')
   })
 
   it('mostra pedido e fato separados e registra interação sem fingir etapa interna', async () => {
@@ -619,29 +664,31 @@ describe('detalhe canônico da demanda', () => {
     let page = await screen.findByTestId('demand-detail')
     const emptyCard = within(page).getByTestId('demand-positioning')
     expect(within(emptyCard).getByText('Ainda sem resposta')).toBeVisible()
-    expect(within(emptyCard).getByText('Vazio')).toBeVisible()
+    expect(within(emptyCard).queryByText('Vazio')).not.toBeInTheDocument()
+    expect(within(emptyCard).getByRole('button', { name: 'Escrever posicionamento' })).toBeVisible()
     expect(within(page).getByRole('banner').compareDocumentPosition(emptyCard) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     unmountCeo()
 
     const { unmount: unmountRegulacao } = renderDemandDetail('d-regulacao')
     page = await screen.findByTestId('demand-detail')
     const draftCard = within(page).getByTestId('demand-positioning')
-    expect(within(draftCard).getByText('Rascunho')).toBeVisible()
+    expect(within(draftCard).queryByText('Rascunho')).not.toBeInTheDocument()
     expect(within(draftCard).getByText(/cronograma de adequação regulatória/)).toBeVisible()
     expect(within(draftCard).getByTestId('positioning-attachment')).toHaveTextContent('cronograma-regulatorio.pdf')
     expect(within(draftCard).getByRole('button', { name: 'Ler completo' })).toBeVisible()
     expect(within(draftCard).getByRole('button', { name: 'Atualizar posicionamento' })).toBeVisible()
     expect(within(page).getByRole('heading', { name: 'Versão salva' })).toBeVisible()
     const actions = within(page).getByRole('group', { name: 'Ações da demanda' })
-    expect(within(actions).getByRole('button', { name: 'Atualizar posicionamento' })).toBeVisible()
+    expect(within(actions).queryByRole('button', { name: 'Atualizar posicionamento' })).not.toBeInTheDocument()
     expect(within(actions).getByRole('button', { name: 'Registrar interação' })).toBeVisible()
     unmountRegulacao()
 
     renderDemandDetail('d-entrevista-adiada')
     page = await screen.findByTestId('demand-detail')
     const approvedCard = within(page).getByTestId('demand-positioning')
-    expect(within(approvedCard).getByText('Aprovado')).toBeVisible()
+    expect(within(approvedCard).queryByText(/^Aprovado$/)).not.toBeInTheDocument()
     expect(within(approvedCard).getByText(/fala já liberada/)).toBeVisible()
+    expect(within(approvedCard).getByText(/Aprovado por/)).toBeVisible()
   })
 
   it('salva o texto no card e no histórico, marca Aprovado e fecha o drawer', async () => {
@@ -651,7 +698,7 @@ describe('detalhe canônico da demanda', () => {
     const card = within(page).getByTestId('demand-positioning')
     expect(within(card).getByText('Ainda sem resposta')).toBeVisible()
 
-    await user.click(within(within(page).getByRole('group', { name: 'Ações da demanda' })).getByRole('button', { name: 'Escrever posicionamento' }))
+    await user.click(within(card).getByRole('button', { name: 'Escrever posicionamento' }))
     const positioningDrawer = await screen.findByRole('dialog', { name: 'Escrever posicionamento' })
     fireEvent.change(within(positioningDrawer).getByRole('textbox', { name: 'Texto do posicionamento' }), {
       target: { value: 'Nota oficial da operação.' },
@@ -660,7 +707,7 @@ describe('detalhe canônico da demanda', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Escrever posicionamento' })).not.toBeInTheDocument())
     expect(within(page).getByTestId('demand-positioning')).toHaveTextContent('Nota oficial da operação.')
-    expect(within(page).getByTestId('demand-positioning')).toHaveTextContent('Rascunho')
+    expect(within(page).getByTestId('demand-positioning')).not.toHaveTextContent('Rascunho')
     expect(within(page).getByRole('heading', { name: 'Versão salva' })).toBeVisible()
     expect(within(page).getByText('Texto')).toBeVisible()
     expect(within(page).getAllByText('Nota oficial da operação.').length).toBeGreaterThan(0)
@@ -696,7 +743,7 @@ describe('detalhe canônico da demanda', () => {
     const discard = screen.queryByRole('dialog', { name: 'Descartar interação?' })
     if (discard) await user.click(within(discard).getByRole('button', { name: 'Descartar' }))
 
-    await user.click(within(within(page).getByRole('group', { name: 'Ações da demanda' })).getByRole('button', { name: 'Escrever posicionamento' }))
+    await user.click(within(page).getByRole('button', { name: 'Escrever posicionamento' }))
     const positioningDrawer = await screen.findByRole('dialog', { name: 'Escrever posicionamento' })
     fireEvent.change(within(positioningDrawer).getByRole('textbox', { name: 'Texto do posicionamento' }), {
       target: { value: 'Texto atual da nota.' },
@@ -717,7 +764,7 @@ describe('detalhe canônico da demanda', () => {
     const page = await screen.findByTestId('demand-detail')
     const file = new File(['nota'], 'nota-oficial.pdf', { type: 'application/pdf' })
 
-    await user.click(within(within(page).getByRole('group', { name: 'Ações da demanda' })).getByRole('button', { name: 'Escrever posicionamento' }))
+    await user.click(within(page).getByRole('button', { name: 'Escrever posicionamento' }))
     const positioningDrawer = await screen.findByRole('dialog', { name: 'Escrever posicionamento' })
     await user.upload(within(positioningDrawer).getByLabelText('Anexo do posicionamento'), file)
     fireEvent.change(within(positioningDrawer).getByRole('textbox', { name: 'Texto do posicionamento' }), {

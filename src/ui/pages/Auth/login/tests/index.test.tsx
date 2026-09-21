@@ -23,9 +23,9 @@ describe('LoginPage', () => {
       </BrowserRouter>,
     )
 
-    expect(screen.getByText('ACESSO SEGURO')).toBeInTheDocument()
+    expect(screen.getByText('Acesso seguro')).toBeInTheDocument()
     expect(screen.getByText('Entre com seu e-mail')).toBeInTheDocument()
-    expect(screen.getByLabelText('E-mail corporativo')).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: /e-mail corporativo/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /enviar código/i })).toBeInTheDocument()
   })
 
@@ -38,7 +38,7 @@ describe('LoginPage', () => {
       </BrowserRouter>,
     )
 
-    const emailInput = screen.getByLabelText('E-mail corporativo')
+    const emailInput = screen.getByRole('textbox', { name: /e-mail corporativo/i })
     const submitButton = screen.getByRole('button', { name: /enviar código/i })
 
     await user.type(emailInput, 'invalid-email')
@@ -56,7 +56,7 @@ describe('LoginPage', () => {
       </BrowserRouter>,
     )
 
-    const emailInput = screen.getByLabelText('E-mail corporativo')
+    const emailInput = screen.getByRole('textbox', { name: /e-mail corporativo/i })
     const submitButton = screen.getByRole('button', { name: /enviar código/i })
 
     await user.type(emailInput, 'test@example.com')

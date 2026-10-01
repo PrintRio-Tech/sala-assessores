@@ -28,10 +28,15 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
+      - name: Configure GitHub Packages
+        run: |
+          printf '%s\n' \
+            '@printrio-tech:registry=https://npm.pkg.github.com' \
+            '//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}' \
+            'always-auth=true' > .npmrc
+
       - name: Install
         run: bun install --frozen-lockfile
-        env:
-          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
         run: bun run build

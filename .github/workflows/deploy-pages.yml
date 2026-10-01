@@ -37,6 +37,8 @@ jobs:
         run: bun run build
         env:
           GITHUB_PAGES: 'true'
+          # BFF print-imprensa-back DEV (VPS, stack print-imprensa-dev). Override via repo variable VITE_GRAPHQL_URL.
+          VITE_GRAPHQL_URL: ${{ vars.VITE_GRAPHQL_URL || 'https://imprensa-dev.187-127-44-1.sslip.io/graphql' }}
 
       - name: SPA fallback
         run: cp dist/index.html dist/404.html

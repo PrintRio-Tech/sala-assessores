@@ -7,6 +7,7 @@ import { Toaster } from '@print/ui'
 
 import { queryClient } from '@/application/composition'
 import { router } from '@/ui/routes/router'
+import { ToastIconBaseStyles } from '@/ui/components/ToastIconBaseStyles'
 import '@print/ui/css'
 import '@print/ui/style'
 import '@/ui/styles/global.css'
@@ -15,6 +16,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <Toaster>
+        <ToastIconBaseStyles />
         <RouterProvider router={router} />
       </Toaster>
     </QueryClientProvider>

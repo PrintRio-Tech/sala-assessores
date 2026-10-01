@@ -1,4 +1,4 @@
-import type { PressRoomReportRepository } from '@/domain/Report/press-room-report'
+import type { PressRoomReportFilter, PressRoomReportRepository } from '@/domain/Report/press-room-report'
 
 export class ReportService {
   private readonly repo: PressRoomReportRepository
@@ -7,7 +7,7 @@ export class ReportService {
     this.repo = repo
   }
 
-  get() {
-    return this.repo.get()
+  get(filter?: PressRoomReportFilter) {
+    return this.repo.get(filter)
   }
 }

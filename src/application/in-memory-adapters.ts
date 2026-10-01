@@ -50,7 +50,7 @@ export const journalistService = {
 }
 
 export const reportService = {
-  get: () => reportState.service.get(),
+  get: (...args: Parameters<ReportService['get']>) => reportState.service.get(...args),
   use(repo: PressRoomReportRepository) {
     reportState.service = new ReportService(repo)
   },

@@ -2,14 +2,14 @@ import { useQuery } from '@tanstack/react-query'
 
 import { reportService } from '@/application/composition'
 import { queryKeys } from '@/application/constants/query-keys'
-import type { PressRoomReport } from '@/domain/Report/press-room-report'
+import type { PressRoomReport, PressRoomReportFilter } from '@/domain/Report/press-room-report'
 
-export type { PressRoomReport }
+export type { PressRoomReport, PressRoomReportFilter }
 
-export function usePressRoomReport() {
+export function usePressRoomReport(filter: PressRoomReportFilter = {}) {
   const query = useQuery({
-    queryKey: queryKeys.pressRoomReport,
-    queryFn: () => reportService.get(),
+    queryKey: [...queryKeys.pressRoomReport, filter],
+    queryFn: () => reportService.get(filter),
   })
 
   return {

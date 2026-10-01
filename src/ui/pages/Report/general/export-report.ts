@@ -1,9 +1,7 @@
-import type { PressRoomReport } from '@/application/modules/Report/hooks/use-press-room-report'
-
-export type ReportExportFormat = 'csv' | 'json'
+import type { PressRoomReport } from '@/domain/Report/press-room-report'
 
 function buildCsv(report: PressRoomReport) {
-  const rows = [
+  const rows: string[][] = [
     ['Métrica', 'Valor'],
     ['Total de demandas', String(report.demandCount)],
     ['Em andamento', String(report.inProgressCount)],
@@ -14,26 +12,30 @@ function buildCsv(report: PressRoomReport) {
     ['Publicadas', String(report.publishedCount)],
     ['Tom médio', report.averageToneScore == null ? '' : String(report.averageToneScore)],
   ]
+
+  for (const item of report.demandsByMonth) {
+    rows.push([`Demandas ${item.yearMonth}`, String(item.count)])
+  }
+  for (const item of report.publishedByMonth) {
+    rows.push([`Publicadas ${item.yearMonth}`, String(item.count)])
+  }
+  for (const item of report.byPriority) {
+    rows.push([`Prioridade ${item.label}`, String(item.count)])
+  }
+  for (const item of report.byOrigin) {
+    rows.push([`Origem ${item.label}`, String(item.count)])
+  }
+
   return rows.map((row) => row.join(',')).join('\n')
 }
 
-function buildJson(report: PressRoomReport) {
-  return JSON.stringify({
-    generated_at: new Date().toISOString(),
-    kpis: report,
-  }, null, 2)
-}
-
-export function downloadReport(format: ReportExportFormat, report: PressRoomReport) {
+export function downloadReport(report: PressRoomReport) {
   const today = new Date().toISOString().slice(0, 10)
-  const content = format === 'json' ? buildJson(report) : buildCsv(report)
-  const filename = `relatorio-sala-assessores-${today}.${format}`
-  const mimeType = format === 'json' ? 'application/json' : 'text/csv;charset=utf-8;'
-  const blob = new Blob([content], { type: mimeType })
+  const blob = new Blob([buildCsv(report)], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = filename
+  link.download = `relatorio-sala-assessores-${today}.csv`
   link.click()
   URL.revokeObjectURL(url)
 }

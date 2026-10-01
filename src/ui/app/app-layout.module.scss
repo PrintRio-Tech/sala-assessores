@@ -18,6 +18,21 @@
   outline-offset: 3px;
 }
 
+.brandLogo {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.brandLogoExpanded {
+  width: min(9.25rem, 100%);
+}
+
+.brandLogoCollapsed {
+  width: 2.5rem;
+}
+
 .footerUser { display: flex; align-items: center; gap: 10px; min-width: 0; color: inherit; }
 .footerIdentity { display: grid; min-width: 0; gap: 1px; }
 .footerIdentity > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

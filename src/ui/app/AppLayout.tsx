@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { AppShell, Avatar, ICONS, Text, type AppNavItem } from '@print/ui'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
@@ -6,6 +6,7 @@ import { useSession } from '@/application/modules/Auth/hooks/use-session'
 import { withAssetBase } from '@/shared/with-asset-base'
 import { Icon } from '@/ui/components/DsIcon'
 import { ROUTES } from '@/ui/routes/paths'
+import { prefixAppShellChromeMasks } from './prefix-appshell-chrome-masks'
 import styles from './app-layout.module.scss'
 
 export function AppLayout() {
@@ -14,17 +15,16 @@ export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const { session, logout } = useSession()
+  const { session } = useSession()
   const displayName = session?.name || session?.email || ''
 
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [location.pathname])
 
-  const handleLogout = () => {
-    logout()
-    navigate(ROUTES.login, { replace: true })
-  }
+  useLayoutEffect(() => {
+    prefixAppShellChromeMasks(document)
+  }, [collapsed])
 
   const navItems: AppNavItem[] = [
     { id: 'home', label: 'Home', icon: <Icon src={ICONS.nav.home} size={20} />, active: location.pathname === '/', onClick: () => navigate(ROUTES.home) },
@@ -38,6 +38,7 @@ export function AppLayout() {
       logo={
         <button className={styles.brandHome} type="button" onClick={() => navigate(ROUTES.home)}>
           <img
+            className={`${styles.brandLogo} ${styles.brandLogoExpanded}`}
             src={withAssetBase('/logos/wordmark-light-tagline.png')}
             alt="Print — Consultoria Estratégica em Comunicação"
             width={148}
@@ -51,6 +52,7 @@ export function AppLayout() {
       logoCollapsed={
         <button className={styles.brandHome} type="button" aria-label="Print" onClick={() => navigate(ROUTES.home)}>
           <img
+            className={`${styles.brandLogo} ${styles.brandLogoCollapsed}`}
             src={withAssetBase('/logos/icon.png')}
             alt="Print"
             width={40}
@@ -75,17 +77,12 @@ export function AppLayout() {
       }
       navItems={navItems}
       footerSlot={
-        <div className={styles.footerWrapper}>
-          <div className={styles.footerUser}>
-            <Avatar name={displayName || ' '} size="sm" />
-            <span className={styles.footerIdentity}>
-              {displayName ? <Text as="strong" variant="labelSm">{displayName}</Text> : null}
-              {session ? <Text as="small" variant="labelSm">Assessor de imprensa</Text> : null}
-            </span>
-          </div>
-          <button type="button" className={styles.logoutButton} onClick={handleLogout} title="Sair" aria-label="Sair">
-            Sair
-          </button>
+        <div className={styles.footerUser}>
+          <Avatar name={displayName || ' '} size="sm" />
+          <span className={styles.footerIdentity}>
+            {displayName ? <Text as="strong" variant="labelSm">{displayName}</Text> : null}
+            {session ? <Text as="small" variant="labelSm">Assessor de imprensa</Text> : null}
+          </span>
         </div>
       }
       collapsed={collapsed}

@@ -159,6 +159,16 @@ describe('AppLayout lifecycle', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/relatorios')
   })
 
+  it('espelha o CSS do BrandLogo no wordmark da sidebar, sem esmagar o PNG quadrado', () => {
+    expect(layoutScss).toMatch(/\.brandLogo\s*\{[^}]*display:\s*block/)
+    expect(layoutScss).toMatch(/\.brandLogo\s*\{[^}]*max-width:\s*100%/)
+    expect(layoutScss).toMatch(/\.brandLogo\s*\{[^}]*height:\s*auto/)
+    expect(layoutScss).toMatch(/\.brandLogo\s*\{[^}]*object-fit:\s*contain/)
+    expect(layoutScss).toMatch(/\.brandLogoExpanded\s*\{[^}]*width:\s*min\(9\.25rem,\s*100%\)/)
+    expect(layoutScss).toMatch(/\.brandLogoCollapsed\s*\{[^}]*width:\s*2\.5rem/)
+    expect(layoutScss).not.toMatch(/\.brandLogo\s*\{[^}]*object-fit:\s*cover/)
+  })
+
   it('mostra a identidade da sessão autenticada, sem usuário mock', () => {
     render(
       <MemoryRouter initialEntries={['/demandas']}>
@@ -175,7 +185,7 @@ describe('AppLayout lifecycle', () => {
     expect(screen.queryByText('Noel Ferreira')).not.toBeInTheDocument()
   })
 
-  it('no logout invalida a sessão e vai ao login sem fallback autenticado', () => {
+  it('não mostra Sair no rodapé da sidebar', () => {
     render(
       <MemoryRouter initialEntries={['/demandas']}>
         <Routes>
@@ -187,12 +197,9 @@ describe('AppLayout lifecycle', () => {
       </MemoryRouter>,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
-
-    expect(logout).toHaveBeenCalled()
-    expect(screen.getByText('login-page')).toBeInTheDocument()
-    expect(screen.queryByText('Noel Ferreira')).not.toBeInTheDocument()
-    expect(screen.queryByText('Ana Silva')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Sair' })).not.toBeInTheDocument()
+    expect(screen.getByText('Ana Silva')).toBeVisible()
+    expect(screen.queryByText('login-page')).not.toBeInTheDocument()
   })
 
   it('mostra o wordmark oficial Print no topo da sidebar', () => {
@@ -213,6 +220,8 @@ describe('AppLayout lifecycle', () => {
     expect(logo).toHaveAttribute('src', withAssetBase('/logos/wordmark-light-tagline.png'))
     expect(logo).toHaveAttribute('width', '148')
     expect(logo).toHaveAttribute('height', '40')
+    expect(logo.className).toMatch(/brandLogo/)
+    expect(logo.className).toMatch(/brandLogoExpanded/)
     expect(screen.queryByText('Sala de Assessores')).not.toBeInTheDocument()
   })
 
@@ -234,6 +243,35 @@ describe('AppLayout lifecycle', () => {
     expect(logo).toHaveAttribute('src', withAssetBase('/logos/icon.png'))
     expect(logo).toHaveAttribute('width', '40')
     expect(logo).toHaveAttribute('height', '40')
+    expect(logo.className).toMatch(/brandLogoCollapsed/)
+  })
+
+  it('prefixa a máscara do Recolher e do Abrir menu, preservando o flip ao expandir', () => {
+    render(
+      <MemoryRouter initialEntries={['/demandas']}>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="/demandas" element={<RouteProbe />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    const collapse = screen.getByRole('button', { name: 'Recolher menu' })
+    const chevron = collapse.querySelector('span') as HTMLElement
+    expect(chevron.style.webkitMaskImage).toBe(`url("${withAssetBase('/icons/ui/chevron-left.svg')}")`)
+    expect(chevron.className).not.toMatch(/Flipped/)
+
+    const menu = screen.getByRole('button', { name: 'Abrir menu', hidden: true })
+    const hamburger = menu.querySelector('span') as HTMLElement
+    expect(hamburger.style.webkitMaskImage).toBe(`url("${withAssetBase('/icons/ui/menu.svg')}")`)
+
+    fireEvent.click(collapse)
+
+    const expand = screen.getByRole('button', { name: 'Expandir menu' })
+    const flipped = expand.querySelector('span') as HTMLElement
+    expect(flipped.style.webkitMaskImage).toBe(`url("${withAssetBase('/icons/ui/chevron-left.svg')}")`)
+    expect(flipped.className).toMatch(/Flipped/)
   })
 
   it('abre a home ao clicar no logo Print', () => {

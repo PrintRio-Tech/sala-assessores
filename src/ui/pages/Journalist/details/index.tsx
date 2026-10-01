@@ -21,10 +21,10 @@ import {
 import type {
   JournalistDemandHistoryItem,
   RelationshipEvaluation,
-} from "@/domain/Journalist/journalist.entity";
+} from "@/application/modules/Journalist/hooks/use-journalist";
 import { useUpdateJournalist } from "@/application/modules/Journalist/hooks/use-update-journalist";
 import { useJournalists } from "@/application/modules/Journalist/hooks/use-journalists";
-import { useLocalDemandActions } from "@/application/modules/Demand/hooks/use-local-demand-actions";
+import { useDemandActions } from "@/application/modules/Demand/hooks/use-demand-actions";
 import { useRegisterDemandOutcome } from "@/application/modules/Demand/hooks/use-register-demand-outcome";
 import { formatPercent, formatScore } from "@/shared/format";
 import { ROUTES } from "@/ui/routes/paths";
@@ -201,7 +201,7 @@ export function JournalistPage() {
   const [evaluationsDrawerOpen, setEvaluationsDrawerOpen] = useState(false);
   const { data: journalist, isLoading } = useJournalist(journalistId);
   const { data: journalists, isLoading: journalistsLoading } = useJournalists();
-  const { capture } = useLocalDemandActions();
+  const { capture } = useDemandActions();
   const updateMutation = useUpdateJournalist(id, {
     onSuccess: () => setEditOpen(false),
   });

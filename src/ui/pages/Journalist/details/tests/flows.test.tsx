@@ -9,7 +9,7 @@ import { useJournalist } from '@/application/modules/Journalist/hooks/use-journa
 import { useJournalists } from '@/application/modules/Journalist/hooks/use-journalists'
 import { useRegisterDemandOutcome } from '@/application/modules/Demand/hooks/use-register-demand-outcome'
 import { useUpdateJournalist } from '@/application/modules/Journalist/hooks/use-update-journalist'
-import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
+import { demandService } from '@/application/composition'
 import { JournalistPage } from '..'
 
 vi.mock('@/application/modules/Journalist/hooks/use-journalist', () => ({ useJournalist: vi.fn() }))
@@ -57,7 +57,6 @@ function renderPage() {
 
 describe('fluxos do perfil do jornalista', () => {
   beforeEach(() => {
-    useLocalDemandStore.getState().reset()
     update.mockReset()
     register.mockReset()
     vi.mocked(useJournalist).mockReturnValue({ data: journalist, isLoading: false, error: null, reload: vi.fn() })
@@ -188,10 +187,10 @@ describe('fluxos do perfil do jornalista', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Continuar' }))
     await user.click(within(dialog).getByRole('button', { name: 'Concluir captura' }))
 
-    const localDemands = useLocalDemandStore.getState().records
-    expect(localDemands).toHaveLength(1)
-    expect(localDemands[0].journalistId).toBe('j-maria')
-    expect(localDemands[0].journalistName).toBe('Maria Clara')
-    expect(localDemands[0].outletName).toBe('TechNews')
+    const created = (await demandService.list({ lifecycle: 'all', search: 'Novo caso de teste' })).items
+    expect(created).toHaveLength(1)
+    expect(created[0]?.journalistId).toBe('j-maria')
+    expect(created[0]?.journalistName).toBe('Maria Clara')
+    expect(created[0]?.outletName).toBe('TechNews')
   })
 })

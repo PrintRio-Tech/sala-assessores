@@ -1,21 +1,22 @@
-import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
 
-type LoginOptions = {
-  onSuccess?: (email: string) => void
-  onError?: (error: Error) => void
-}
+import { auth } from '@/application/composition'
+import type { MutationOptions } from '@/application/shared/mutation-options'
+import { normalizeEmail } from '@/domain/Auth/user.entity'
 
-export function useLogin(options: LoginOptions = {}) {
-  const [isPending, setIsPending] = useState(false)
+export function useLogin(options: MutationOptions<string> = {}) {
+  const mutation = useMutation({
+    mutationFn: async (email: string) => {
+      await auth.service.requestMagicLink(email)
+      return normalizeEmail(email)
+    },
+    onSuccess: (email) => options.onSuccess?.(email),
+    onError: (error) => options.onError?.(error),
+  })
 
   return {
-    isPending,
-    login(email: string) {
-      setIsPending(true)
-      window.setTimeout(() => {
-        setIsPending(false)
-        options.onSuccess?.(email)
-      }, 800)
-    },
+    isPending: mutation.isPending,
+    error: mutation.error,
+    login: mutation.mutate,
   }
 }

@@ -1,9 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { mockAuthService } from '@/application/services/mock-auth-service'
+import { auth } from '@/application/composition'
+import type { FakeAuthRepository } from '@/infrastructure/modules/Auth/fakes/fake-auth.repository'
+import { AuthTestProviders } from '@/test/auth-providers'
+import { FAKE_MEMBER_EMAIL, installFakeAuth } from '@/test/install-fake-auth'
+
 import { VerifyPage } from '..'
 
 const mockNavigate = vi.fn()
@@ -16,65 +20,74 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
+function renderVerify(email = FAKE_MEMBER_EMAIL) {
+  return render(
+    <AuthTestProviders>
+      <MemoryRouter initialEntries={[`/login/verificar?email=${encodeURIComponent(email)}`]}>
+        <Routes>
+          <Route path="/login/verificar" element={<VerifyPage />} />
+        </Routes>
+      </MemoryRouter>
+    </AuthTestProviders>,
+  )
+}
+
+async function typeOtp(user: ReturnType<typeof userEvent.setup>, digits: string) {
+  const inputs = screen.getAllByRole('textbox')
+  for (const [index, digit] of digits.split('').entries()) {
+    await user.type(inputs[index], digit)
+  }
+}
+
 describe('VerifyPage', () => {
+  let fake: FakeAuthRepository
+
   beforeEach(() => {
     mockNavigate.mockClear()
     localStorage.clear()
+    fake = installFakeAuth()
   })
 
   it('renders verify form with email', () => {
-    render(
-      <MemoryRouter initialEntries={['/login/verificar?email=test@example.com']}>
-        <Routes>
-          <Route path="/login/verificar" element={<VerifyPage />} />
-        </Routes>
-      </MemoryRouter>,
-    )
+    renderVerify()
 
     expect(screen.getByText('Confirme o código')).toBeInTheDocument()
-    expect(screen.getByText('test@example.com')).toBeInTheDocument()
+    expect(screen.getByText(FAKE_MEMBER_EMAIL)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /entrar na plataforma/i })).toBeInTheDocument()
   })
 
-  it('accepts valid code and authenticates', async () => {
+  it('rejeita qualquer 6 dígitos e autentica só o OTP emitido', async () => {
     const user = userEvent.setup()
+    await auth.service.requestMagicLink(FAKE_MEMBER_EMAIL)
+    renderVerify()
 
-    render(
-      <MemoryRouter initialEntries={['/login/verificar?email=test@example.com']}>
-        <Routes>
-          <Route path="/login/verificar" element={<VerifyPage />} />
-        </Routes>
-      </MemoryRouter>,
-    )
+    await typeOtp(user, '000000')
+    await user.click(screen.getByRole('button', { name: /entrar na plataforma/i }))
 
-    const inputs = screen.getAllByRole('textbox')
-    const submitButton = screen.getByRole('button', { name: /entrar na plataforma/i })
+    await waitFor(() => {
+      expect(screen.getByText(/inválido/i)).toBeInTheDocument()
+    })
+    expect(mockNavigate).not.toHaveBeenCalledWith('/')
+    expect(auth.service.hasStoredToken()).toBe(false)
 
-    await user.type(inputs[0], '1')
-    await user.type(inputs[1], '2')
-    await user.type(inputs[2], '3')
-    await user.type(inputs[3], '4')
-    await user.type(inputs[4], '5')
-    await user.type(inputs[5], '6')
+    await typeOtp(user, fake.issuedCodeFor(FAKE_MEMBER_EMAIL)!)
+    await user.click(screen.getByRole('button', { name: /entrar na plataforma/i }))
 
-    await user.click(submitButton)
-
-    await waitFor(
-      () => {
-        expect(mockAuthService.isAuthenticated()).toBe(true)
-        expect(mockNavigate).toHaveBeenCalledWith('/')
-      },
-      { timeout: 2000 },
-    )
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/')
+    })
+    expect(auth.service.hasStoredToken()).toBe(true)
   })
 
   it('redirects to login when no email provided', () => {
     render(
-      <MemoryRouter initialEntries={['/login/verificar']}>
-        <Routes>
-          <Route path="/login/verificar" element={<VerifyPage />} />
-        </Routes>
-      </MemoryRouter>,
+      <AuthTestProviders>
+        <MemoryRouter initialEntries={['/login/verificar']}>
+          <Routes>
+            <Route path="/login/verificar" element={<VerifyPage />} />
+          </Routes>
+        </MemoryRouter>
+      </AuthTestProviders>,
     )
 
     expect(mockNavigate).toHaveBeenCalledWith('/login')

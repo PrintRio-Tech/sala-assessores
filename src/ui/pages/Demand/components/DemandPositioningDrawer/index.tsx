@@ -2,7 +2,8 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Button, ConfirmDialog, DrawerShell, FormField, Text, Textarea } from '@print/ui'
 
 import { useSavePositioning } from '@/application/modules/Demand/hooks/use-save-positioning'
-import type { PositioningAttachment } from '@/domain/Demand/demand.entity'
+import type { PositioningAttachment } from '@/application/modules/Demand/demand-types'
+import { PositioningAttachmentTooLargeError } from '@/application/modules/Demand/demand-types'
 import { PositioningAttachmentChip } from '../PositioningAttachmentChip'
 import { fileToAttachment, revokeAttachmentUrl } from '../positioning-file'
 import styles from './styles.module.scss'
@@ -105,12 +106,16 @@ export function DemandPositioningDrawer({
       setError('')
       return
     }
-    const next = fileToAttachment(file)
-    setAttachment(next)
-    attachmentRef.current = next
-    setOwnedUrl(next.objectUrl)
-    setError('')
-    if (mutationError) resetMutation()
+    try {
+      const next = fileToAttachment(file)
+      setAttachment(next)
+      attachmentRef.current = next
+      setOwnedUrl(next.objectUrl)
+      setError('')
+      if (mutationError) resetMutation()
+    } catch (error) {
+      setError(error instanceof PositioningAttachmentTooLargeError ? error.message : 'Não foi possível anexar o arquivo.')
+    }
   }
 
   const submit = () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { ListDemands } from './list-demands.use-case'
+import { ListDemands, selectDemandList } from './list-demands.use-case'
 import type { Demand } from '../demand.entity'
 import type { DemandRepository } from '../demand.repository'
 
@@ -14,6 +14,7 @@ function demand(partial: Partial<Demand> & Pick<Demand, 'id' | 'status' | 'title
     responsibleId: 'r1',
     responsibleName: 'Ana Paula',
     deadlineAt: new Date('2026-08-12T12:00:00.000Z'),
+    origin: 'solicited' as const,
     priority: 'high',
     createdAt: new Date('2026-08-01T12:00:00.000Z'),
     updatedAt: new Date('2026-08-01T12:00:00.000Z'),
@@ -24,15 +25,29 @@ function demand(partial: Partial<Demand> & Pick<Demand, 'id' | 'status' | 'title
 
 function createRepo(items: Demand[]): DemandRepository {
   return {
-    async list() {
-      return { items, total: items.length }
+    async list(params) {
+      return selectDemandList(items, params)
+    },
+    async listResponsibles() {
+      return []
     },
     async getById(id) {
       return items.find((item) => item.id === id) ?? null
     },
+    async create() {
+      throw new Error('not implemented')
+    },
+    async reviseCapture() {
+      return null
+    },
+    async remove() {},
     async registerInteraction() {
       return null
     },
+    async createAttachmentUpload() {
+      throw new Error('not implemented')
+    },
+    async putAttachment() {},
     async savePositioning() {
       return null
     },

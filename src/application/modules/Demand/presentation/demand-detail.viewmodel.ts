@@ -15,7 +15,6 @@ import {
   type ExternalInteractionType,
   type PositioningAttachment,
 } from '@/domain/Demand/demand.entity'
-import type { LocalDemandCapture } from '../stores/local-demand.store'
 import { DEMAND_PRIORITY_LABELS } from './demand-priority'
 
 const statusLabels: Record<DemandStatus, string> = {
@@ -170,7 +169,7 @@ function positioningTimelineEvents(positioning: DemandPositioning | undefined): 
 }
 
 function mapInteractions(
-  items: Demand['interactions'] | LocalDemandCapture['interactions'],
+  items: Demand['interactions'],
   positioning?: DemandPositioning,
 ) {
   return [...items]
@@ -269,10 +268,10 @@ export function buildDemandDetailViewModel(demand: Demand) {
       code: demand.code,
       title: demand.title,
       journalistId: demand.journalistId,
-      journalistName: demand.journalistName,
-      outletName: demand.outletName,
+      journalistName: demand.contactName || demand.journalistName,
+      outletName: demand.contactOutlet || demand.outletName,
       responsibleName: demand.responsibleName,
-      priorityLabel: DEMAND_PRIORITY_LABELS[demand.priority],
+      priorityLabel: demand.priority ? DEMAND_PRIORITY_LABELS[demand.priority] : null,
       statusLabel: statusLabels[demand.status],
       deadline: dateTime(demand.deadlineAt),
     },
@@ -280,6 +279,11 @@ export function buildDemandDetailViewModel(demand: Demand) {
     factContext: demand.factContext ?? '',
     sourceChannel: demand.channel?.trim() ?? '',
     createdByName: null,
+    needsJournalist: !demand.journalistId,
+    unregisteredContact: {
+      journalistName: demand.contactName || demand.journalistName,
+      outletName: demand.contactOutlet || demand.outletName,
+    },
     enrichment,
     validNextActions,
     canWritePositioning: validNextActions.includes('write_positioning') && positioning.canEdit,
@@ -303,117 +307,7 @@ export function buildDemandDetailViewModel(demand: Demand) {
   }
 }
 
-export function buildLocalDemandDetailViewModel(record: LocalDemandCapture) {
-  const capturedAt = dateTime(record.createdAt)
-  const updatedAt = dateTime(record.updatedAt)
-  const sourceLabel = `${record.contactName || record.journalistName} · ${record.contactOutlet || record.outletName}`
-  const localDeadline = /^\d{4}-\d{2}-\d{2}$/.test(record.requestedDeadline)
-    ? record.requestedDeadline.split('-').reverse().join('/')
-    : record.requestedDeadline
-  const brDate = record.requestedDeadline.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
-  const localDeadlineShort = /^\d{4}-\d{2}-\d{2}$/.test(record.requestedDeadline)
-    ? `${record.requestedDeadline.slice(8, 10)}/${record.requestedDeadline.slice(5, 7)}/${record.requestedDeadline.slice(2, 4)}`
-    : brDate
-      ? `${brDate[1]}/${brDate[2]}/${brDate[3].slice(2)}`
-      : localDeadline
-  const interactions = mapInteractions(record.interactions, record.positioning)
-  const validNextActions = getDemandNextActions(record.status)
-  const positioning = positioningView(record.positioning, record.status)
-  const stateEvents: DemandDetailTimelineEvent[] = record.stateTransitions.map((item) => ({
-    id: item.id, kind: 'state_change', title: statusLabels[item.to], actor: item.recordedBy,
-    attribution: `Mudança de estado · ${statusLabels[item.from]} → ${statusLabels[item.to]}`, description: null,
-    isAttention: item.to === 'closed_without_send', isCurrent: false, ...dateTime(item.occurredAt),
-  }))
-  const timeline: DemandDetailTimelineEvent[] = [
-    {
-      id: `${record.id}-received`,
-      kind: 'request' as const,
-      title: 'Demanda registrada',
-      actor: sourceLabel,
-      attribution: `${record.channel} · registro local`,
-      description: null,
-      isAttention: false,
-      isCurrent: false,
-      ...capturedAt,
-    },
-    ...interactions.map((item) => ({
-      id: item.id,
-      kind: 'interaction' as const,
-      title: interactionTitle(item),
-      actor: item.recordedBy,
-      participants: item.participants,
-      attribution: interactionAttribution(item.originLabel, item.participants),
-      description: item.description,
-      nextStep: item.nextStep,
-      isAttention: item.closesCase && item.resultLabel === 'Encerrado sem resposta',
-      isCurrent: false,
-      iso: item.iso,
-      dateLabel: item.dateLabel,
-      timeLabel: item.timeLabel,
-    })),
-    ...stateEvents,
-    ...positioningTimelineEvents(record.positioning),
-    ...[enrichmentTimelineEvent(record.id, record.enrichment, record.updatedAt, record.responsibleName)].filter(
-      (event): event is DemandDetailTimelineEvent => event !== null,
-    ),
-    {
-      id: `${record.id}-local`,
-      kind: 'current' as const,
-      title: statusLabels[record.status],
-      actor: record.responsibleName,
-      attribution: 'Estado atual · registro local desta sessão',
-      description: `Estado atual registrado: ${statusLabels[record.status]}.`,
-      isAttention: false,
-      isCurrent: true,
-      ...updatedAt,
-    },
-  ].sort(compareTimeline)
-
-  return {
-    id: record.id,
-    isLocal: true as const,
-    identity: {
-      code: record.code,
-      title: record.subject,
-      journalistId: record.journalistId === 'unidentified' ? '' : record.journalistId,
-      journalistName: record.journalistName,
-      outletName: record.outletName,
-      responsibleName: record.responsibleName,
-      priorityLabel: record.priority ? DEMAND_PRIORITY_LABELS[record.priority] : null,
-      statusLabel: statusLabels[record.status],
-      deadline: { dateLabel: 'Prazo solicitado', timeLabel: localDeadline, shortDate: localDeadlineShort, iso: '' },
-    },
-    requestSummary: record.pressRequest,
-    factContext: record.factContext,
-    createdByName: record.createdBy && record.createdBy.name !== record.responsibleName ? record.createdBy.name : null,
-    enrichment: record.enrichment,
-    validNextActions,
-    canWritePositioning: validNextActions.includes('write_positioning') && positioning.canEdit,
-    canRegisterInteraction: validNextActions.includes('register_interaction'),
-    canRegisterOutcome: canRegisterDemandOutcome(record.status),
-    outcome: outcomeView(record.outcome),
-    positioning,
-    sourceChannel: record.channel,
-    localCapture: {
-      requestedDeadline: localDeadline,
-      journalistName: record.contactName || record.journalistName,
-      outletName: record.contactOutlet || record.outletName,
-      responsibleId: record.responsibleId,
-    },
-    interactions,
-    currentState: {
-      statusLabel: statusLabels[record.status],
-      responsibleName: record.responsibleName,
-      latestRecordedNextStep: record.enrichment.nextStep ?? [...interactions].reverse().find((item) => item.nextStep)?.nextStep ?? null,
-      latestInteractionResult: interactions.at(-1)?.resultLabel ?? null,
-      updatedAt,
-    },
-    lifecycle: { createdAt: capturedAt, updatedAt },
-    timeline,
-  }
-}
-
-export type DemandDetailViewModel = ReturnType<typeof buildDemandDetailViewModel> | ReturnType<typeof buildLocalDemandDetailViewModel>
+export type DemandDetailViewModel = ReturnType<typeof buildDemandDetailViewModel>
 
 function interactionAttribution(origin: string, participants: string | null): string {
   return participants ? `${origin} · Participantes: ${participants}` : origin

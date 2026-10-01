@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { Journalist } from '@/application/modules/Journalist/hooks/use-journalists'
-import type { NewLocalDemandCapture } from '@/application/modules/Demand/stores/local-demand.store'
+import type { NewDemandCapture } from '@/application/modules/Demand/demand-types'
 import { DemandCreateDrawer } from './index'
 
 const journalist: Journalist = {
@@ -30,7 +30,7 @@ const journalist: Journalist = {
   relationshipEvaluations: [],
 }
 
-const capture: NewLocalDemandCapture = {
+const capture: NewDemandCapture = {
   subject: 'Resultados do Q1 2024',
   factContext: 'Envio de release com resultados do primeiro trimestre.',
   pressRequest: 'Pedido de posicionamento sobre o trimestre.',
@@ -44,7 +44,7 @@ const capture: NewLocalDemandCapture = {
   outletName: 'Valor Econômico',
 }
 
-function EditSession({ onCapture = vi.fn() }: { onCapture?: (capture: NewLocalDemandCapture) => void }) {
+function EditSession({ onCapture = vi.fn() }: { onCapture?: (capture: NewDemandCapture) => void }) {
   const [open, setOpen] = useState(true)
   const [mode, setMode] = useState<'create' | 'edit'>('edit')
 
@@ -266,6 +266,7 @@ describe('DemandCreateDrawer capture fields', () => {
 
     expect(onCapture).toHaveBeenCalledWith(expect.objectContaining({
       subject: 'Caso rápido',
+      origin: 'solicited',
       priority: null,
       enrichment: expect.objectContaining({ tags: [], topics: [], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null }),
     }))

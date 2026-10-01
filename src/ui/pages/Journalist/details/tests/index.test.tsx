@@ -5,17 +5,16 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
 import { queryKeys } from '@/application/constants/query-keys'
-import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
+import { captureDemand } from '@/test/demand-fixtures'
 import { JournalistPage } from '..'
 
 describe('perfil do jornalista', () => {
   it('deriva contagens, temas e histórico de demandas locais vinculadas sem misturar avaliações manuais', async () => {
-    useLocalDemandStore.getState().reset()
-    useLocalDemandStore.getState().add({
+    await captureDemand({
       subject: 'Demanda local vinculada',
       factContext: 'Contexto confirmado localmente.',
       pressRequest: 'Pedido de posicionamento.',
-      requestedDeadline: '2026-08-30T15:00',
+      requestedDeadline: '2026-08-30',
       channel: 'email',
       contactMode: 'known',
       contactName: 'Joana Local',
@@ -47,7 +46,6 @@ describe('perfil do jornalista', () => {
     expect(screen.getByText('Mobilidade urbana')).toBeVisible()
     expect(screen.getByRole('link', { name: /Demanda local vinculada/ })).toBeVisible()
     expect(screen.getByText('Avaliação manual.')).toBeVisible()
-    useLocalDemandStore.getState().reset()
   })
 
   it('recalcula o perfil a partir das múltiplas demandas mock vinculadas', async () => {
@@ -63,7 +61,7 @@ describe('perfil do jornalista', () => {
     expect(await screen.findByRole('heading', { name: 'Carolina Montenegro' })).toBeVisible()
     expect(screen.getByRole('link', { name: /Impactos da nova regulamentação no setor/ })).toBeVisible()
     expect(screen.queryByRole('link', { name: /Crise Logística: Impacto nos Portos/ })).not.toBeInTheDocument()
-    expect(screen.getByText(/6 solicitadas · 0 proativas/)).toBeVisible()
+    expect(screen.getByText(/80 solicitadas · 62 proativas/)).toBeVisible()
     expect(screen.getByText('Matéria saiu no Valor com o recorte alinhado ao posicionamento enviado.')).toBeVisible()
     expect(screen.getByRole('link', { name: 'Ver demanda' })).toHaveAttribute('href', '/demandas/d-q1')
 

@@ -6,9 +6,12 @@ import {
   AuthLayout,
   Button,
   TextInput,
+  useToast,
 } from '@print/ui'
 
 import { useLogin } from '@/application/modules/Auth/hooks/use-login'
+import { magicLinkAcceptedCopy } from '@/application/modules/Auth/utils/magic-link-request-copy'
+import { diagnoseMagicLinkRequestError } from '@/application/modules/Auth/utils/otp-resend-diagnostics'
 import { ROUTES } from '@/ui/routes/paths'
 import {
   salaAuthEyebrow,
@@ -22,11 +25,24 @@ import {
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const toast = useToast()
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const { login, isPending } = useLogin({
     onSuccess: (nextEmail) => {
+      toast.success(
+        magicLinkAcceptedCopy.request.title,
+        magicLinkAcceptedCopy.request.description,
+      )
       navigate(`${ROUTES.verify}?email=${encodeURIComponent(nextEmail)}`)
+    },
+    onError: (nextError) => {
+      if (nextError.name === 'InvalidEmailError') {
+        setError(nextError.message)
+        return
+      }
+      const diag = diagnoseMagicLinkRequestError(nextError, 'request')
+      toast.error(diag.toast.title, diag.toast.description)
     },
   })
 

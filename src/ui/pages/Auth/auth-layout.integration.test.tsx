@@ -7,6 +7,8 @@ import { render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { beforeEach, describe, expect, it } from 'vitest'
 
+import { AuthTestProviders } from '@/test/auth-providers'
+import { installFakeAuth } from '@/test/install-fake-auth'
 import { appRoutes } from '@/ui/routes/router'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -17,12 +19,17 @@ function readAuthSource(rel: string) {
 
 function renderAuthRoute(path: string) {
   const router = createMemoryRouter(appRoutes, { initialEntries: [path] })
-  return render(<RouterProvider router={router} />)
+  return render(
+    <AuthTestProviders>
+      <RouterProvider router={router} />
+    </AuthTestProviders>,
+  )
 }
 
 describe('telas de auth consomem AuthLayout do @print/ui', () => {
   beforeEach(() => {
     localStorage.clear()
+    installFakeAuth()
   })
 
   it('expõe AuthLayout e os slots de formulário no pacote público', () => {

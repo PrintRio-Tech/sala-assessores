@@ -2,18 +2,24 @@ import { useState } from 'react'
 import { Button, Card, Heading, Icon as DsIcon, ICONS, Stat, Text } from '@print/ui'
 
 import pageStyles from '@/ui/styles/design.module.scss'
-import { REPORT_KPIS } from './constants'
+import { usePressRoomReport } from '@/application/modules/Report/hooks/use-press-room-report'
 import { downloadReport } from './export-report'
 import styles from './styles.module.scss'
 
 export function ReportsPage() {
   const [isExporting, setIsExporting] = useState(false)
+  const { data: report, isLoading } = usePressRoomReport()
 
   const handleExport = (format: 'csv' | 'json') => {
+    if (!report) return
     setIsExporting(true)
-    downloadReport(format)
+    downloadReport(format, report)
     window.setTimeout(() => setIsExporting(false), 500)
   }
+
+  const demandCount = report?.demandCount ?? (isLoading ? '…' : 0)
+  const averageTone = report?.averageToneScore == null ? '—' : report.averageToneScore.toFixed(1)
+  const publishedCount = report?.publishedCount ?? 0
 
   return (
     <div className={pageStyles.page}>
@@ -21,14 +27,14 @@ export function ReportsPage() {
         <div>
           <Text as="p" variant="labelSm" tone="primary" className={pageStyles.eyebrow}>Analytics e exportações</Text>
           <Heading level={1} className={pageStyles.pageTitle}>Relatórios</Heading>
-          <Text tone="muted">Indicadores de desempenho da assessoria de imprensa.</Text>
+          <Text tone="muted">Projeção pressRoomReport do BFF.</Text>
         </div>
         <div className={pageStyles.headingActions}>
           <Button
             type="button"
             variant="secondary"
             onClick={() => handleExport('csv')}
-            disabled={isExporting}
+            disabled={isExporting || !report}
           >
             <DsIcon src={ICONS.ui.download} size={18} />
             Exportar CSV
@@ -37,7 +43,7 @@ export function ReportsPage() {
             type="button"
             variant="secondary"
             onClick={() => handleExport('json')}
-            disabled={isExporting}
+            disabled={isExporting || !report}
           >
             <DsIcon src={ICONS.ui.download} size={18} />
             Exportar JSON
@@ -47,9 +53,9 @@ export function ReportsPage() {
 
       <section aria-label="KPIs principais">
         <div className={styles.statGrid}>
-          <Stat label="Total de demandas" value={String(REPORT_KPIS.totalDemands)} />
-          <Stat label="Tempo médio de resposta" value={REPORT_KPIS.averageResponseTime} />
-          <Stat label="Taxa de satisfação" value={`${REPORT_KPIS.satisfactionRate}%`} />
+          <Stat label="Total de demandas" value={String(demandCount)} />
+          <Stat label="Tom médio" value={averageTone} />
+          <Stat label="Publicadas" value={String(publishedCount)} />
         </div>
       </section>
 
@@ -57,27 +63,19 @@ export function ReportsPage() {
         <Heading level={2} variant="sm" className={styles.sectionTitle}>Demandas por status</Heading>
         <Card padding="lg" className={styles.statusCard}>
           <div className={styles.statusGrid}>
-            <Stat label="Em andamento" value={String(REPORT_KPIS.demandsByStatus.in_progress)} />
-            <Stat label="Enviada" value={String(REPORT_KPIS.demandsByStatus.sent)} />
-            <Stat label="Encerrada sem envio" value={String(REPORT_KPIS.demandsByStatus.closed_without_send)} />
+            <Stat label="Em andamento" value={String(report?.inProgressCount ?? 0)} />
+            <Stat label="Enviada" value={String(report?.sentCount ?? 0)} />
+            <Stat label="Encerrada sem envio" value={String(report?.closedWithoutSendCount ?? 0)} />
           </div>
         </Card>
       </section>
 
-      <section aria-label="Top jornalistas">
-        <Heading level={2} variant="sm" className={styles.sectionTitle}>Jornalistas mais ativos</Heading>
+      <section aria-label="Base e avaliações">
+        <Heading level={2} variant="sm" className={styles.sectionTitle}>Base e avaliações</Heading>
         <Card padding="lg">
-          <div className={styles.ranking}>
-            {REPORT_KPIS.topJournalists.map((journalist, index) => (
-              <div key={journalist.name} className={styles.rankingRow}>
-                <div className={styles.rankBadge}>{index + 1}</div>
-                <div className={styles.rankCopy}>
-                  <Text variant="labelMd">{journalist.name}</Text>
-                  <Text variant="labelSm" tone="muted">{journalist.outlet}</Text>
-                </div>
-                <Text as="p" variant="bodyLg">{journalist.count}</Text>
-              </div>
-            ))}
+          <div className={styles.statusGrid}>
+            <Stat label="Jornalistas" value={String(report?.journalistCount ?? 0)} />
+            <Stat label="Resultados avaliados" value={String(report?.outcomeCount ?? 0)} />
           </div>
         </Card>
       </section>

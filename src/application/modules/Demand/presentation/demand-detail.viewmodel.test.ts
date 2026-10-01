@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { demandService } from '@/application/composition'
-import { buildDemandDetailViewModel, buildLocalDemandDetailViewModel } from './demand-detail.viewmodel'
-import { useLocalDemandStore } from '../stores/local-demand.store'
+import { buildDemandDetailViewModel } from './demand-detail.viewmodel'
 
 describe('Demand detail presentation contract', () => {
   it('expõe o inventário atribuído do detalhe canônico via interações', async () => {
@@ -133,17 +132,16 @@ describe('Demand detail presentation contract', () => {
     expect(viewModel.currentState.latestRecordedNextStep).toBe('Aguardar publicação.')
   })
 
-  it('expõe enriquecimento, ações válidas e captura no histórico local', () => {
-    useLocalDemandStore.getState().reset()
-    const record = useLocalDemandStore.getState().add({
+  it('expõe enriquecimento, ações válidas e captura no histórico', async () => {
+    const record = await demandService.create({
       subject: 'Caso urgente sem jornalista', factContext: 'Fato em apuração.', pressRequest: 'Nota até 18h',
       requestedDeadline: '2026-08-28', channel: 'Telefone', contactMode: 'local', contactName: 'Plantão',
       contactOutlet: 'Redação', journalistId: '', journalistName: 'Plantão', outletName: 'Redação',
       priority: 'critical',
       enrichment: { tags: ['urgente'], topics: ['Operação'], relatedAreas: ['Jurídico'], confirmedFacts: ['Ocorrência confirmada'], pendingFacts: ['Aguardar laudo'], nextStep: 'Solicitar laudo.' },
-    })
+    }, { id: 'r-noel', name: 'Noel Ferreira' })
 
-    const view = buildLocalDemandDetailViewModel(record)
+    const view = buildDemandDetailViewModel(record)
 
     expect(view.enrichment).toEqual(expect.objectContaining({ tags: ['urgente'], confirmedFacts: ['Ocorrência confirmada'], pendingFacts: ['Aguardar laudo'] }))
     expect(view.timeline).toEqual(expect.arrayContaining([
@@ -229,15 +227,15 @@ describe('Demand detail presentation contract', () => {
     expect(event?.attachment?.filename).toBe('nota-oficial.pdf')
   })
 
-  it('não trata anexo sem texto como posicionamento vazio', () => {
-    useLocalDemandStore.getState().reset()
-    const record = useLocalDemandStore.getState().add({
+  it('não trata anexo sem texto como posicionamento vazio', async () => {
+    const record = await demandService.create({
       subject: 'Caso com arquivo', factContext: 'Fato.', pressRequest: 'Pedido.',
       requestedDeadline: '2026-08-28', channel: 'E-mail', contactMode: 'local', contactName: 'Plantão',
       contactOutlet: 'Redação', journalistId: '', journalistName: 'Plantão', outletName: 'Redação',
-    })
-    useLocalDemandStore.getState().savePositioning(record.id, {
+    }, { id: 'r-noel', name: 'Noel Ferreira' })
+    const saved = await demandService.savePositioning(record.id, {
       body: '',
+      author: 'Noel Ferreira',
       attachment: {
         filename: 'nota.pdf',
         contentType: 'application/pdf',
@@ -246,7 +244,7 @@ describe('Demand detail presentation contract', () => {
       },
     })
 
-    const view = buildLocalDemandDetailViewModel(useLocalDemandStore.getState().records[0]!)
+    const view = buildDemandDetailViewModel(saved)
 
     expect(view.positioning.isEmpty).toBe(false)
     expect(view.positioning.hasBody).toBe(false)

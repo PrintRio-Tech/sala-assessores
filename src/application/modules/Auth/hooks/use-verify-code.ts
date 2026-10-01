@@ -1,34 +1,25 @@
-import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import { mockAuthService } from '@/application/services/mock-auth-service'
+import { auth } from '@/application/composition'
+import { queryKeys } from '@/application/constants/query-keys'
+import type { MutationOptions } from '@/application/shared/mutation-options'
+import type { VerifyCodeInput } from '@/domain/Auth/auth.repository'
+import type { Session } from '@/domain/Auth/session.entity'
 
-type VerifyCodeOptions = {
-  onSuccess?: () => void
-  onError?: (error: Error) => void
-}
-
-export function useVerifyCode(options: VerifyCodeOptions = {}) {
-  const [isPending, setIsPending] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
+export function useVerifyCode(options: MutationOptions<Session> = {}) {
+  const queryClient = useQueryClient()
+  const mutation = useMutation({
+    mutationFn: (input: VerifyCodeInput) => auth.service.verify(input),
+    onSuccess: (session) => {
+      queryClient.setQueryData(queryKeys.auth.session(), session)
+      options.onSuccess?.(session)
+    },
+    onError: (error) => options.onError?.(error),
+  })
 
   return {
-    isPending,
-    error,
-    verify(input: { code: string; email: string }) {
-      setIsPending(true)
-      setError(null)
-      window.setTimeout(() => {
-        if (!mockAuthService.verifyCode(input.code)) {
-          const nextError = new Error('Código inválido. Tente 123456')
-          setError(nextError)
-          setIsPending(false)
-          options.onError?.(nextError)
-          return
-        }
-        mockAuthService.setAuthenticated(true, input.email)
-        setIsPending(false)
-        options.onSuccess?.()
-      }, 600)
-    },
+    isPending: mutation.isPending,
+    error: mutation.error,
+    verify: mutation.mutate,
   }
 }

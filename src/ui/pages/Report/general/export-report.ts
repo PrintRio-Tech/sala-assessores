@@ -1,38 +1,32 @@
-import { REPORT_KPIS, type ReportExportFormat } from './constants'
+import type { PressRoomReport } from '@/application/modules/Report/hooks/use-press-room-report'
 
-function buildCsv() {
+export type ReportExportFormat = 'csv' | 'json'
+
+function buildCsv(report: PressRoomReport) {
   const rows = [
     ['Métrica', 'Valor'],
-    ['Total de demandas', String(REPORT_KPIS.totalDemands)],
-    ['Tempo médio de resposta', REPORT_KPIS.averageResponseTime],
-    ['Taxa de satisfação (%)', String(REPORT_KPIS.satisfactionRate)],
-    ['', ''],
-    ['Status', 'Quantidade'],
-    ['Em andamento', String(REPORT_KPIS.demandsByStatus.in_progress)],
-    ['Enviada', String(REPORT_KPIS.demandsByStatus.sent)],
-    ['Encerrada sem envio', String(REPORT_KPIS.demandsByStatus.closed_without_send)],
-    ['', ''],
-    ['Top Jornalistas', 'Veículo', 'Demandas'],
-    ...REPORT_KPIS.topJournalists.map((journalist) => [
-      journalist.name,
-      journalist.outlet,
-      String(journalist.count),
-    ]),
+    ['Total de demandas', String(report.demandCount)],
+    ['Em andamento', String(report.inProgressCount)],
+    ['Enviadas', String(report.sentCount)],
+    ['Encerradas sem envio', String(report.closedWithoutSendCount)],
+    ['Jornalistas', String(report.journalistCount)],
+    ['Resultados avaliados', String(report.outcomeCount)],
+    ['Publicadas', String(report.publishedCount)],
+    ['Tom médio', report.averageToneScore == null ? '' : String(report.averageToneScore)],
   ]
   return rows.map((row) => row.join(',')).join('\n')
 }
 
-function buildJson() {
+function buildJson(report: PressRoomReport) {
   return JSON.stringify({
-    period: 'Últimos 30 dias',
     generated_at: new Date().toISOString(),
-    kpis: REPORT_KPIS,
+    kpis: report,
   }, null, 2)
 }
 
-export function downloadReport(format: ReportExportFormat) {
+export function downloadReport(format: ReportExportFormat, report: PressRoomReport) {
   const today = new Date().toISOString().slice(0, 10)
-  const content = format === 'json' ? buildJson() : buildCsv()
+  const content = format === 'json' ? buildJson(report) : buildCsv(report)
   const filename = `relatorio-sala-assessores-${today}.${format}`
   const mimeType = format === 'json' ? 'application/json' : 'text/csv;charset=utf-8;'
   const blob = new Blob([content], { type: mimeType })

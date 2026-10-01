@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { ActionTile, Card, Divider, Heading, Icon as DsIcon, ICONS, Text } from '@print/ui'
 import { useNavigate } from 'react-router-dom'
 
-import { currentUser } from '@/application/current-user'
-import { useLocalDemandActions } from '@/application/modules/Demand/hooks/use-local-demand-actions'
+import { useSession } from '@/application/modules/Auth/hooks/use-session'
+import { useDemandActions } from '@/application/modules/Demand/hooks/use-demand-actions'
+import { useDemands } from '@/application/modules/Demand/hooks/use-demands'
+import { usePressRoomReport } from '@/application/modules/Report/hooks/use-press-room-report'
 import { useJournalists } from '@/application/modules/Journalist/hooks/use-journalists'
 import { DemandCreateDrawer } from '@/ui/pages/Demand/components/DemandCreateDrawer'
 import { ROUTES } from '@/ui/routes/paths'
-import { HOME_DEMANDS_IN_PROGRESS, HOME_MONTH_KPIS } from './constants'
+import { HOME_MONTH_KPI_COPY } from './constants'
 import styles from './styles.module.scss'
 
 function SectionHeading({ title }: { title: string }) {
@@ -21,17 +23,45 @@ function SectionHeading({ title }: { title: string }) {
   )
 }
 
+function greetingFromSession(name: string | null | undefined): string {
+  const trimmed = name?.trim()
+  return trimmed ? `Olá, ${trimmed}` : 'Olá'
+}
+
 export function HomePage() {
   const navigate = useNavigate()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const { capture } = useLocalDemandActions()
+  const { capture } = useDemandActions()
   const { data: journalists, isLoading: journalistsLoading } = useJournalists()
+  const { session } = useSession()
+  const { data: activeDemands } = useDemands({ lifecycle: 'active' })
+  const { data: report } = usePressRoomReport()
+  const monthKpis = [
+    {
+      id: 'demands',
+      label: HOME_MONTH_KPI_COPY.demands.label,
+      value: String(report?.demandCount ?? '—'),
+      hint: `${report?.inProgressCount ?? 0} em andamento`,
+    },
+    {
+      id: 'positionings',
+      label: HOME_MONTH_KPI_COPY.positionings.label,
+      value: String(report?.sentCount ?? '—'),
+      hint: HOME_MONTH_KPI_COPY.positionings.hint,
+    },
+    {
+      id: 'journalists',
+      label: HOME_MONTH_KPI_COPY.journalists.label,
+      value: String(report?.journalistCount ?? '—'),
+      hint: HOME_MONTH_KPI_COPY.journalists.hint,
+    },
+  ]
 
   return (
     <div className={styles.homePage}>
       <header className={styles.greeting}>
         <Heading level={1} variant="xl" className={styles.greetingTitle}>
-          Olá, {currentUser.name}
+          {greetingFromSession(session?.name)}
         </Heading>
         <p className={styles.greetingSubtitle}>
           O que foi realizado neste mês?
@@ -40,7 +70,7 @@ export function HomePage() {
 
       <section className={styles.section} aria-label="Indicadores do mês">
         <div className={styles.metricsGrid}>
-          {HOME_MONTH_KPIS.map((kpi) => (
+          {monthKpis.map((kpi) => (
             <Card key={kpi.id} variant="elevated" padding="none" className={styles.metricCard} data-kpi-card>
               <span className={styles.metricDot} aria-hidden="true" />
               <Text as="p" variant="labelMd" tone="muted" className={styles.metricLabel}>
@@ -56,9 +86,9 @@ export function HomePage() {
       <section className={styles.section} aria-label="Continuar de onde parou">
         <SectionHeading title="Continuar de onde parou" />
 
-        {HOME_DEMANDS_IN_PROGRESS.length > 0 ? (
+        {activeDemands.length > 0 ? (
           <div className={styles.demandsList}>
-            {HOME_DEMANDS_IN_PROGRESS.map((demand) => (
+            {activeDemands.slice(0, 5).map((demand) => (
               <button
                 key={demand.id}
                 type="button"

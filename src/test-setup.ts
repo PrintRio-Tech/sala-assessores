@@ -1,4 +1,6 @@
+import { beforeEach } from 'vitest'
 import '@testing-library/jest-dom/vitest'
+import { resetInMemoryAdapters } from '@/application/in-memory-adapters'
 
 const localStorageMock = (() => {
   let store = new Map<string, string>()
@@ -30,7 +32,11 @@ const matchMedia = (query: string) => ({
   removeEventListener: () => undefined,
   addListener: () => undefined,
   removeListener: () => undefined,
-  dispatchEvent: () => false,
+    dispatchEvent: () => false,
+})
+
+beforeEach(() => {
+  resetInMemoryAdapters()
 })
 
 Object.defineProperty(globalThis, 'matchMedia', {

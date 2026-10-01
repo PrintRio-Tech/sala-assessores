@@ -7,8 +7,14 @@ import { RegisterExternalInteraction } from './register-external-interaction.use
 function repository(): DemandRepository {
   return {
     list: vi.fn(),
+    listResponsibles: vi.fn(),
     getById: vi.fn(),
+    create: vi.fn(),
+    reviseCapture: vi.fn(),
+    remove: vi.fn(),
     registerInteraction: vi.fn().mockResolvedValue({ id: 'd-1' }),
+    createAttachmentUpload: vi.fn(),
+    putAttachment: vi.fn(),
     savePositioning: vi.fn(),
     registerOutcome: vi.fn(),
   }

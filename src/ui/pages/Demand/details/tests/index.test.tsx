@@ -1,12 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { DemandDetailPage } from '..'
-import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
-import type { DemandStatus } from '@/application/modules/Demand/stores/local-demand.store'
+import { demandService } from '@/application/composition'
+import { captureDemand } from '@/test/demand-fixtures'
+import type { DemandStatus } from '@/application/modules/Demand/demand-types'
+import { currentUser } from '@/application/current-user'
 
 function renderDemandDetail(demandId = 'd-regulacao') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
@@ -22,27 +24,58 @@ function renderDemandDetail(demandId = 'd-regulacao') {
   )
 }
 
-function renderLocalDemandDetail(contact = {
+async function renderLocalDemandDetail(contact = {
   name: 'Contato não identificado',
   outlet: 'Fonte não identificada',
-}, status: DemandStatus = 'in_progress') {
+}, status: DemandStatus = 'in_progress', enrichment?: {
+  tags?: string[]
+  topics?: string[]
+  relatedAreas?: string[]
+  confirmedFacts?: string[]
+  pendingFacts?: string[]
+  nextStep?: string | null
+  priority?: 'low' | 'medium' | 'high' | 'critical'
+}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
-  const local = useLocalDemandStore.getState().add({
+  const local = await captureDemand({
     subject: 'Acidente na operação — TV Globo',
     factContext: 'A equipe ainda apura as circunstâncias.',
     pressRequest: 'A TV Globo pediu posicionamento.',
-    requestedDeadline: 'Hoje, 18h',
+    requestedDeadline: '2026-08-28',
     channel: 'Telefone',
     contactMode: 'local',
     contactName: contact.name,
     contactOutlet: contact.outlet,
-    journalistId: 'unidentified',
+    journalistId: '',
     journalistName: contact.name,
     outletName: contact.outlet,
+    priority: enrichment?.priority,
+    enrichment: enrichment ? {
+      tags: enrichment.tags ?? [],
+      topics: enrichment.topics ?? [],
+      relatedAreas: enrichment.relatedAreas ?? [],
+      confirmedFacts: enrichment.confirmedFacts ?? [],
+      pendingFacts: enrichment.pendingFacts ?? [],
+      nextStep: enrichment.nextStep ?? null,
+    } : undefined,
   })
-  useLocalDemandStore.setState((state) => ({
-    records: state.records.map((record) => record.id === local.id ? { ...record, status } : record),
-  }))
+  if (status === 'sent') {
+    await demandService.savePositioning(local.id, { body: 'Nota.', author: currentUser.name })
+    await demandService.registerInteraction(local.id, {
+      occurredAt: new Date(),
+      result: 'response_sent',
+      channel: 'E-mail',
+      recipient: contact.name,
+      body: 'Nota.',
+    })
+  }
+  if (status === 'closed_without_send') {
+    await demandService.registerInteraction(local.id, {
+      occurredAt: new Date(),
+      result: 'closed_without_send',
+      summary: 'Encerrado no teste.',
+    })
+  }
   return { local, view: render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[`/demandas/${local.id}`]}>
@@ -64,7 +97,7 @@ async function openInteraction(user: ReturnType<typeof userEvent.setup>, page: H
   await screen.findByRole('dialog', { name: 'Registrar interação' })
 }
 
-afterEach(() => useLocalDemandStore.getState().reset())
+afterEach(() => undefined)
 
 describe('detalhe canônico da demanda', () => {
   it('mostra toolbar acima do título com voltar e ações visíveis, sem menu ⋮', async () => {
@@ -176,14 +209,11 @@ describe('detalhe canônico da demanda', () => {
   })
 
   it('mostra apuração capturada sem accordion ornamental', async () => {
-    const { local } = renderLocalDemandDetail()
-    act(() => {
-      useLocalDemandStore.getState().updateEnrichment(local.id, {
+    await renderLocalDemandDetail(undefined, 'in_progress', {
         tags: ['transparência'],
         topics: ['Governança'],
         relatedAreas: ['Sustentabilidade'],
         confirmedFacts: ['Indicador confirmado.'],
-      })
     })
     const page = await screen.findByTestId('demand-detail')
 
@@ -218,7 +248,6 @@ describe('detalhe canônico da demanda', () => {
     await user.click(within(drawer).getByRole('button', { name: 'Cancelar' }))
 
     expect(within(page).queryByRole('heading', { name: 'Apuração e classificação' })).not.toBeInTheDocument()
-    expect(useLocalDemandStore.getState().records).toHaveLength(0)
   })
 
   it('identifica interações externas e oferece um único CTA de acompanhamento', async () => {
@@ -238,14 +267,14 @@ describe('detalhe canônico da demanda', () => {
 
   it('cancela e confirma a exclusão da fixture local, deixando clara a limitação da sessão', async () => {
     const user = userEvent.setup()
-    const { local } = renderLocalDemandDetail()
+    const { local } = await renderLocalDemandDetail()
     const page = await screen.findByTestId('demand-detail')
 
     await user.click(within(page).getByRole('button', { name: 'Excluir' }))
     let confirm = await screen.findByRole('dialog', { name: 'Excluir demanda?' })
     expect(confirm).toHaveTextContent('somente nesta sessão do protótipo')
     await user.click(within(confirm).getByRole('button', { name: 'Cancelar' }))
-    expect(useLocalDemandStore.getState().isHidden(local.id)).toBe(false)
+    expect(await demandService.getById(local.id)).toMatchObject({ id: local.id })
     expect(within(page).getByRole('heading', { name: 'Acidente na operação — TV Globo' })).toBeVisible()
 
     await user.click(within(page).getByRole('button', { name: 'Excluir' }))
@@ -253,7 +282,7 @@ describe('detalhe canônico da demanda', () => {
     await user.click(within(confirm).getByRole('button', { name: 'Excluir' }))
 
     expect(await screen.findByTestId('demand-list-route')).toBeVisible()
-    expect(useLocalDemandStore.getState().isHidden(local.id)).toBe(true)
+    await expect(demandService.getById(local.id)).rejects.toThrow()
   })
 
   it('registra interações sem sair da demanda e atualiza timeline e próximo passo', async () => {
@@ -440,7 +469,7 @@ describe('detalhe canônico da demanda', () => {
   })
 
   it('oferece registrar interação na captura local já em andamento, sem completar informações', async () => {
-    const { view } = renderLocalDemandDetail()
+    const { view } = await renderLocalDemandDetail()
     const page = await screen.findByTestId('demand-detail')
 
     expect(within(page).getByRole('heading', { name: 'Acidente na operação — TV Globo' })).toBeVisible()
@@ -459,7 +488,7 @@ describe('detalhe canônico da demanda', () => {
 
   it('abre a conversão do contato local com nome e veículo preenchidos e editáveis', async () => {
     const user = userEvent.setup()
-    renderLocalDemandDetail({ name: 'Marina Lima', outlet: 'TV Globo' })
+    await renderLocalDemandDetail({ name: 'Marina Lima', outlet: 'TV Globo' })
     const page = await screen.findByTestId('demand-detail')
 
     await user.click(within(page).getByRole('button', { name: 'Cadastrar jornalista' }))
@@ -480,8 +509,7 @@ describe('detalhe canônico da demanda', () => {
 
   it('edita somente complementares sem trocar responsável nem etapa', async () => {
     const user = userEvent.setup()
-    const { local } = renderLocalDemandDetail()
-    act(() => useLocalDemandStore.getState().updateEnrichment(local.id, { priority: 'high', tags: ['original'] }))
+    const { local } = await renderLocalDemandDetail(undefined, 'in_progress', { priority: 'high', tags: ['original'] })
     const page = await screen.findByTestId('demand-detail')
 
     await openDetailActions(user, page)
@@ -494,9 +522,12 @@ describe('detalhe canônico da demanda', () => {
 
     expect(within(page).getAllByText('Em andamento').length).toBeGreaterThan(0)
     expect(within(page).getAllByText('Noel Ferreira').length).toBeGreaterThan(0)
-    expect(useLocalDemandStore.getState().records[0]?.responsibleName).toBe('Noel Ferreira')
-    expect(useLocalDemandStore.getState().records[0]?.status).toBe('in_progress')
-    expect(useLocalDemandStore.getState().records[0]?.enrichment.tags).toEqual(['editada'])
+    await waitFor(async () => {
+      const updated = await demandService.getById(local.id)
+      expect(updated?.responsibleName).toBe('Noel Ferreira')
+      expect(updated?.status).toBe('in_progress')
+      expect(updated?.enrichment.tags).toEqual(['editada'])
+    })
   })
 
   it.each([
@@ -504,7 +535,7 @@ describe('detalhe canônico da demanda', () => {
     ['sent', false, true],
     ['closed_without_send', false, true],
   ] satisfies Array<[DemandStatus, boolean, boolean]>)('status %s: interação=%s avaliação=%s', async (status, canInteract, canEvaluate) => {
-    renderLocalDemandDetail(undefined, status)
+    await renderLocalDemandDetail(undefined, status)
     const page = await screen.findByTestId('demand-detail')
 
     expect(within(page).queryByTestId('primary-workflow-action')).not.toBeInTheDocument()
@@ -603,7 +634,7 @@ describe('detalhe canônico da demanda', () => {
   })
 
   it('mostra o nome completo do responsável no card esquerdo', async () => {
-    renderLocalDemandDetail()
+    await renderLocalDemandDetail()
     const page = await screen.findByTestId('demand-detail')
     const rail = within(page).getByTestId('demand-summary-rail')
     expect(within(rail).getByText('Noel Ferreira')).toBeVisible()
@@ -624,7 +655,7 @@ describe('detalhe canônico da demanda', () => {
 
   it('abre a conversão do contato local com nome e redação preenchidos e editáveis', async () => {
     const user = userEvent.setup()
-    renderLocalDemandDetail()
+    await renderLocalDemandDetail()
     const page = await screen.findByTestId('demand-detail')
     await user.click(within(page).getByRole('button', { name: 'Cadastrar jornalista' }))
 
@@ -692,7 +723,7 @@ describe('detalhe canônico da demanda', () => {
 
   it('salva o texto no card e no histórico, marca Aprovado e fecha o drawer', async () => {
     const user = userEvent.setup()
-    const { view } = renderLocalDemandDetail()
+    const { view } = await renderLocalDemandDetail()
     const page = await screen.findByTestId('demand-detail')
     const card = within(page).getByTestId('demand-positioning')
     expect(within(card).getByText('Ainda sem resposta')).toBeVisible()
@@ -727,7 +758,7 @@ describe('detalhe canônico da demanda', () => {
 
   it('bloqueia Aprovado sem texto e pré-preenche o envio com a versão atual', async () => {
     const user = userEvent.setup()
-    renderLocalDemandDetail()
+    await renderLocalDemandDetail()
     const page = await screen.findByTestId('demand-detail')
 
     await openInteraction(user, page)
@@ -759,7 +790,7 @@ describe('detalhe canônico da demanda', () => {
 
   it('salva anexo no card e no histórico e abre a leitura completa', async () => {
     const user = userEvent.setup()
-    const { view } = renderLocalDemandDetail()
+    const { view } = await renderLocalDemandDetail()
     const page = await screen.findByTestId('demand-detail')
     const file = new File(['nota'], 'nota-oficial.pdf', { type: 'application/pdf' })
 

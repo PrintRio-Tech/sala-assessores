@@ -1,13 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
-import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
 import { HomePage } from '..'
 
 const mockNavigate = vi.fn()
+const useSessionMock = vi.fn()
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
@@ -16,6 +16,10 @@ vi.mock('react-router-dom', async () => {
     useNavigate: () => mockNavigate,
   }
 })
+
+vi.mock('@/application/modules/Auth/hooks/use-session', () => ({
+  useSession: () => useSessionMock(),
+}))
 
 function renderHomePage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -31,15 +35,43 @@ function renderHomePage() {
   )
 }
 
+beforeEach(() => {
+  useSessionMock.mockReturnValue({
+    session: null,
+    isAuthenticated: false,
+    isChecking: false,
+    logout: vi.fn(),
+  })
+})
+
 afterEach(() => {
   mockNavigate.mockReset()
-  useLocalDemandStore.getState().reset()
 })
 
 describe('HomePage', () => {
-  it('exibe saudação com nome do usuário', () => {
+  it('saúda com o nome da sessão real, sem identidade mock', () => {
+    useSessionMock.mockReturnValue({
+      session: { name: 'Admin Imprensa', email: 'admin.imprensa@print.local' },
+      isAuthenticated: true,
+      isChecking: false,
+      logout: vi.fn(),
+    })
     renderHomePage()
-    expect(screen.getByRole('heading', { name: /Olá, Noel Ferreira/i, level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Olá, Admin Imprensa', level: 1 })).toBeInTheDocument()
+    expect(screen.queryByText(/Noel Ferreira/i)).not.toBeInTheDocument()
+  })
+
+  it('usa saudação genérica quando a sessão não tem nome', () => {
+    useSessionMock.mockReturnValue({
+      session: { name: null, email: 'admin.imprensa@print.local' },
+      isAuthenticated: true,
+      isChecking: false,
+      logout: vi.fn(),
+    })
+    renderHomePage()
+    expect(screen.getByRole('heading', { name: 'Olá', level: 1 })).toBeInTheDocument()
+    expect(screen.queryByText(/Noel Ferreira/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/admin\.imprensa@print\.local/i)).not.toBeInTheDocument()
   })
 
   it('exibe subtítulo do mês', () => {
@@ -47,29 +79,21 @@ describe('HomePage', () => {
     expect(screen.getByText(/O que foi realizado neste mês\?/i)).toBeInTheDocument()
   })
 
-  it('exibe três KPIs iguais com valor headline e linha de apoio', () => {
+  it('exibe três KPIs iguais com valor headline e linha de apoio', async () => {
     renderHomePage()
 
     const metrics = screen.getByRole('region', { name: 'Indicadores do mês' })
-    const demandsValue = within(metrics).getByText('8')
-    expect(demandsValue.className).toMatch(/_lg_/)
-    expect(within(metrics).getByText('Demandas em setembro')).toBeInTheDocument()
-    expect(within(metrics).getByText('5 em andamento')).toBeInTheDocument()
-
-    const positioningsValue = within(metrics).getByText('3')
-    expect(positioningsValue.className).toMatch(/_lg_/)
+    expect(await within(metrics).findByText('Demandas registradas')).toBeInTheDocument()
+    expect(within(metrics).getByText(/em andamento/)).toBeInTheDocument()
     expect(within(metrics).getByText('Posicionamentos enviados')).toBeInTheDocument()
-    expect(within(metrics).getByText('Taxa de aprovação 86%')).toBeInTheDocument()
-
-    const interactionsValue = within(metrics).getByText('12')
-    expect(interactionsValue.className).toMatch(/_lg_/)
-    expect(within(metrics).getByText('Interações com jornalistas')).toBeInTheDocument()
-    expect(within(metrics).getByText('E-mail, telefone, reunião')).toBeInTheDocument()
+    expect(within(metrics).getByText('Casos com resposta enviada')).toBeInTheDocument()
+    expect(within(metrics).getByText('Jornalistas na base')).toBeInTheDocument()
+    expect(within(metrics).getByText('Cadastro ativo da sala')).toBeInTheDocument()
 
     expect(metrics.querySelectorAll('[class*="_elevated_"]')).toHaveLength(3)
     expect(metrics.querySelector('[class*="_primary_"]')).toBeNull()
 
-    const kpiCard = within(metrics).getByText('8').closest('[data-kpi-card]')
+    const kpiCard = within(metrics).getByText('Demandas registradas').closest('[data-kpi-card]')
     expect(kpiCard).not.toBeNull()
     expect(kpiCard?.className).toMatch(/metricCard/)
   })
@@ -85,9 +109,9 @@ describe('HomePage', () => {
     expect(within(section).queryByRole('heading', { name: /Nova demanda/i })).not.toBeInTheDocument()
   })
 
-  it('exibe lista de demandas em andamento', () => {
+  it('exibe lista de demandas em andamento', async () => {
     renderHomePage()
-    expect(screen.getByText('TEC-889')).toBeInTheDocument()
+    expect(await screen.findByText('TEC-889')).toBeInTheDocument()
     expect(screen.getByText('Entrevista exclusiva: CEO TechCorp')).toBeInTheDocument()
     expect(screen.getByText('ECO-442')).toBeInTheDocument()
     expect(screen.getByText('Crise Logística: Impacto nos Portos')).toBeInTheDocument()
@@ -135,7 +159,7 @@ describe('HomePage', () => {
     const user = userEvent.setup()
     renderHomePage()
 
-    const demandItem = screen.getByText('Entrevista exclusiva: CEO TechCorp').closest('button')
+    const demandItem = (await screen.findByText('Entrevista exclusiva: CEO TechCorp')).closest('button')
     if (!demandItem) throw new Error('Demand item not found')
 
     await user.click(demandItem)

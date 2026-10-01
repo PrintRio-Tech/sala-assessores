@@ -16,6 +16,7 @@ describe('GetDemandById', () => {
     responsibleId: 'r1',
     responsibleName: 'Ana Paula',
     deadlineAt: new Date('2026-10-24T12:00:00.000Z'),
+    origin: 'solicited',
     priority: 'high',
     status: 'in_progress',
     createdAt: new Date('2026-10-20T14:32:05.000Z'),
@@ -40,14 +41,28 @@ describe('GetDemandById', () => {
   it('retorna a demanda com interações registradas', async () => {
     const useCase = new GetDemandById({
       async list() {
-        return { items: [], total: 0 }
+        return { items: [], total: 0, activeCount: 0, historyCount: 0 }
+      },
+      async listResponsibles() {
+        return []
       },
       async getById(id) {
         return id === 'd1' ? demand : null
       },
+      async create() {
+        throw new Error('not implemented')
+      },
+      async reviseCapture() {
+        return null
+      },
+      async remove() {},
       async registerInteraction() {
         return null
       },
+      async createAttachmentUpload() {
+        throw new Error('not implemented')
+      },
+      async putAttachment() {},
       async savePositioning() {
         return null
       },
@@ -67,14 +82,28 @@ describe('GetDemandById', () => {
   it('lança erro tipado quando a demanda não existe', async () => {
     const useCase = new GetDemandById({
       async list() {
-        return { items: [], total: 0 }
+        return { items: [], total: 0, activeCount: 0, historyCount: 0 }
+      },
+      async listResponsibles() {
+        return []
       },
       async getById() {
         return null
       },
+      async create() {
+        throw new Error('not implemented')
+      },
+      async reviseCapture() {
+        return null
+      },
+      async remove() {},
       async registerInteraction() {
         return null
       },
+      async createAttachmentUpload() {
+        throw new Error('not implemented')
+      },
+      async putAttachment() {},
       async savePositioning() {
         return null
       },

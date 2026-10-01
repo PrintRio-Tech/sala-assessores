@@ -1,4 +1,4 @@
-import type { DemandDto } from '@/infrastructure/modules/Demand/DTOs/demand.dto'
+import type { DemandDtoInput } from '@/infrastructure/modules/Demand/DTOs/demand.dto'
 import type { JournalistDto } from '@/infrastructure/modules/Journalist/DTOs/journalist.dto'
 
 export const mockJournalistDtos: JournalistDto[] = [
@@ -104,7 +104,7 @@ export const mockJournalistDtos: JournalistDto[] = [
   },
 ]
 
-export const mockDemandDtos: DemandDto[] = [
+export const mockDemandDtos: DemandDtoInput[] = [
   {
     id: 'd-ceo',
     code: 'TEC-889',

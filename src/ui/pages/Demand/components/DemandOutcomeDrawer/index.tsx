@@ -15,7 +15,7 @@ import {
   DEMAND_OUTCOME_SCORE_MIN,
   demandOutcomeRequiresUsage,
   type DemandOutcomePublished,
-} from '@/domain/Demand/demand.entity'
+} from '@/application/modules/Demand/demand-types'
 import type { RegisterDemandOutcomeInput } from '@/application/modules/Demand/hooks/use-register-demand-outcome'
 import styles from './styles.module.scss'
 

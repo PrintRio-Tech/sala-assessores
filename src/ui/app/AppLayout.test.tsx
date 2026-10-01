@@ -3,9 +3,15 @@ import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppLayout } from './AppLayout'
+
+const useSessionMock = vi.fn()
+
+vi.mock('@/application/modules/Auth/hooks/use-session', () => ({
+  useSession: () => useSessionMock(),
+}))
 
 const layoutScss = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), 'app-layout.module.scss'),
@@ -28,6 +34,18 @@ function LocationProbe() {
 }
 
 describe('AppLayout lifecycle', () => {
+  const logout = vi.fn()
+
+  beforeEach(() => {
+    logout.mockReset()
+    useSessionMock.mockReturnValue({
+      session: { name: 'Ana Silva', email: 'ana@imprensa.gov.br' },
+      logout,
+      isAuthenticated: true,
+      isChecking: false,
+    })
+  })
+
   afterEach(() => {
     vi.restoreAllMocks()
   })
@@ -140,7 +158,7 @@ describe('AppLayout lifecycle', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/relatorios')
   })
 
-  it('apresenta a identidade local que assina os registros, sem autenticação', () => {
+  it('mostra a identidade da sessão autenticada, sem usuário mock', () => {
     render(
       <MemoryRouter initialEntries={['/demandas']}>
         <Routes>
@@ -151,8 +169,29 @@ describe('AppLayout lifecycle', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('Noel Ferreira')).toBeVisible()
+    expect(screen.getByText('Ana Silva')).toBeVisible()
     expect(screen.getByText('Assessor de imprensa')).toBeVisible()
+    expect(screen.queryByText('Noel Ferreira')).not.toBeInTheDocument()
+  })
+
+  it('no logout invalida a sessão e vai ao login sem fallback autenticado', () => {
+    render(
+      <MemoryRouter initialEntries={['/demandas']}>
+        <Routes>
+          <Route path="/login" element={<div>login-page</div>} />
+          <Route element={<AppLayout />}>
+            <Route path="/demandas" element={<RouteProbe />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
+
+    expect(logout).toHaveBeenCalled()
+    expect(screen.getByText('login-page')).toBeInTheDocument()
+    expect(screen.queryByText('Noel Ferreira')).not.toBeInTheDocument()
+    expect(screen.queryByText('Ana Silva')).not.toBeInTheDocument()
   })
 
   it('mostra o wordmark oficial Print no topo da sidebar', () => {

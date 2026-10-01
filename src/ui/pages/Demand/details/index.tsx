@@ -10,14 +10,12 @@ import {
 } from "@print/ui";
 
 import { useDemandDetailView } from "@/application/modules/Demand/hooks/use-demand-detail-view";
-import { useLocalDemandActions } from "@/application/modules/Demand/hooks/use-local-demand-actions";
+import { useDemandActions } from "@/application/modules/Demand/hooks/use-demand-actions";
 import { useRegisterDemandOutcome } from "@/application/modules/Demand/hooks/use-register-demand-outcome";
 import { useJournalists } from "@/application/modules/Journalist/hooks/use-journalists";
 import { useCreateJournalist } from "@/application/modules/Journalist/hooks/use-create-journalist";
-import { useLocalDemandStore } from "@/application/modules/Demand/stores/local-demand.store";
 import { collectDemandTags } from "@/application/modules/Demand/presentation/demand-tags";
 import { toDemandCaptureRevision } from "@/application/modules/Demand/presentation/demand-list-filters";
-import type { DemandDetailViewModel } from "@/application/modules/Demand/presentation/demand-detail.viewmodel";
 import { ROUTES } from "@/ui/routes/paths";
 import { DemandCreateDrawer } from "../components/DemandCreateDrawer";
 import { JournalistCreateDrawer } from "@/ui/pages/Journalist/components/JournalistCreateDrawer";
@@ -31,12 +29,6 @@ import { StackedField } from "./components/StackedField";
 import { Timeline } from "./components/Timeline";
 import styles from "./styles.module.scss";
 
-function isLocalDemandView(
-  demand: DemandDetailViewModel,
-): demand is Extract<DemandDetailViewModel, { isLocal: true }> {
-  return "isLocal" in demand;
-}
-
 type CaptureIntent = "edit" | null;
 
 function capturedResponsibleName(name: string) {
@@ -48,8 +40,7 @@ export function DemandDetailPage() {
   const navigate = useNavigate();
   const { data: demand, source, isLoading } = useDemandDetailView(demandId);
   const { data: journalists, isLoading: journalistsLoading } = useJournalists();
-  const { revise, remove, linkJournalist } = useLocalDemandActions();
-  const localRecords = useLocalDemandStore((state) => state.records);
+  const { revise, remove, linkJournalist } = useDemandActions();
   const [interactionOpen, setInteractionOpen] = useState(false);
   const [outcomeOpen, setOutcomeOpen] = useState(false);
   const [positioningOpen, setPositioningOpen] = useState(false);
@@ -62,9 +53,7 @@ export function DemandDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const initialCapture = useMemo(() => {
     if (!source) return undefined;
-    return "pressRequest" in source
-      ? toDemandCaptureRevision({ ...source, kind: "local" })
-      : toDemandCaptureRevision(source);
+    return toDemandCaptureRevision(source);
   }, [source]);
   const createJournalist = useCreateJournalist({
     onSuccess: (journalist) => {
@@ -104,7 +93,7 @@ export function DemandDetailPage() {
   const responsibleName = capturedResponsibleName(
     demand.identity.responsibleName,
   );
-  const tagSuggestions = collectDemandTags([...localRecords, { enrichment }]);
+  const tagSuggestions = collectDemandTags([{ enrichment }]);
   const confirmedFacts = enrichment.confirmedFacts.filter(Boolean);
   const pendingFacts = enrichment.pendingFacts.filter(Boolean);
   const captureNextStep = enrichment.nextStep?.trim() ?? "";
@@ -115,8 +104,7 @@ export function DemandDetailPage() {
   const journalist = journalists.find(
     (item) => item.id === demand.identity.journalistId,
   );
-  const needsJournalist =
-    isLocalDemandView(demand) && !demand.identity.journalistId;
+  const needsJournalist = demand.needsJournalist;
   const hasClassification = Boolean(
     enrichment.tags.length ||
     enrichment.topics.length ||
@@ -454,10 +442,10 @@ export function DemandDetailPage() {
         onOpenChange={setJournalistOpen}
         onCreate={createJournalist.create}
         initialValue={
-          isLocalDemandView(demand)
+          demand.needsJournalist
             ? {
-                name: demand.localCapture.journalistName,
-                outletName: demand.localCapture.outletName,
+                name: demand.unregisteredContact.journalistName,
+                outletName: demand.unregisteredContact.outletName,
               }
             : undefined
         }

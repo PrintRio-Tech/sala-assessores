@@ -3,37 +3,37 @@ import { cleanup, render, screen, waitFor, within } from '@testing-library/react
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
+import { demandService } from '@/application/composition'
+import { currentUser } from '@/application/current-user'
+import { captureDemand } from '@/test/demand-fixtures'
 import { DemandInteractionDrawer } from './index'
 
 afterEach(() => {
   cleanup()
-  useLocalDemandStore.getState().reset()
 })
 
-function renderDrawer(positioningBody = '', onOpenChange = vi.fn()) {
-  const demand = useLocalDemandStore.getState().add({
+async function renderDrawer(positioningBody = '', onOpenChange = vi.fn()) {
+  const demand = await captureDemand({
     subject: 'Caso local',
     factContext: 'Fato.',
     pressRequest: 'Pedido.',
-    requestedDeadline: '2026-08-28',
-    channel: 'Telefone',
-    contactMode: 'local',
     contactName: 'Contato',
     contactOutlet: 'Redação',
-    journalistId: '',
     journalistName: 'Contato',
     outletName: 'Redação',
   })
-  if (positioningBody) useLocalDemandStore.getState().savePositioning(demand.id, { body: positioningBody })
+  if (positioningBody) {
+    await demandService.savePositioning(demand.id, { body: positioningBody, author: currentUser.name })
+  }
+  const latest = await demandService.getById(demand.id)
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   render(
     <QueryClientProvider client={client}>
       <DemandInteractionDrawer
         demandId={demand.id}
         demandCode={demand.code}
-        demandTitle={demand.subject}
-        positioningBody={useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.positioning.versions.at(-1)?.body ?? ''}
+        demandTitle={demand.title}
+        positioningBody={latest.positioning?.versions.at(-1)?.body ?? ''}
         open
         onOpenChange={onOpenChange}
       />
@@ -44,7 +44,7 @@ function renderDrawer(positioningBody = '', onOpenChange = vi.fn()) {
 
 describe('DemandInteractionDrawer', () => {
   it('não pede versão ao registrar encaminhamento', async () => {
-    renderDrawer()
+    await renderDrawer()
     const user = userEvent.setup()
     const drawer = screen.getByRole('dialog', { name: 'Registrar interação' })
 
@@ -58,7 +58,7 @@ describe('DemandInteractionDrawer', () => {
   })
 
   it('exige quem aprovou e o parecer para Aprovado, e recusa sem texto salvo', async () => {
-    const { demand } = renderDrawer()
+    const { demand } = await renderDrawer()
     const user = userEvent.setup()
     const drawer = screen.getByRole('dialog', { name: 'Registrar interação' })
 
@@ -71,18 +71,20 @@ describe('DemandInteractionDrawer', () => {
     await user.type(within(drawer).getByLabelText('Parecer'), 'Liberado internamente.')
     await user.click(within(drawer).getByRole('button', { name: 'Salvar' }))
     expect(await within(drawer).findByText('Salve o posicionamento (texto ou anexo) antes de registrar a aprovação.')).toBeVisible()
-    expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.interactions).toEqual([])
+    expect((await demandService.getById(demand.id)).interactions).toEqual([])
 
-    useLocalDemandStore.getState().savePositioning(demand.id, { body: 'Nota da sessão.' })
+    await demandService.savePositioning(demand.id, { body: 'Nota da sessão.', author: currentUser.name })
     await user.click(within(drawer).getByRole('button', { name: 'Salvar' }))
 
-    await waitFor(() => expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.positioning.state).toBe('approved'))
-    expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.status).toBe('in_progress')
-    expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.interactions.at(-1)?.result).toBe('approved')
+    await waitFor(async () => {
+      expect((await demandService.getById(demand.id)).positioning?.state).toBe('approved')
+    })
+    expect((await demandService.getById(demand.id)).status).toBe('in_progress')
+    expect((await demandService.getById(demand.id)).interactions.at(-1)?.result).toBe('approved')
   })
 
   it('exige canal, destinatário e texto na resposta enviada, pré-preenche o corpo e fecha o caso', async () => {
-    const { demand, onOpenChange } = renderDrawer('Nota oficial.')
+    const { demand, onOpenChange } = await renderDrawer('Nota oficial.')
     const user = userEvent.setup()
     const drawer = screen.getByRole('dialog', { name: 'Registrar interação' })
 
@@ -96,13 +98,15 @@ describe('DemandInteractionDrawer', () => {
     await user.type(within(drawer).getByLabelText('Destinatário'), 'redacao@exemplo.com')
     await user.click(within(drawer).getByRole('button', { name: 'Salvar' }))
 
-    await waitFor(() => expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.status).toBe('sent'))
-    expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.positioning.state).toBe('sent')
+    await waitFor(async () => {
+      expect((await demandService.getById(demand.id)).status).toBe('sent')
+    })
+    expect((await demandService.getById(demand.id)).positioning?.state).toBe('sent')
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 
   it('só encerra sem resposta depois da confirmação explícita', async () => {
-    const { demand, onOpenChange } = renderDrawer()
+    const { demand, onOpenChange } = await renderDrawer()
     const user = userEvent.setup()
     const drawer = screen.getByRole('dialog', { name: 'Registrar interação' })
 
@@ -111,12 +115,14 @@ describe('DemandInteractionDrawer', () => {
     await user.type(within(drawer).getByLabelText('Motivo do encerramento'), 'A pauta perdeu atualidade.')
     await user.click(within(drawer).getByRole('button', { name: 'Salvar' }))
     expect(within(drawer).getByText('Confirme o encerramento sem resposta enviada.')).toBeVisible()
-    expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.status).toBe('in_progress')
+    expect((await demandService.getById(demand.id)).status).toBe('in_progress')
 
     await user.click(within(drawer).getByRole('checkbox', { name: 'Confirmo o encerramento sem resposta enviada' }))
     await user.click(within(drawer).getByRole('button', { name: 'Salvar' }))
 
-    await waitFor(() => expect(useLocalDemandStore.getState().records.find((item) => item.id === demand.id)?.status).toBe('closed_without_send'))
+    await waitFor(async () => {
+      expect((await demandService.getById(demand.id)).status).toBe('closed_without_send')
+    })
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 })

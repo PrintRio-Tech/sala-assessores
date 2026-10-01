@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 
-import type { LocalDemandCapture } from '@/application/modules/Demand/stores/local-demand.store'
 import type { Demand } from '@/domain/Demand/demand.entity'
 import { emptyPositioning } from '@/domain/Demand/demand.entity'
 import type { Journalist } from '@/domain/Journalist/journalist.entity'
@@ -23,49 +22,25 @@ const journalist: Journalist = {
   relationshipEvaluations: [],
 }
 
-const mockDemand: Demand = {
+const demand: Demand = {
   id: 'd-shared',
   code: 'DEM-001',
-  title: 'Título antigo do seed',
+  title: 'Título atualizado',
   requestSummary: 'Pedido original',
   journalistId: journalist.id,
   journalistName: journalist.name,
   outletName: journalist.outletName,
-  responsibleId: 'r-ana',
-  responsibleName: 'Ana Paula',
-  deadlineAt: new Date('2026-08-30T12:00:00.000Z'),
-  priority: 'medium',
-  status: 'in_progress',
-  createdAt: new Date('2026-08-20T12:00:00.000Z'),
-  updatedAt: new Date('2026-08-20T12:00:00.000Z'),
-  interactions: [],
-  enrichment: { tags: [], topics: ['Tema antigo'], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null },
-}
-
-const adoptedLocalDemand: LocalDemandCapture = {
-  id: mockDemand.id,
-  code: mockDemand.code,
-  subject: 'Título atualizado localmente',
-  factContext: 'Contexto',
-  pressRequest: mockDemand.requestSummary,
-  requestedDeadline: '2026-08-30',
-  channel: 'Registro mock',
   contactMode: 'known',
   contactName: journalist.name,
   contactOutlet: journalist.outletName,
-  journalistId: journalist.id,
-  journalistName: journalist.name,
-  outletName: journalist.outletName,
-  createdAt: mockDemand.createdAt,
-  updatedAt: new Date('2026-08-25T12:00:00.000Z'),
-  status: 'sent',
   responsibleId: 'r-noel',
   responsibleName: 'Noel Ferreira',
-  createdBy: null,
+  deadlineAt: new Date('2026-08-30T12:00:00.000Z'),
+  origin: 'solicited',
   priority: 'critical',
-  enrichment: { tags: [], topics: ['Tema local'], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null },
-  stateTransitions: [],
-  positioning: emptyPositioning(),
+  status: 'sent',
+  createdAt: new Date('2026-08-20T12:00:00.000Z'),
+  updatedAt: new Date('2026-08-25T12:00:00.000Z'),
   interactions: [{
     id: 'int-sent',
     occurredAt: new Date('2026-08-25T12:00:00.000Z'),
@@ -79,6 +54,8 @@ const adoptedLocalDemand: LocalDemandCapture = {
     body: 'Posicionamento',
     origin: 'off_platform',
   }],
+  positioning: emptyPositioning(),
+  enrichment: { tags: [], topics: ['Tema atual'], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null },
   outcome: {
     toneScore: 5,
     published: 'yes',
@@ -90,8 +67,8 @@ const adoptedLocalDemand: LocalDemandCapture = {
 }
 
 describe('buildJournalistProfileViewModel', () => {
-  it('deduplica demandas por ID e usa o registro local adotado como fonte de verdade', () => {
-    const profile = buildJournalistProfileViewModel(journalist, [mockDemand], [adoptedLocalDemand])
+  it('projeta histórico e resultado a partir das demandas do repositório', () => {
+    const profile = buildJournalistProfileViewModel(journalist, [demand])
 
     expect(profile.objectiveStats.totalDemands).toBe(1)
     expect(profile.objectiveStats.successRate).toBe(1)
@@ -99,16 +76,16 @@ describe('buildJournalistProfileViewModel', () => {
     expect(profile.demandHistory).toEqual([
       expect.objectContaining({
         demandId: 'd-shared',
-        title: 'Título atualizado localmente',
+        title: 'Título atualizado',
         status: 'sent',
-        kindLabel: 'Demanda local',
+        kindLabel: 'Demanda registrada',
         outcomeLabel: 'Publicado · Tom 5/5 · Uso 5/5',
       }),
     ])
     expect(profile.caseOutcomes).toEqual([
       expect.objectContaining({
         demandId: 'd-shared',
-        demandTitle: 'Título atualizado localmente',
+        demandTitle: 'Título atualizado',
         toneScore: 5,
         publishedLabel: 'Sim',
         usageScore: 5,
@@ -118,8 +95,25 @@ describe('buildJournalistProfileViewModel', () => {
     ])
     expect(profile.relationshipScore).toBe(5)
     expect(profile.relationshipScoreLabel).toBe('5.0')
-    expect(profile.topics).toContain('Tema local')
-    expect(profile.topics).not.toContain('Tema antigo')
+    expect(profile.topics).toContain('Tema atual')
+  })
+
+  it('mostra solicitedCount e proactiveCount que o BFF devolveu', () => {
+    const fromBff: Journalist = {
+      ...journalist,
+      objectiveStats: {
+        totalDemands: 8,
+        solicitedCount: 6,
+        proactiveCount: 2,
+        successRate: 0.75,
+        positioningUsageRate: 0.5,
+      },
+    }
+
+    const profile = buildJournalistProfileViewModel(fromBff, [demand])
+
+    expect(profile.objectiveStats.solicitedCount).toBe(6)
+    expect(profile.objectiveStats.proactiveCount).toBe(2)
   })
 
   it('média mistura nota inicial do cadastro com notas das pautas', () => {
@@ -136,7 +130,7 @@ describe('buildJournalistProfileViewModel', () => {
       }],
     }
 
-    const profile = buildJournalistProfileViewModel(withInitial, [], [adoptedLocalDemand])
+    const profile = buildJournalistProfileViewModel(withInitial, [demand])
     expect(profile.relationshipScore).toBe(4)
     expect(profile.relationshipScoreLabel).toBe('4.0')
   })

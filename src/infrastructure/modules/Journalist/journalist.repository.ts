@@ -11,7 +11,7 @@ import { journalistDtoSchema } from './DTOs/journalist.dto'
 import { toDomain } from './mappers/journalist.mapper'
 import { mockJournalistDtos } from '@/infrastructure/mock/seed'
 
-export class MockJournalistRepository implements JournalistRepository {
+export class InMemoryJournalistRepository implements JournalistRepository {
   private readonly localJournalists: Journalist[] = []
   private readonly overridesById = new Map<string, Journalist>()
   private readonly idFactory: () => string

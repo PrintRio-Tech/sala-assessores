@@ -3,8 +3,9 @@ import { useQuery } from '@tanstack/react-query'
 import { journalistService } from '@/application/composition'
 import { demandService } from '@/application/composition'
 import { queryKeys } from '@/application/constants/query-keys'
-import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
 import { buildJournalistProfileViewModel } from '../presentation/journalist-profile.viewmodel'
+
+export type { JournalistDemandHistoryItem, RelationshipEvaluation } from '@/domain/Journalist/journalist.entity'
 
 export function useJournalist(id: string | undefined) {
   const journalistQuery = useQuery({
@@ -17,13 +18,8 @@ export function useJournalist(id: string | undefined) {
     queryFn: () => demandService.list({ lifecycle: 'all' }),
     enabled: Boolean(id),
   })
-  const localDemands = useLocalDemandStore((state) => state.records)
   const data = journalistQuery.data
-    ? buildJournalistProfileViewModel(
-        journalistQuery.data,
-        demandsQuery.data?.items ?? [],
-        localDemands,
-      )
+    ? buildJournalistProfileViewModel(journalistQuery.data, demandsQuery.data?.items ?? [])
     : null
 
   return {

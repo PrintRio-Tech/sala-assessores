@@ -1,4 +1,7 @@
-import type { PositioningAttachment } from '@/domain/Demand/demand.entity'
+import type { PositioningAttachment } from '@/application/modules/Demand/demand-types'
+import {
+  assertPositioningAttachmentSize,
+} from '@/application/modules/Demand/demand-types'
 
 export function formatFileSize(sizeBytes: number): string {
   if (sizeBytes < 1024) return `${sizeBytes} B`
@@ -7,6 +10,7 @@ export function formatFileSize(sizeBytes: number): string {
 }
 
 export function fileToAttachment(file: File): PositioningAttachment {
+  assertPositioningAttachmentSize(file.size)
   return {
     filename: file.name,
     contentType: file.type || 'application/octet-stream',

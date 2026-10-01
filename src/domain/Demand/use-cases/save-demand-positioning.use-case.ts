@@ -1,4 +1,4 @@
-import { savePositioningVersion, type Demand, type PositioningAttachment } from '../demand.entity'
+import { assertPositioningAttachmentSize, savePositioningVersion, type Demand, type PositioningAttachment } from '../demand.entity'
 import type { DemandRepository } from '../demand.repository'
 import { DemandNotFoundError } from '../errors/demand.errors'
 
@@ -10,6 +10,7 @@ export class SaveDemandPositioning {
   }
 
   async execute(demandId: string, input: { body: string; author: string; savedAt?: Date; attachment?: PositioningAttachment | null }): Promise<Demand> {
+    if (input.attachment) assertPositioningAttachmentSize(input.attachment.sizeBytes)
     const demand = await this.repo.savePositioning(demandId, {
       body: input.body,
       author: input.author,

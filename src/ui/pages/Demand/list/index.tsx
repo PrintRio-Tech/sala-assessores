@@ -3,7 +3,8 @@ import { Badge, Button, Card, ConfirmDialog, DataTable, DatePicker, Heading, Ico
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useDemands, type DemandListItem } from '@/application/modules/Demand/hooks/use-demands'
-import { useLocalDemandActions } from '@/application/modules/Demand/hooks/use-local-demand-actions'
+import { useDemandActions } from '@/application/modules/Demand/hooks/use-demand-actions'
+import { useDemandResponsibles } from '@/application/modules/Demand/hooks/use-demand-responsibles'
 import { useJournalists } from '@/application/modules/Journalist/hooks/use-journalists'
 import { useDemandFilters } from '@/application/modules/Demand/stores/demand.store'
 import {
@@ -29,18 +30,7 @@ const statusLabels: Record<string, string> = {
 }
 const statusTones: Record<string, BadgeTone> = { in_progress: 'soft', sent: 'primary', closed_without_send: 'neutral' }
 const DEMANDS_PAGE_SIZE = 4
-const responsibleOptions = [
-  { value: 'all', label: 'Toda a equipe' },
-  { value: 'r-ana', label: 'Ana Paula' },
-  { value: 'r-bruno', label: 'Bruno Costa' },
-  { value: 'r-ricardo', label: 'Ricardo M.' },
-  { value: 'r-mariana', label: 'Mariana S.' },
-]
 type DemandLifecycle = 'active' | 'history'
-
-function isLocalDemand(demand: DemandListItem): demand is Extract<DemandListItem, { kind: 'local' }> {
-  return 'kind' in demand
-}
 
 function deadlineLabel(value: Date) {
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(value)
@@ -57,7 +47,12 @@ export function DemandsPage() {
   const setPage = useDemandFilters((state) => state.setPage)
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { capture, revise, remove } = useLocalDemandActions()
+  const { capture, revise, remove } = useDemandActions()
+  const { data: responsibles } = useDemandResponsibles()
+  const responsibleOptions = useMemo(() => [
+    { value: 'all', label: 'Toda a equipe' },
+    ...responsibles.map((item) => ({ value: item.id, label: item.name })),
+  ], [responsibles])
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editing, setEditing] = useState<DemandListItem | null>(null)
   const [deleting, setDeleting] = useState<DemandListItem | null>(null)
@@ -150,9 +145,9 @@ export function DemandsPage() {
   }, [page, pageState, setPage])
 
   const columns = useMemo<TableColumnDef<DemandListItem>[]>(() => [
-    { id: 'demand', header: 'Caso / fonte', priority: { desktop: 1, tablet: 1, mobile: 1 }, size: 'fill', cell: (demand) => <span className={styles.demandTitle}><Link to={ROUTES.demand(demand.id)}>{isLocalDemand(demand) ? demand.subject : demand.title}</Link><small>{isLocalDemand(demand) ? `${demand.contactName} · ${demand.contactOutlet} · #${demand.code} · Registro local` : `${demand.journalistName} · #${demand.code}`}</small></span> },
+    { id: 'demand', header: 'Caso / fonte', priority: { desktop: 1, tablet: 1, mobile: 1 }, size: 'fill', cell: (demand) => <span className={styles.demandTitle}><Link to={ROUTES.demand(demand.id)}>{demand.title}</Link><small>{`${demand.journalistName} · #${demand.code}`}</small></span> },
     { id: 'status', header: 'Status', priority: { desktop: 2, tablet: 2, mobile: 3 }, size: 'sm', cell: (demand) => <Badge size="sm" tone={statusTones[demand.status] ?? 'neutral'}>{statusLabels[demand.status] ?? demand.status}</Badge> },
-    { id: 'deadline', header: 'Prazo', priority: { desktop: 3, tablet: 3, mobile: 2 }, size: 'md', cell: (demand) => <span className={styles.deadline}><Icon name="calendar" />{isLocalDemand(demand) ? demand.requestedDeadline : deadlineLabel(demand.deadlineAt)}</span> },
+    { id: 'deadline', header: 'Prazo', priority: { desktop: 3, tablet: 3, mobile: 2 }, size: 'md', cell: (demand) => <span className={styles.deadline}><Icon name="calendar" />{deadlineLabel(demand.deadlineAt)}</span> },
     { id: 'responsible', header: 'Responsável', priority: { desktop: 4, tablet: 4, mobile: 4 }, size: 'md', cellType: 'personDetailed', cell: (demand) => ({ name: demand.responsibleName }) },
     { id: 'priority', header: 'Prioridade', priority: { desktop: 5, tablet: 5, mobile: 5 }, size: 'sm', cell: (demand) => <span className={styles.priority}>{demand.priority ? DEMAND_PRIORITY_LABELS[demand.priority] : 'Ainda não definida'}</span> },
   ], [])

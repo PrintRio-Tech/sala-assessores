@@ -55,3 +55,27 @@ export class InvalidDemandOutcomeError extends DomainError {
     super(message)
   }
 }
+
+export class InvalidDemandInputError extends DomainError {
+  readonly code = 'INVALID_INPUT'
+
+  constructor(message = 'Não foi possível gravar a demanda com os dados informados.') {
+    super(message)
+  }
+}
+
+export class PositioningAttachmentTooLargeError extends DomainError {
+  readonly code = 'POSITIONING_ATTACHMENT_TOO_LARGE'
+
+  constructor(message = 'O anexo pode ter no máximo 20 MB.') {
+    super(message)
+  }
+}
+
+export class AttachmentStorageUnavailableError extends DomainError {
+  readonly code = 'STORAGE_UNAVAILABLE'
+
+  constructor(message = 'O armazenamento de anexos não está disponível.') {
+    super(message)
+  }
+}

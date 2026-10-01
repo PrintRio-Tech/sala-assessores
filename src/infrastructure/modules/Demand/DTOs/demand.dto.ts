@@ -40,10 +40,14 @@ export const demandDtoSchema = z.object({
   journalist_id: z.string(),
   journalist_name: z.string(),
   outlet_name: z.string(),
+  contact_mode: z.enum(['known', 'local']).optional(),
+  contact_name: z.string().optional(),
+  contact_outlet: z.string().optional(),
   responsible_id: z.string(),
   responsible_name: z.string(),
   deadline_at: z.string(),
   channel: z.string().optional(),
+  origin: z.enum(['solicited', 'proactive']).optional().default('solicited'),
   priority: z.enum(['low', 'medium', 'high', 'critical']),
   status: demandStatusDtoSchema,
   created_at: z.string(),
@@ -69,6 +73,7 @@ export const demandDtoSchema = z.object({
         content_type: z.string(),
         size_bytes: z.number(),
         object_url: z.string(),
+        object_key: z.string().optional(),
       }).nullish(),
     })),
     approval: z.object({
@@ -89,3 +94,4 @@ export const demandDtoSchema = z.object({
 })
 
 export type DemandDto = z.infer<typeof demandDtoSchema>
+export type DemandDtoInput = z.input<typeof demandDtoSchema>

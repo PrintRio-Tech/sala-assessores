@@ -8,10 +8,12 @@ import {
   applyInteractionToPositioning,
   currentPositioningBody,
   emptyPositioning,
+  formatDemandCalendarDay,
   getDemandNextActions,
   getDemandStatusFilterValues,
   getExternalInteractionFieldErrors,
   isExternalInteractionResult,
+  parseDemandDeadline,
   registerDemandOutcome,
   sanitizeDemandListStatus,
   savePositioningVersion,
@@ -40,6 +42,7 @@ function demand(partial: Partial<Demand> & Pick<Demand, 'id' | 'status'>): Deman
     responsibleId: 'r1',
     responsibleName: 'Bruno',
     deadlineAt: new Date('2026-08-12T12:00:00.000Z'),
+    origin: 'solicited' as const,
     priority: 'medium',
     createdAt: new Date('2026-08-01T12:00:00.000Z'),
     updatedAt: new Date('2026-08-01T12:00:00.000Z'),
@@ -411,5 +414,13 @@ describe('Demand domain', () => {
       recordedBy: 'Noel Ferreira',
       recordedAt,
     })).toThrow(InvalidDemandOutcomeError)
+  })
+
+  it('interpreta prazo YYYY-MM-DD como dia civil local, sem recuar no fuso', () => {
+    const deadline = parseDemandDeadline('2026-08-18')
+    expect(formatDemandCalendarDay(deadline)).toBe('2026-08-18')
+    expect(deadline.getFullYear()).toBe(2026)
+    expect(deadline.getMonth()).toBe(7)
+    expect(deadline.getDate()).toBe(18)
   })
 })

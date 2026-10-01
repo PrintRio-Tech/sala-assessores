@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation, Link } from 'react-router-dom'
 import { Route, Routes } from 'react-router-dom'
@@ -7,7 +7,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { DemandDetailPage, DemandsPage } from '@/ui/pages/Demand'
 import { useDemandFilters } from '@/application/modules/Demand/stores/demand.store'
-import { useLocalDemandStore } from '@/application/modules/Demand/stores/local-demand.store'
+import { demandService } from '@/application/composition'
+import { captureDemand } from '@/test/demand-fixtures'
 
 function LocationProbe() {
   const location = useLocation()
@@ -44,7 +45,6 @@ function renderDemandFlow(initialEntry = '/demandas') {
 
 afterEach(() => {
   useDemandFilters.getState().reset()
-  useLocalDemandStore.getState().reset()
 })
 
 async function openDemandActions(user: ReturnType<typeof userEvent.setup>, title: string) {
@@ -55,7 +55,7 @@ async function openDemandActions(user: ReturnType<typeof userEvent.setup>, title
 
 describe('cabeçalho da lista de demandas', () => {
   it('reflete estado, responsável e prioridade atuais de uma demanda local na lista e no histórico', async () => {
-    const local = useLocalDemandStore.getState().add({
+    const local = await captureDemand({
       subject: 'Atualização operacional local',
       factContext: 'Fato confirmado.',
       pressRequest: 'Pedido de posicionamento.',
@@ -81,7 +81,7 @@ describe('cabeçalho da lista de demandas', () => {
     expect(within(activeRow!).queryByText('Rascunho local')).not.toBeInTheDocument()
 
     unmount()
-    useLocalDemandStore.getState().registerInteraction(local.id, {
+    await demandService.registerInteraction(local.id, {
       occurredAt: new Date('2026-08-30T18:00:00.000Z'),
       result: 'closed_without_send',
       summary: 'Pedido perdeu a atualidade.',
@@ -109,7 +109,9 @@ describe('cabeçalho da lista de demandas', () => {
 
     expect(screen.getByRole('textbox', { name: 'Busca por texto' })).toHaveValue('energia')
     expect(screen.getByRole('combobox', { name: 'Status' })).toHaveTextContent('Enviadas')
-    expect(screen.getByRole('combobox', { name: 'Responsável' })).toHaveTextContent('Ana Paula')
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: 'Responsável' })).toHaveTextContent('Ana Paula')
+    })
     expect(screen.getByRole('textbox', { name: 'Prazo' })).toHaveValue('24/08/2026')
     expect(screen.getByRole('tab', { name: /Histórico/ })).toHaveAttribute('aria-selected', 'true')
   })
@@ -201,7 +203,6 @@ describe('cabeçalho da lista de demandas', () => {
   })
 
   it('permite registrar contato local estruturado e conclui com DatePicker no detalhe', async () => {
-    useLocalDemandStore.getState().reset()
     renderDemandFlow()
     const user = userEvent.setup()
     fireEvent.click(screen.getByRole('button', { name: 'Começar' }))

@@ -1,6 +1,6 @@
 import { Button, Icon, ICONS, Text } from '@print/ui'
 
-import type { PositioningAttachment } from '@/domain/Demand/demand.entity'
+import type { PositioningAttachment } from '@/application/modules/Demand/demand-types'
 import { formatFileSize } from './positioning-file'
 import styles from './positioning-attachment.module.scss'
 
@@ -24,7 +24,10 @@ export function PositioningAttachmentChip({
         size="sm"
         iconOnly
         aria-label={`Baixar ${attachment.filename}`}
-        onClick={() => window.open(attachment.objectUrl, '_blank', 'noopener')}
+        onClick={() => {
+          if (attachment.objectUrl) window.open(attachment.objectUrl, '_blank', 'noopener')
+        }}
+        disabled={!attachment.objectUrl}
       >
         <Icon src={ICONS.ui.download} size={16} aria-hidden />
       </Button>

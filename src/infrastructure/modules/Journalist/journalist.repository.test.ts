@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { NewJournalist } from '@/domain/Journalist/journalist.repository'
-import { MockJournalistRepository } from './journalist.repository'
+import { InMemoryJournalistRepository } from './journalist.repository'
 
 const localJournalist: NewJournalist = {
   name: 'Joana Ribeiro',
@@ -19,20 +19,20 @@ const localJournalist: NewJournalist = {
   relationshipEvaluations: [],
 }
 
-describe('MockJournalistRepository create', () => {
+describe('InMemoryJournalistRepository create', () => {
   it('mantém o novo jornalista somente na instância da sessão e permite abrir o detalhe', async () => {
-    const repository = new MockJournalistRepository(() => 'uuid-safe')
+    const repository = new InMemoryJournalistRepository(() => 'uuid-safe')
 
     const created = await repository.create(localJournalist)
 
     expect(created.id).toBe('j-local-uuid-safe')
     expect((await repository.list()).items[0]).toEqual(created)
     expect(await repository.getById(created.id)).toEqual(created)
-    expect(await new MockJournalistRepository(() => 'other').getById(created.id)).toBeNull()
+    expect(await new InMemoryJournalistRepository(() => 'other').getById(created.id)).toBeNull()
   })
 
   it('atualiza cadastro objetivo na instância e reflete a mudança na lista e no detalhe', async () => {
-    const repository = new MockJournalistRepository(() => 'uuid-safe')
+    const repository = new InMemoryJournalistRepository(() => 'uuid-safe')
     const original = await repository.getById('j-maria')
 
     const updated = await repository.updateProfile('j-maria', {
@@ -59,7 +59,7 @@ describe('MockJournalistRepository create', () => {
   })
 
   it('acrescenta uma avaliação datada sem alterar os dados objetivos do jornalista', async () => {
-    const repository = new MockJournalistRepository(() => 'evaluation-id')
+    const repository = new InMemoryJournalistRepository(() => 'evaluation-id')
     const original = await repository.getById('j-maria')
 
     const updated = await repository.addRelationshipEvaluation('j-maria', {
@@ -84,7 +84,7 @@ describe('MockJournalistRepository create', () => {
 
   it('aplica update e avaliação também sobre jornalista criado localmente', async () => {
     const ids = ['local-id', 'evaluation-id']
-    const repository = new MockJournalistRepository(() => ids.shift()!)
+    const repository = new InMemoryJournalistRepository(() => ids.shift()!)
     const created = await repository.create(localJournalist)
 
     const edited = await repository.updateProfile(created.id, {
@@ -107,7 +107,7 @@ describe('MockJournalistRepository create', () => {
   })
 
   it('ordena todos os registros de avaliação por data decrescente sem mutar o seed', async () => {
-    const repository = new MockJournalistRepository(() => 'older-evaluation')
+    const repository = new InMemoryJournalistRepository(() => 'older-evaluation')
     const original = await repository.getById('j-maria')
 
     const updated = await repository.addRelationshipEvaluation('j-maria', {
@@ -120,7 +120,7 @@ describe('MockJournalistRepository create', () => {
     })
 
     expect(updated?.relationshipEvaluations.at(-1)?.id).toBe('older-evaluation')
-    expect((await new MockJournalistRepository().getById('j-maria'))?.relationshipEvaluations)
+    expect((await new InMemoryJournalistRepository().getById('j-maria'))?.relationshipEvaluations)
       .toEqual(original?.relationshipEvaluations)
   })
 })

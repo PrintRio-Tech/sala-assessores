@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { AppShell, Avatar, BrandLogo, Icon, ICONS, Text, type AppNavItem } from '@print/ui'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
-import { currentUser } from '@/application/current-user'
 import { useSession } from '@/application/modules/Auth/hooks/use-session'
 import { ROUTES } from '@/ui/routes/paths'
 import styles from './app-layout.module.scss'
@@ -14,7 +13,7 @@ export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const { session, logout } = useSession()
-  const displayName = session?.email || currentUser.name
+  const displayName = session?.name || session?.email || ''
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -22,7 +21,7 @@ export function AppLayout() {
 
   const handleLogout = () => {
     logout()
-    navigate(ROUTES.login)
+    navigate(ROUTES.login, { replace: true })
   }
 
   const navItems: AppNavItem[] = [
@@ -60,10 +59,10 @@ export function AppLayout() {
       footerSlot={
         <div className={styles.footerWrapper}>
           <div className={styles.footerUser}>
-            <Avatar name={displayName} size="sm" />
+            <Avatar name={displayName || ' '} size="sm" />
             <span className={styles.footerIdentity}>
-              <Text as="strong" variant="labelSm">{displayName}</Text>
-              <Text as="small" variant="labelSm">Assessor de imprensa</Text>
+              {displayName ? <Text as="strong" variant="labelSm">{displayName}</Text> : null}
+              {session ? <Text as="small" variant="labelSm">Assessor de imprensa</Text> : null}
             </span>
           </div>
           <button type="button" className={styles.logoutButton} onClick={handleLogout} title="Sair" aria-label="Sair">

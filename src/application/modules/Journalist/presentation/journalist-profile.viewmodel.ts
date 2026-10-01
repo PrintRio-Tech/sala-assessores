@@ -1,4 +1,3 @@
-import type { LocalDemandCapture } from '@/application/modules/Demand/stores/local-demand.store'
 import type { Demand, DemandOutcome, DemandStatus } from '@/domain/Demand/demand.entity'
 import {
   DEMAND_OUTCOME_PUBLISHED_LABELS,
@@ -64,7 +63,7 @@ export function computeJournalistRelationshipScore(
   return samples.reduce((sum, value) => sum + value, 0) / samples.length
 }
 
-function fromMockDemand(demand: Demand): LinkedDemand {
+function fromDemand(demand: Demand): LinkedDemand {
   return {
     id: demand.id,
     title: demand.title,
@@ -74,20 +73,6 @@ function fromMockDemand(demand: Demand): LinkedDemand {
     topics: demand.enrichment?.topics ?? [],
     hasPositioning: demand.interactions.some((item) => item.result === 'response_sent'),
     kindLabel: 'Demanda registrada',
-    outcome: demand.outcome ?? null,
-  }
-}
-
-function fromLocalDemand(demand: LocalDemandCapture): LinkedDemand {
-  return {
-    id: demand.id,
-    title: demand.subject,
-    journalistId: demand.journalistId,
-    status: demand.status,
-    updatedAt: demand.updatedAt,
-    topics: demand.enrichment.topics,
-    hasPositioning: demand.interactions.some((item) => item.result === 'response_sent'),
-    kindLabel: 'Demanda local',
     outcome: demand.outcome ?? null,
   }
 }
@@ -124,17 +109,11 @@ function toCaseOutcomeView(demand: LinkedDemand): JournalistCaseOutcomeView | nu
 
 export function buildJournalistProfileViewModel(
   journalist: Journalist,
-  mockDemands: Demand[],
-  localDemands: LocalDemandCapture[],
+  demands: Demand[],
 ): JournalistProfileViewModel {
-  const demandsById = new Map<string, LinkedDemand>()
-  for (const demand of mockDemands) demandsById.set(demand.id, fromMockDemand(demand))
-  // Registros locais incluem as mutações feitas nesta sessão e, por isso,
-  // substituem o snapshot seed/adotado quando compartilham a mesma identidade.
-  for (const demand of localDemands) demandsById.set(demand.id, fromLocalDemand(demand))
-
-  const linkedDemands = [...demandsById.values()]
+  const linkedDemands = demands
     .filter((demand) => demand.journalistId === journalist.id)
+    .map(fromDemand)
     .sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime())
 
   const totalDemands = linkedDemands.length
@@ -157,8 +136,8 @@ export function buildJournalistProfileViewModel(
     topics: normalizeJournalistTopics([...derivedTopics, ...journalist.topics]),
     objectiveStats: {
       totalDemands,
-      solicitedCount: totalDemands,
-      proactiveCount: 0,
+      solicitedCount: journalist.objectiveStats.solicitedCount,
+      proactiveCount: journalist.objectiveStats.proactiveCount,
       successRate: totalDemands === 0 ? 0 : sentCount / totalDemands,
       positioningUsageRate: totalDemands === 0 ? 0 : positioningCount / totalDemands,
     },

@@ -9,9 +9,16 @@ import {
   AuthLayout,
   Button,
   OtpInput,
+  useToast,
 } from '@print/ui'
 
+import { useLogin } from '@/application/modules/Auth/hooks/use-login'
 import { useVerifyCode } from '@/application/modules/Auth/hooks/use-verify-code'
+import {
+  MAGIC_LINK_SUCCESS_COOLDOWN_SECONDS,
+  magicLinkAcceptedCopy,
+} from '@/application/modules/Auth/utils/magic-link-request-copy'
+import { diagnoseOtpResendError } from '@/application/modules/Auth/utils/otp-resend-diagnostics'
 import { ROUTES } from '@/ui/routes/paths'
 import {
   salaAuthEyebrow,
@@ -25,22 +32,57 @@ import {
 
 export function VerifyPage() {
   const navigate = useNavigate()
+  const toast = useToast()
   const [searchParams] = useSearchParams()
   const email = searchParams.get('email') || ''
   const [code, setCode] = useState('')
+  const [cooldownSecondsRemaining, setCooldownSecondsRemaining] = useState(0)
   const { verify, isPending, error } = useVerifyCode({
     onSuccess: () => navigate(ROUTES.home),
     onError: () => setCode(''),
   })
+  const { login: resend, isPending: isResending } = useLogin({
+    onSuccess: () => {
+      toast.success(
+        magicLinkAcceptedCopy.resend.title,
+        magicLinkAcceptedCopy.resend.description,
+      )
+      setCooldownSecondsRemaining(MAGIC_LINK_SUCCESS_COOLDOWN_SECONDS)
+    },
+    onError: (nextError) => {
+      const diag = diagnoseOtpResendError(nextError)
+      setCooldownSecondsRemaining(diag.cooldownSeconds)
+      toast.error(diag.toast.title, diag.toast.description)
+    },
+  })
+
+  const cooldownActive = cooldownSecondsRemaining > 0
 
   useEffect(() => {
     if (!email) navigate(ROUTES.login)
   }, [email, navigate])
 
+  useEffect(() => {
+    if (!cooldownActive) return
+    const id = window.setInterval(() => {
+      setCooldownSecondsRemaining((seconds) => Math.max(0, seconds - 1))
+    }, 1000)
+    return () => window.clearInterval(id)
+  }, [cooldownActive])
+
   const handleVerify = (event: FormEvent) => {
     event.preventDefault()
     if (code.length !== 6) return
     verify({ code, email })
+  }
+
+  const handleResend = () => {
+    if (!email) {
+      navigate(ROUTES.login)
+      return
+    }
+    if (cooldownActive || isResending) return
+    resend(email)
   }
 
   return (
@@ -83,8 +125,8 @@ export function VerifyPage() {
         </Button>
       </AuthForm>
       <AuthFormActions>
-        <button type="button" onClick={() => setCode('')}>
-          Reenviar código
+        <button type="button" onClick={handleResend} disabled={cooldownActive || isResending}>
+          {isResending ? 'Reenviando...' : 'Reenviar código'}
         </button>
         <button type="button" onClick={() => navigate(ROUTES.login)}>
           Alterar e-mail

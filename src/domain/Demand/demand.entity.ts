@@ -2,6 +2,7 @@ import {
   DemandInteractionNotAllowedError,
   DemandOutcomeNotAllowedError,
   InvalidDemandOutcomeError,
+  PositioningAttachmentTooLargeError,
   PositioningNotEditableError,
   PositioningTextRequiredError,
 } from './errors/demand.errors'
@@ -21,6 +22,27 @@ export const DEMAND_ACTIVE_STATUSES = [
 export const DEMAND_HISTORY_STATUSES = ['sent', 'closed_without_send'] as const satisfies readonly DemandStatus[]
 
 export type DemandPriority = 'low' | 'medium' | 'high' | 'critical'
+
+export const DEMAND_ORIGINS = ['solicited', 'proactive'] as const
+export type DemandOrigin = (typeof DEMAND_ORIGINS)[number]
+export const DEFAULT_DEMAND_ORIGIN: DemandOrigin = 'solicited'
+
+export type DemandContactMode = 'known' | 'local'
+
+export function parseDemandDeadline(value: string): Date {
+  const isoDay = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim())
+  if (isoDay) {
+    return new Date(Number(isoDay[1]), Number(isoDay[2]) - 1, Number(isoDay[3]))
+  }
+  return new Date(value)
+}
+
+export function formatDemandCalendarDay(value: Date): string {
+  const year = String(value.getFullYear())
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 export type ExternalInteractionType =
   | 'phone'
@@ -203,11 +225,20 @@ export const POSITIONING_STATE_LABELS: Record<PositioningState, string> = {
   sent: 'Enviado',
 }
 
+export const POSITIONING_ATTACHMENT_MAX_BYTES = 20 * 1024 * 1024
+
+export function assertPositioningAttachmentSize(sizeBytes: number) {
+  if (sizeBytes > POSITIONING_ATTACHMENT_MAX_BYTES) {
+    throw new PositioningAttachmentTooLargeError()
+  }
+}
+
 export interface PositioningAttachment {
   filename: string
   contentType: string
   sizeBytes: number
   objectUrl: string
+  objectKey?: string
 }
 
 export interface PositioningVersion {
@@ -312,6 +343,15 @@ export interface DemandEnrichment {
   confirmedFacts: string[]
   pendingFacts: string[]
   nextStep: string | null
+}
+
+export const EMPTY_DEMAND_ENRICHMENT: DemandEnrichment = {
+  tags: [],
+  topics: [],
+  relatedAreas: [],
+  confirmedFacts: [],
+  pendingFacts: [],
+  nextStep: null,
 }
 
 export const DEMAND_OUTCOME_PUBLISHED = ['yes', 'no', 'unknown'] as const
@@ -428,11 +468,15 @@ export interface Demand {
   journalistId: string
   journalistName: string
   outletName: string
+  contactMode?: DemandContactMode
+  contactName?: string
+  contactOutlet?: string
   responsibleId: string
   responsibleName: string
   deadlineAt: Date
   channel?: string
-  priority: DemandPriority
+  origin: DemandOrigin
+  priority: DemandPriority | null
   status: DemandStatus
   createdAt: Date
   updatedAt: Date

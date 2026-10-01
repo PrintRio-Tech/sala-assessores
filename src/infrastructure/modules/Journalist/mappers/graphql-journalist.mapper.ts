@@ -26,7 +26,7 @@ export function toDomain(dto: GraphQLJournalistDto): Journalist {
       successRate: dto.objectiveStats.successRate,
       positioningUsageRate: dto.objectiveStats.positioningUsageRate,
     },
-    demandHistory: dto.demandHistory.map((item) => ({
+    demandHistory: (dto.demandHistory ?? []).map((item) => ({
       demandId: item.demandId,
       title: item.title,
       status: item.status,

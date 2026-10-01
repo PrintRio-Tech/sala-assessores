@@ -1,4 +1,4 @@
-const JOURNALIST_FIELDS = /* GraphQL */ `
+const JOURNALIST_LIST_FIELDS = /* GraphQL */ `
   id
   name
   roleTitle
@@ -19,14 +19,6 @@ const JOURNALIST_FIELDS = /* GraphQL */ `
     successRate
     positioningUsageRate
   }
-  demandHistory {
-    demandId
-    title
-    status
-    occurredAt
-    kindLabel
-    outcomeLabel
-  }
   relationshipEvaluations {
     id
     authorUserId
@@ -36,6 +28,18 @@ const JOURNALIST_FIELDS = /* GraphQL */ `
     traits
     editorialToneLabel
     notes
+  }
+`
+
+const JOURNALIST_FIELDS = /* GraphQL */ `
+  ${JOURNALIST_LIST_FIELDS}
+  demandHistory {
+    demandId
+    title
+    status
+    occurredAt
+    kindLabel
+    outcomeLabel
   }
 `
 
@@ -51,7 +55,7 @@ export const JOURNALISTS_QUERY = /* GraphQL */ `
   query Journalists($search: String, $isActive: Boolean) {
     journalists(search: $search, isActive: $isActive) {
       items {
-        ${JOURNALIST_FIELDS}
+        ${JOURNALIST_LIST_FIELDS}
       }
       total
     }

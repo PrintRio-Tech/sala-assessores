@@ -28,7 +28,7 @@ export const graphqlJournalistDtoSchema = z.object({
     occurredAt: z.string(),
     kindLabel: z.string(),
     outcomeLabel: z.string().nullable(),
-  })),
+  })).default([]),
   relationshipEvaluations: z.array(z.object({
     id: z.string(),
     authorUserId: z.string().nullable().optional(),

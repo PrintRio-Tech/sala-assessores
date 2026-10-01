@@ -21,7 +21,7 @@ const POSITIONING_FIELDS = /* GraphQL */ `
   }
 `
 
-const DEMAND_FIELDS = /* GraphQL */ `
+const DEMAND_LIST_FIELDS = /* GraphQL */ `
   id
   code
   title
@@ -47,6 +47,12 @@ const DEMAND_FIELDS = /* GraphQL */ `
   pendingFacts
   enrichmentNextStep
   positioningState
+  createdAt
+  updatedAt
+`
+
+const DEMAND_FIELDS = /* GraphQL */ `
+  ${DEMAND_LIST_FIELDS}
   positioning {
     ${POSITIONING_FIELDS}
   }
@@ -84,8 +90,6 @@ const DEMAND_FIELDS = /* GraphQL */ `
     recordedByUserId
     trigger
   }
-  createdAt
-  updatedAt
 `
 
 export const DEMAND_QUERY = /* GraphQL */ `
@@ -100,7 +104,7 @@ export const DEMANDS_QUERY = /* GraphQL */ `
   query Demands($filter: DemandsFilter) {
     demands(filter: $filter) {
       items {
-        ${DEMAND_FIELDS}
+        ${DEMAND_LIST_FIELDS}
       }
       total
       activeCount

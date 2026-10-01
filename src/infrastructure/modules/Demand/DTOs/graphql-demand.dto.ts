@@ -50,7 +50,7 @@ export const graphqlDemandDtoSchema = z.object({
       approvedAt: z.string(),
       versionId: z.string(),
     }).nullable(),
-  }),
+  }).default({ state: 'empty', versions: [], approval: null }),
   interactions: z.array(z.object({
     id: z.string(),
     occurredAt: z.string(),
@@ -75,7 +75,7 @@ export const graphqlDemandDtoSchema = z.object({
     body: z.string().nullable(),
     origin: z.string(),
     positioningVersionId: z.string().nullable(),
-  })),
+  })).default([]),
   outcome: z.object({
     toneScore: z.number(),
     published: z.enum(['yes', 'no', 'unknown']),
@@ -84,7 +84,7 @@ export const graphqlDemandDtoSchema = z.object({
     recordedBy: z.string(),
     recordedByUserId: z.string().nullable().optional(),
     recordedAt: z.string(),
-  }).nullable(),
+  }).nullable().default(null),
   stateTransitions: z.array(z.object({
     id: z.string(),
     fromStatus: demandStatusSchema,
@@ -93,7 +93,7 @@ export const graphqlDemandDtoSchema = z.object({
     recordedBy: z.string(),
     recordedByUserId: z.string().nullable().optional(),
     trigger: z.string(),
-  })),
+  })).default([]),
   createdAt: z.string(),
   updatedAt: z.string(),
 })

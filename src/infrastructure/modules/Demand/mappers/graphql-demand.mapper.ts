@@ -29,7 +29,7 @@ export function toDomain(dto: GraphQLDemandDto): Demand {
     status: dto.status,
     createdAt: new Date(dto.createdAt),
     updatedAt: new Date(dto.updatedAt),
-    interactions: dto.interactions.map((item) => ({
+    interactions: (dto.interactions ?? []).map((item) => ({
       id: item.id,
       occurredAt: new Date(item.occurredAt),
       recordedBy: item.recordedBy,
@@ -52,7 +52,7 @@ export function toDomain(dto: GraphQLDemandDto): Demand {
       pendingFacts: dto.pendingFacts,
       nextStep: dto.enrichmentNextStep,
     },
-    stateTransitions: dto.stateTransitions.map((item) => ({
+    stateTransitions: (dto.stateTransitions ?? []).map((item) => ({
       id: item.id,
       from: item.fromStatus,
       to: item.toStatus,
@@ -61,8 +61,8 @@ export function toDomain(dto: GraphQLDemandDto): Demand {
       trigger: item.trigger === 'closed_without_send' ? 'closed_without_send' : 'response_sent',
     })),
     positioning: {
-      state: dto.positioning.state,
-      versions: dto.positioning.versions.map((item) => ({
+      state: dto.positioning?.state ?? dto.positioningState,
+      versions: (dto.positioning?.versions ?? []).map((item) => ({
         id: item.id,
         body: item.body,
         author: item.author,
@@ -75,7 +75,7 @@ export function toDomain(dto: GraphQLDemandDto): Demand {
           objectUrl: item.attachment.downloadUrl ?? '',
         } : null,
       })),
-      approval: dto.positioning.approval ? {
+      approval: dto.positioning?.approval ? {
         approvedBy: dto.positioning.approval.approvedBy,
         opinion: dto.positioning.approval.opinion,
         approvedAt: new Date(dto.positioning.approval.approvedAt),

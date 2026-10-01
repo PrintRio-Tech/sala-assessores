@@ -66,8 +66,9 @@ describe('GraphQLDemandRepository', () => {
   })
 
   it('consulta demandas com filtro e Bearer, sem clientId', async () => {
+    const { interactions: _interactions, positioning: _positioning, outcome: _outcome, stateTransitions: _stateTransitions, ...listItem } = demandDto
     request.mockResolvedValueOnce({
-      demands: { items: [demandDto], total: 1, activeCount: 1, historyCount: 0 },
+      demands: { items: [listItem], total: 1, activeCount: 1, historyCount: 0 },
     })
 
     const listed = await repository.list({ lifecycle: 'active', search: 'Acidente', responsibleId: 'user-1' })
@@ -87,6 +88,10 @@ describe('GraphQLDemandRepository', () => {
       { accessToken: 'access-token' },
     )
     expect(DEMANDS_QUERY).not.toContain('clientId')
+    expect(DEMANDS_QUERY).not.toContain('interactions')
+    expect(DEMANDS_QUERY).not.toContain('stateTransitions')
+    expect(DEMANDS_QUERY).not.toContain('demandHistory')
+    expect(DEMAND_QUERY).toContain('interactions')
     expect(listed.items[0]?.responsibleId).toBe('user-1')
     expect(listed.items[0]?.origin).toBe('solicited')
     expect(listed.activeCount).toBe(1)

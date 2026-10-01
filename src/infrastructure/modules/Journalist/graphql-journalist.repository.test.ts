@@ -4,7 +4,7 @@ import { SessionExpiredError } from '@/domain/Auth/errors/auth.errors'
 import { graphqlClient } from '@/infrastructure/graphql/graphql-client'
 import { persistSessionTokens } from '@/infrastructure/http/auth-token-storage'
 import { GraphQLJournalistRepository } from './graphql-journalist.repository'
-import { CREATE_JOURNALIST_MUTATION, JOURNALISTS_QUERY } from './graphql/journalist.queries'
+import { CREATE_JOURNALIST_MUTATION, JOURNALIST_QUERY, JOURNALISTS_QUERY } from './graphql/journalist.queries'
 
 vi.mock('@/infrastructure/graphql/graphql-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/infrastructure/graphql/graphql-client')>()
@@ -51,7 +51,8 @@ describe('GraphQLJournalistRepository', () => {
   })
 
   it('lista jornalistas com Bearer e sem clientId', async () => {
-    request.mockResolvedValueOnce({ journalists: { items: [journalistDto], total: 1 } })
+    const { demandHistory: _demandHistory, ...listItem } = journalistDto
+    request.mockResolvedValueOnce({ journalists: { items: [listItem], total: 1 } })
 
     const listed = await repository.list()
 
@@ -61,6 +62,9 @@ describe('GraphQLJournalistRepository', () => {
       { accessToken: 'access-token' },
     )
     expect(JOURNALISTS_QUERY).not.toContain('clientId')
+    expect(JOURNALISTS_QUERY).not.toContain('demandHistory')
+    expect(JOURNALISTS_QUERY).toContain('totalDemands')
+    expect(JOURNALIST_QUERY).toContain('demandHistory')
     expect(listed.items[0]?.email).toBe('ana@valor.com')
     expect(listed.total).toBe(1)
   })

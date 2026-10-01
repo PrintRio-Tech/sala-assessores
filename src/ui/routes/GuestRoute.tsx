@@ -6,6 +6,7 @@ import {
   salaAuthEyebrow,
   salaAuthFooterNote,
   salaAuthHeadline,
+  salaAuthHeroBrand,
   salaAuthLead,
   salaAuthMobileBrand,
   salaAuthPillars,
@@ -31,6 +32,7 @@ export function GuestRoute({ children }: GuestRouteProps) {
         lead={salaAuthLead.login}
         pillars={salaAuthPillars}
         footerNote={salaAuthFooterNote}
+        heroBrand={salaAuthHeroBrand}
         mobileBrand={salaAuthMobileBrand}
       >
         <AuthRouteLoading />

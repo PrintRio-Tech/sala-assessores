@@ -5,7 +5,6 @@ import {
   Card,
   DataTable,
   Heading,
-  Icon,
   ICONS,
   Pagination,
   SectionState,
@@ -18,6 +17,7 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import { useJournalists, type JournalistFilters } from '@/application/modules/Journalist/hooks/use-journalists'
 import { useCreateJournalist } from '@/application/modules/Journalist/hooks/use-create-journalist'
+import { Icon } from '@/ui/components/DsIcon'
 import { ROUTES } from '@/ui/routes/paths'
 import { JournalistCreateDrawer } from '../components/JournalistCreateDrawer'
 import styles from '@/ui/styles/design.module.scss'
@@ -192,7 +192,7 @@ export function JournalistsPage() {
             </div>
             <Button type="button" variant="secondary" onClick={() => { resetCreate(); setCreateDrawerOpen(true) }}>
               Novo jornalista
-              <Icon src={ICONS.home.arrowForward} size={18} aria-hidden="true" />
+              <Icon src={ICONS.home.arrowForward} size={18} />
             </Button>
           </Card>
         </section>

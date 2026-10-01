@@ -24,6 +24,7 @@ import {
   salaAuthEyebrow,
   salaAuthFooterNote,
   salaAuthHeadline,
+  salaAuthHeroBrand,
   salaAuthLead,
   salaAuthMobileBrand,
   salaAuthPillars,
@@ -94,6 +95,7 @@ export function VerifyPage() {
       lead={salaAuthLead.verify}
       pillars={salaAuthPillars}
       footerNote={salaAuthFooterNote}
+      heroBrand={salaAuthHeroBrand}
       mobileBrand={salaAuthMobileBrand}
     >
       <AuthFormHeader

@@ -1,5 +1,7 @@
 import { AuthHeadlineEmphasis, type AuthHeroPillar } from '@print/ui'
 
+import { withAssetBase } from '@/shared/with-asset-base'
+
 export const salaAuthProductName = 'Sala de Assessores'
 export const salaAuthEyebrow = 'Assessoria de imprensa'
 
@@ -29,9 +31,21 @@ export const salaAuthFooterNote = (
   </>
 )
 
+export const salaAuthHeroBrand = (
+  <img
+    src={withAssetBase('/logos/wordmark-light-tagline.png')}
+    alt="Print — Consultoria Estratégica em Comunicação"
+    width={200}
+    height={55}
+    loading="eager"
+    decoding="async"
+    translate="no"
+  />
+)
+
 export const salaAuthMobileBrand = (
   <img
-    src={`${import.meta.env.BASE_URL}logos/wordmark-chumbo.png`}
+    src={withAssetBase('/logos/wordmark-chumbo.png')}
     alt="Print"
     width={120}
     height={32}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Button, Card, Heading, Icon as DsIcon, ICONS, Stat, Text } from '@print/ui'
+import { Button, Card, Heading, ICONS, Stat, Text } from '@print/ui'
 
+import { Icon as DsIcon } from '@/ui/components/DsIcon'
 import pageStyles from '@/ui/styles/design.module.scss'
 import { usePressRoomReport } from '@/application/modules/Report/hooks/use-press-room-report'
 import { downloadReport } from './export-report'

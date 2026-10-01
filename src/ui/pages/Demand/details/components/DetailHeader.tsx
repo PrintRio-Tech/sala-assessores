@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
-import { ActionGroup, Badge, Button, Heading, Icon, ICONS, Text } from '@print/ui'
+import { ActionGroup, Badge, Button, Heading, ICONS, Text } from '@print/ui'
 
 import type { DemandDetailViewModel } from '@/application/modules/Demand/presentation/demand-detail.viewmodel'
+import { Icon } from '@/ui/components/DsIcon'
 import { ROUTES } from '@/ui/routes/paths'
 import styles from '../styles.module.scss'
 
@@ -24,7 +25,7 @@ export function DetailHeader({
     <header className={styles.detailHeader}>
       <ActionGroup align="between" className={styles.toolbar}>
         <Link to={ROUTES.demands} className={styles.back}>
-          <Icon src={ICONS.ui.chevronLeft} size={20} aria-hidden />
+          <Icon src={ICONS.ui.chevronLeft} size={20} />
           Voltar para demandas
         </Link>
         <ActionGroup aria-label="Ações da demanda">
@@ -59,10 +60,10 @@ export function DetailHeader({
             </Button>
           ) : null}
           <Button type="button" variant="outline" size="sm" iconOnly aria-label="Editar" onClick={onEdit}>
-            <Icon src={ICONS.table.edit} size={16} aria-hidden />
+            <Icon src={ICONS.table.edit} size={16} />
           </Button>
           <Button type="button" variant="outline" size="sm" iconOnly aria-label="Excluir" onClick={onDelete}>
-            <Icon src={ICONS.table.delete} size={16} aria-hidden />
+            <Icon src={ICONS.table.delete} size={16} />
           </Button>
         </ActionGroup>
       </ActionGroup>

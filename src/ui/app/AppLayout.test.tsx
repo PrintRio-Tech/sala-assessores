@@ -5,6 +5,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { withAssetBase } from '@/shared/with-asset-base'
 import { AppLayout } from './AppLayout'
 
 const useSessionMock = vi.fn()
@@ -89,7 +90,7 @@ describe('AppLayout lifecycle', () => {
     expect(within(topbar as HTMLElement).getByRole('button', { name: 'Abrir menu' })).toBeInTheDocument()
     expect(within(topbar as HTMLElement).getByRole('img', { name: 'Print' })).toHaveAttribute(
       'src',
-      '/logos/wordmark-chumbo.png',
+      withAssetBase('/logos/wordmark-chumbo.png'),
     )
     expect(view.container.querySelector('#main-content')).toBeVisible()
   })
@@ -209,8 +210,30 @@ describe('AppLayout lifecycle', () => {
       name: 'Print — Consultoria Estratégica em Comunicação',
     })
     expect(logo).toBeVisible()
-    expect(logo).toHaveAttribute('src', '/logos/wordmark-light-tagline.png')
+    expect(logo).toHaveAttribute('src', withAssetBase('/logos/wordmark-light-tagline.png'))
+    expect(logo).toHaveAttribute('width', '148')
+    expect(logo).toHaveAttribute('height', '40')
     expect(screen.queryByText('Sala de Assessores')).not.toBeInTheDocument()
+  })
+
+  it('usa o ícone oficial Print quando a sidebar colapsa', () => {
+    render(
+      <MemoryRouter initialEntries={['/demandas']}>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="/demandas" element={<RouteProbe />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Recolher menu' }))
+
+    const collapsedBrand = screen.getByRole('button', { name: 'Print' })
+    const logo = within(collapsedBrand).getByRole('img')
+    expect(logo).toHaveAttribute('src', withAssetBase('/logos/icon.png'))
+    expect(logo).toHaveAttribute('width', '40')
+    expect(logo).toHaveAttribute('height', '40')
   })
 
   it('abre a home ao clicar no logo Print', () => {

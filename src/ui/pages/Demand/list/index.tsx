@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Badge, Button, Card, ConfirmDialog, DataTable, DatePicker, Heading, Icon as DsIcon, ICONS, Pagination, SelectField, TableRowActions, Tabs, TabsList, TabsTrigger, Text, TextInput, type BadgeTone, type TableColumnDef } from '@print/ui'
+import { Badge, Button, Card, ConfirmDialog, DataTable, DatePicker, Heading, ICONS, Pagination, SelectField, TableRowActions, Tabs, TabsList, TabsTrigger, Text, TextInput, type BadgeTone, type TableColumnDef } from '@print/ui'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useDemands, type DemandListItem } from '@/application/modules/Demand/hooks/use-demands'
@@ -19,6 +19,7 @@ import {
 import { DEMAND_PRIORITY_LABELS } from '@/application/modules/Demand/presentation/demand-priority'
 import { collectDemandTags } from '@/application/modules/Demand/presentation/demand-tags'
 import { ROUTES } from '@/ui/routes/paths'
+import { Icon as DsIcon } from '@/ui/components/DsIcon'
 import { Icon } from '@/ui/components/Icon'
 import { DemandCreateDrawer } from '../components/DemandCreateDrawer'
 import styles from '@/ui/styles/design.module.scss'
@@ -171,7 +172,7 @@ export function DemandsPage() {
           </div>
           <Button type="button" variant="secondary" onClick={() => setIsCreateOpen(true)}>
             Começar
-            <DsIcon src={ICONS.home.arrowForward} size={18} aria-hidden="true" />
+            <DsIcon src={ICONS.home.arrowForward} size={18} />
           </Button>
         </Card>
         </section>

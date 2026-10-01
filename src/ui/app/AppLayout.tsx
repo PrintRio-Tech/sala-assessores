@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { AppShell, Avatar, BrandLogo, Icon, ICONS, Text, type AppNavItem } from '@print/ui'
+import { AppShell, Avatar, ICONS, Text, type AppNavItem } from '@print/ui'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { useSession } from '@/application/modules/Auth/hooks/use-session'
+import { withAssetBase } from '@/shared/with-asset-base'
+import { Icon } from '@/ui/components/DsIcon'
 import { ROUTES } from '@/ui/routes/paths'
 import styles from './app-layout.module.scss'
 
@@ -35,18 +37,34 @@ export function AppLayout() {
     <AppShell
       logo={
         <button className={styles.brandHome} type="button" onClick={() => navigate(ROUTES.home)}>
-          <BrandLogo variant="sidebarExpanded" />
+          <img
+            src={withAssetBase('/logos/wordmark-light-tagline.png')}
+            alt="Print — Consultoria Estratégica em Comunicação"
+            width={148}
+            height={40}
+            loading="eager"
+            decoding="async"
+            translate="no"
+          />
         </button>
       }
       logoCollapsed={
         <button className={styles.brandHome} type="button" aria-label="Print" onClick={() => navigate(ROUTES.home)}>
-          <BrandLogo variant="sidebarCollapsed" />
+          <img
+            src={withAssetBase('/logos/icon.png')}
+            alt="Print"
+            width={40}
+            height={40}
+            loading="eager"
+            decoding="async"
+            translate="no"
+          />
         </button>
       }
       mobileLogo={
         <img
           className={styles.mobileHeaderLogo}
-          src={`${import.meta.env.BASE_URL}logos/wordmark-chumbo.png`}
+          src={withAssetBase('/logos/wordmark-chumbo.png')}
           alt="Print"
           width={120}
           height={32}

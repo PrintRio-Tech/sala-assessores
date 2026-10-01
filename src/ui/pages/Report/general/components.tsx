@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import { Button, Card, Heading, Text } from '@print/ui'
+import { Button, Card, Heading, Rating, Text } from '@print/ui'
 
-import type { HeatmapCell, RankCount } from '@/domain/Report/press-room-report'
+import type { HeatmapCell, RankCount, ToneBucket } from '@/domain/Report/press-room-report'
 import { formatHeatmapMonth, formatReportNumber, heatmapIntensity } from './format'
 import styles from './styles.module.scss'
 
@@ -54,7 +54,7 @@ export function ReportKpiCard({
   variant = 'default',
 }: {
   label: string
-  value: string
+  value: ReactNode
   hint?: string
   sparkline?: number[]
   variant?: 'default' | 'primary'
@@ -66,7 +66,11 @@ export function ReportKpiCard({
       className={variant === 'primary' ? styles.kpiPrimary : styles.kpiCard}
     >
       <Text as="p" variant="labelSm" className={styles.kpiLabel}>{label}</Text>
-      <Heading as="p" variant="lg" className={styles.kpiValue}>{value}</Heading>
+      {typeof value === 'string' || typeof value === 'number' ? (
+        <Heading as="p" variant="lg" className={styles.kpiValue}>{value}</Heading>
+      ) : (
+        <div className={styles.kpiValue}>{value}</div>
+      )}
       {hint ? <Text variant="labelSm" className={styles.kpiHint}>{hint}</Text> : null}
       {sparkline ? <Sparkline values={sparkline} /> : null}
     </Card>
@@ -208,6 +212,54 @@ export function ReportsEmptyState() {
     <div className={styles.state}>
       <Text tone="muted">Nenhum dado encontrado para os filtros selecionados.</Text>
     </div>
+  )
+}
+
+export function ReportToneStars({
+  label,
+  value,
+}: {
+  label: string
+  value: number | null
+}) {
+  if (value == null) {
+    return <Text tone="muted">—</Text>
+  }
+  return (
+    <Rating
+      label={label}
+      labelHidden
+      readOnly
+      size="sm"
+      value={value}
+      className={styles.toneStars}
+    />
+  )
+}
+
+export function ReportToneBars({ items }: { items: ToneBucket[] }) {
+  const max = Math.max(1, ...items.map((item) => item.count))
+  const ordered = [...items].sort((a, b) => b.score - a.score)
+
+  return (
+    <Card variant="elevated" padding="none" className={styles.chartCard}>
+      <div className={styles.chartHeader}>
+        <Heading level={2} variant="sm" className={styles.chartTitle}>Tom da matéria</Heading>
+      </div>
+      <ul className={styles.barsList}>
+        {ordered.map((item) => (
+          <li key={item.score} className={styles.barItem}>
+            <div className={styles.barHeader}>
+              <ReportToneStars label={`${item.score} de 5`} value={item.score} />
+              <span className={styles.barValue}>{formatReportNumber(item.count)}</span>
+            </div>
+            <div className={styles.barTrack}>
+              <div className={styles.barFill} style={{ width: `${(item.count / max) * 100}%` }} />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Card>
   )
 }
 

@@ -2,8 +2,9 @@ export function formatReportNumber(value: number): string {
   return new Intl.NumberFormat('pt-BR').format(value)
 }
 
-export function formatTone(value: number | null): string {
-  return value == null ? '—' : value.toFixed(1)
+export function nearestToneStars(value: number | null): number | null {
+  if (value == null || !Number.isFinite(value)) return null
+  return Math.min(5, Math.max(1, Math.round(value)))
 }
 
 export function formatHeatmapMonth(yearMonth: string): string {
@@ -12,7 +13,8 @@ export function formatHeatmapMonth(yearMonth: string): string {
   const monthLabel = date
     .toLocaleDateString('pt-BR', { month: 'short', timeZone: 'UTC' })
     .replace('.', '')
-  return `${monthLabel}. de ${String(year).slice(2)}`
+    .trim()
+  return monthLabel.charAt(0).toLocaleUpperCase('pt-BR') + monthLabel.slice(1)
 }
 
 export function heatmapIntensity(count: number, max: number): number {

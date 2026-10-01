@@ -8,7 +8,7 @@ import { ToastIconBaseStyles } from './ToastIconBaseStyles'
 describe('ToastIconBaseStyles', () => {
   it('reescreve todos os ícones de toast com o BASE da app', () => {
     const css = toastIconBaseCss('/sala-assessores/')
-    for (const path of Object.values(ICONS.toast)) {
+    for (const path of [...Object.values(ICONS.toast), ICONS.datePicker.calendar]) {
       expect(css).toContain(`[style*="${path}"]`)
       expect(css).toContain(`url("/sala-assessores/${path.replace(/^\//, '')}") !important`)
     }

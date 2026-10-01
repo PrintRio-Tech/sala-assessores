@@ -20,13 +20,15 @@ import {
   ReportHeatmap,
   ReportHighlightCard,
   ReportKpiCard,
+  ReportToneBars,
+  ReportToneStars,
   ReportsEmptyState,
   ReportsErrorState,
   ReportsHero,
   ReportsLoadingState,
 } from './components'
 import { downloadReport } from './export-report'
-import { formatReportNumber, formatTone } from './format'
+import { formatReportNumber, nearestToneStars } from './format'
 import styles from './styles.module.scss'
 
 const FILTER_ALL = 'all'
@@ -139,7 +141,7 @@ export function ReportsPage() {
             />
             <ReportKpiCard
               label="Tom médio"
-              value={formatTone(report.averageToneScore)}
+              value={<ReportToneStars label="Tom médio" value={nearestToneStars(report.averageToneScore)} />}
               hint={`${formatReportNumber(report.outcomeCount)} resultados avaliados`}
             />
             <ReportHighlightCard
@@ -165,14 +167,7 @@ export function ReportsPage() {
             </TabsContent>
             <TabsContent value="resultados">
               <ChartPanel>
-                <ReportBarList
-                  title="Distribuição de tom"
-                  items={report.toneDistribution.map((item) => ({
-                    key: String(item.score),
-                    label: `Tom ${item.score}`,
-                    count: item.count,
-                  }))}
-                />
+                <ReportToneBars items={report.toneDistribution} />
                 <ReportBarList title="Publicação" items={report.byPublished} />
               </ChartPanel>
             </TabsContent>

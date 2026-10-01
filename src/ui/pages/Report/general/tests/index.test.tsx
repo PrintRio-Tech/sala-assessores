@@ -32,7 +32,8 @@ describe('ReportsPage', () => {
     renderReports()
     expect(await screen.findByText(/total de demandas/i)).toBeInTheDocument()
     expect(screen.getByText('Publicadas')).toBeInTheDocument()
-    expect(screen.getByText(/tom médio/i)).toBeInTheDocument()
+    expect(screen.getByRole('radiogroup', { name: /tom médio/i })).toBeInTheDocument()
+    expect(screen.queryByText('3.1')).not.toBeInTheDocument()
     expect(screen.getByText(/jornalista em destaque/i)).toBeInTheDocument()
   })
 
@@ -45,7 +46,10 @@ describe('ReportsPage', () => {
     expect(screen.getByText(/mapa de calor/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('tab', { name: /resultados/i }))
-    expect(screen.getByText(/distribuição de tom/i)).toBeInTheDocument()
+    expect(screen.queryByText(/distribuição de tom/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/tom da matéria/i)).toBeInTheDocument()
+    expect(screen.queryByText(/^Tom \d$/)).not.toBeInTheDocument()
+    expect(screen.getAllByRole('radiogroup', { name: /de 5$/i }).length).toBeGreaterThan(0)
 
     await user.click(screen.getByRole('tab', { name: /relacionamento/i }))
     expect(screen.getByText(/veículos/i)).toBeInTheDocument()

@@ -1,0 +1,60 @@
+name: Deploy Sala cPanel
+
+# main -> Environment "development" (https://imprensa-dev.printcomunicacao.com.br).
+# Quando houver produção: main -> production, dev -> development (padrão print-adm).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-sala-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Configure GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "::error::Configure o secret NPM_TOKEN (read:packages em @printrio-tech) no environment development."
+            exit 1
+          fi
+          printf '%s\n' \
+            '@printrio-tech:registry=https://npm.pkg.github.com' \
+            "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" \
+            'always-auth=true' > .npmrc
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: Build
+        env:
+          # Site na raiz do subdomínio: base "/" (GITHUB_PAGES não setado).
+          VITE_GRAPHQL_URL: ${{ vars.VITE_GRAPHQL_URL || 'https://imprensa-dev.187-127-44-1.sslip.io/graphql' }}
+        run: |
+          echo "VITE_GRAPHQL_URL=$VITE_GRAPHQL_URL"
+          bun run build
+      - name: Publish dist via cPanel HTTPS API
+        env:
+          CPANEL_HOST: ${{ secrets.CPANEL_HOST }}
+          CPANEL_HOSTNAME: ${{ secrets.CPANEL_HOSTNAME }}
+          CPANEL_USER: ${{ secrets.CPANEL_USER }}
+          CPANEL_API_TOKEN: ${{ secrets.CPANEL_API_TOKEN }}
+          CPANEL_DIR: ${{ vars.CPANEL_DIR }}
+        run: |
+          if [ -z "$CPANEL_HOST" ] || [ -z "$CPANEL_HOSTNAME" ] || [ -z "$CPANEL_USER" ] || [ -z "$CPANEL_API_TOKEN" ] || [ -z "$CPANEL_DIR" ]; then
+            echo "::error::Configure CPANEL_HOST, CPANEL_HOSTNAME, CPANEL_USER, CPANEL_API_TOKEN (secrets) e CPANEL_DIR (variable) no environment development."
+            exit 1
+          fi
+          python3 scripts/cpanel-publish.py

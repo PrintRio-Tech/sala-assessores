@@ -1,4 +1,4 @@
-import type { Demand, DemandOutcome, DemandStatus } from '@/domain/Demand/demand.entity'
+import { isSolicitedDemand, type Demand, type DemandOutcome, type DemandStatus } from '@/domain/Demand/demand.entity'
 import {
   DEMAND_OUTCOME_PUBLISHED_LABELS,
   demandOutcomeCaseScore,
@@ -112,7 +112,7 @@ export function buildJournalistProfileViewModel(
   demands: Demand[],
 ): JournalistProfileViewModel {
   const linkedDemands = demands
-    .filter((demand) => demand.journalistId === journalist.id)
+    .filter((demand) => demand.journalistId === journalist.id && isSolicitedDemand(demand))
     .map(fromDemand)
     .sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime())
 

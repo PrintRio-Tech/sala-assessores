@@ -116,12 +116,12 @@ describe('CreateDemand', () => {
     expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ origin: 'solicited' }))
   })
 
-  it('envia origem proactive quando a captura escolhe proativa', async () => {
+  it('ignora origem da captura e grava sempre solicited', async () => {
     const repo: DemandRepository = {
       list: vi.fn(),
       listResponsibles: vi.fn(),
       getById: vi.fn(),
-      create: vi.fn().mockResolvedValue(createdDemand({ origin: 'proactive' })),
+      create: vi.fn().mockResolvedValue(createdDemand({ origin: 'solicited' })),
       reviseCapture: vi.fn(),
       remove: vi.fn(),
       registerInteraction: vi.fn(),
@@ -134,7 +134,7 @@ describe('CreateDemand', () => {
 
     await useCase.execute({ ...capture, origin: 'proactive' }, { id: 'r-noel', name: 'Noel Ferreira' })
 
-    expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ origin: 'proactive' }))
+    expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ origin: 'solicited' }))
   })
 
   it('assume prioridade medium quando a captura não informa', async () => {

@@ -1,0 +1,55 @@
+@use '@print/ui/tokens' as *;
+@use '@print/ui/mixins' as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  width: 100%;
+  padding-bottom: $space-6;
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  min-width: 0;
+
+  @include wide-desktop {
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: $space-4;
+  }
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  min-width: 0;
+}
+
+.listSection {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  min-width: 0;
+}
+
+.listHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $space-2;
+  min-width: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

@@ -4,7 +4,7 @@ import { demandService } from '@/application/composition'
 import { queryKeys } from '@/application/constants/query-keys'
 import { currentUser } from '@/application/current-user'
 import type { MutationOptions } from '@/application/shared/mutation-options'
-import { formatDemandCalendarDay, type Demand } from '@/domain/Demand/demand.entity'
+import { DEFAULT_DEMAND_ORIGIN, formatDemandCalendarDay, type Demand } from '@/domain/Demand/demand.entity'
 import type { DemandCaptureRevision } from '@/domain/Demand/demand.repository'
 
 export type NewDemandCapture = DemandCaptureRevision
@@ -108,7 +108,7 @@ export function useDemandActions() {
           journalistId: input.journalistId,
           journalistName: input.journalistName,
           outletName: input.outletName,
-          origin: demand.origin,
+          origin: DEFAULT_DEMAND_ORIGIN,
           priority: demand.priority,
           enrichment: demand.enrichment,
         })

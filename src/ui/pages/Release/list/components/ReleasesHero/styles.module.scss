@@ -1,0 +1,50 @@
+@use '@print/ui/tokens' as *;
+@use '@print/ui/mixins' as *;
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  max-width: 36rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: $radius-full;
+  background-color: $accent-gold;
+}
+
+.eyebrowText {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: $accent-gold;
+}
+
+.title {
+  margin: 0;
+  color: $primary;
+  text-wrap: balance;
+}
+
+.emphasis {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: $font-weight-regular;
+  color: $accent-gold;
+}
+
+.description {
+  margin: 0;
+  max-width: 32rem;
+  line-height: 1.5;
+}

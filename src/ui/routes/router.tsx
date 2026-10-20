@@ -7,6 +7,7 @@ import { ProtectedRoute } from '@/ui/routes/ProtectedRoute'
 import { DemandDetailPage, DemandsPage } from '@/ui/pages/Demand'
 import { HomePage } from '@/ui/pages/Home'
 import { JournalistPage, JournalistsPage } from '@/ui/pages/Journalist'
+import { ReleaseFormPage, ReleasesPage } from '@/ui/pages/Release'
 import { ReportsPage } from '@/ui/pages/Report'
 
 export const appRoutes: RouteObject[] = [
@@ -32,6 +33,9 @@ export const appRoutes: RouteObject[] = [
       { path: '/', element: <HomePage /> },
       { path: 'demandas', element: <DemandsPage /> },
       { path: 'demandas/:demandId', element: <DemandDetailPage /> },
+      { path: 'releases', element: <ReleasesPage /> },
+      { path: 'releases/novo', element: <ReleaseFormPage /> },
+      { path: 'releases/:id/editar', element: <ReleaseFormPage /> },
       { path: 'jornalistas', element: <JournalistsPage /> },
       { path: 'jornalistas/:journalistId', element: <JournalistPage /> },
       { path: 'relatorios', element: <ReportsPage /> },

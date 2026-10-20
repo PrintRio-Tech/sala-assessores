@@ -1,0 +1,45 @@
+@use '@print/ui/tokens' as *;
+@use '@print/ui/mixins' as *;
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.sectionTitle {
+  margin: 0;
+  @include label-md;
+  font-style: normal;
+  color: $on-surface;
+}
+
+.sectionFields {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.dateGroup {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dateLegend {
+  @include field-label-sm;
+  padding: 0;
+  margin-bottom: $label-gap;
+}
+
+.dateFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $space-2;
+}

@@ -1,0 +1,48 @@
+@use '@print/ui/tokens' as *;
+@use '@print/ui/mixins' as *;
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.importActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+}
+
+.fileInput {
+  display: none;
+}
+
+.actions {
+  display: none;
+
+  @include mobile {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $space-2;
+    padding: $space-2 0 max($space-4, env(safe-area-inset-bottom));
+  }
+}

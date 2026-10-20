@@ -98,6 +98,16 @@ describe('buildJournalistProfileViewModel', () => {
     expect(profile.topics).toContain('Tema atual')
   })
 
+  it('não trata demanda proativa como caso reativo no histórico', () => {
+    const profile = buildJournalistProfileViewModel(journalist, [
+      demand,
+      { ...demand, id: 'd-proactive', title: 'Release antecipado de resultados', origin: 'proactive' },
+    ])
+
+    expect(profile.demandHistory.map((item) => item.demandId)).toEqual(['d-shared'])
+    expect(profile.objectiveStats.totalDemands).toBe(1)
+  })
+
   it('mostra solicitedCount e proactiveCount que o BFF devolveu', () => {
     const fromBff: Journalist = {
       ...journalist,

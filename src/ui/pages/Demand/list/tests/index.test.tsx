@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { DemandDetailPage, DemandsPage } from '@/ui/pages/Demand'
 import { useDemandFilters } from '@/application/modules/Demand/stores/demand.store'
 import { demandService } from '@/application/composition'
+import { InMemoryDemandRepository } from '@/infrastructure/modules/Demand/demand.repository'
 import { captureDemand } from '@/test/demand-fixtures'
 
 function LocationProbe() {
@@ -444,6 +445,33 @@ describe('cabeçalho da lista de demandas', () => {
     detail.unmount()
     renderDemandFlow('/demandas')
     expect(screen.queryAllByRole('link', { name: 'Relatório ESG: Setor de Energia' })).toHaveLength(0)
+  })
+
+  it('não lista demanda proativa como caso reativo', async () => {
+    const repo = new InMemoryDemandRepository()
+    await repo.create({
+      title: 'Release antecipado de resultados',
+      requestSummary: 'Envio de release.',
+      factContext: 'Material proativo.',
+      journalistId: 'j-carolina',
+      journalistName: 'Carolina Montenegro',
+      outletName: 'Valor Econômico',
+      contactMode: 'known',
+      contactName: 'Carolina Montenegro',
+      contactOutlet: 'Valor Econômico',
+      responsibleId: 'r-ana',
+      responsibleName: 'Ana Paula',
+      deadlineAt: new Date('2026-08-20T12:00:00.000Z'),
+      channel: 'E-mail',
+      origin: 'proactive',
+      priority: 'medium',
+      enrichment: { tags: [], topics: [], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null },
+    })
+    demandService.use(repo)
+    renderDemandsPage()
+
+    expect(await screen.findAllByRole('link', { name: 'Entrevista exclusiva: CEO TechCorp' })).not.toHaveLength(0)
+    expect(screen.queryAllByRole('link', { name: 'Release antecipado de resultados' })).toHaveLength(0)
   })
 
 })

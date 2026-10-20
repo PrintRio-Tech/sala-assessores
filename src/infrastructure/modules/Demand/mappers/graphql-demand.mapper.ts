@@ -1,4 +1,4 @@
-import { parseDemandDeadline, type Demand, type NewDemandOutcome, type PositioningAttachment } from '@/domain/Demand/demand.entity'
+import { DEFAULT_DEMAND_ORIGIN, parseDemandDeadline, type Demand, type NewDemandOutcome, type PositioningAttachment } from '@/domain/Demand/demand.entity'
 import type {
   DemandCaptureRevision,
   DemandListParams,
@@ -122,7 +122,7 @@ function captureInput(input: {
     contactOutlet: input.contactMode === 'local' ? emptyToUndefined(input.contactOutlet) : undefined,
     deadlineAt: input.deadlineAt,
     channel: emptyToUndefined(input.channel),
-    origin: input.origin,
+    origin: DEFAULT_DEMAND_ORIGIN,
     priority: input.priority ?? undefined,
     tags: input.enrichment?.tags,
     topics: input.enrichment?.topics,

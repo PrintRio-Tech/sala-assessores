@@ -27,6 +27,10 @@ export const DEMAND_ORIGINS = ['solicited', 'proactive'] as const
 export type DemandOrigin = (typeof DEMAND_ORIGINS)[number]
 export const DEFAULT_DEMAND_ORIGIN: DemandOrigin = 'solicited'
 
+export function isSolicitedDemand(demand: { origin: DemandOrigin }): boolean {
+  return demand.origin === DEFAULT_DEMAND_ORIGIN
+}
+
 export type DemandContactMode = 'known' | 'local'
 
 export function parseDemandDeadline(value: string): Date {

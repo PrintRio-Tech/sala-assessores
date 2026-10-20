@@ -8,6 +8,8 @@ import type {
 } from '@/domain/Demand/demand.repository'
 import {
   assertPositioningAttachmentSize,
+  isActiveDemandStatus,
+  isSolicitedDemand,
   type Demand,
   type NewDemandOutcome,
   type PositioningAttachment,
@@ -64,11 +66,15 @@ export class GraphQLDemandRepository implements DemandRepository {
         filter: toDemandsFilter(params),
       })
       const listed = graphqlDemandListDtoSchema.parse(data.demands)
+      const items = listed.items.map(parseDemand)
+      const solicited = items.filter(isSolicitedDemand)
+      const dropped = items.filter((item) => !isSolicitedDemand(item))
+      const droppedActive = dropped.filter((item) => isActiveDemandStatus(item.status)).length
       return {
-        items: listed.items.map(parseDemand),
-        total: listed.total,
-        activeCount: listed.activeCount,
-        historyCount: listed.historyCount,
+        items: solicited,
+        total: listed.total - dropped.length,
+        activeCount: listed.activeCount - droppedActive,
+        historyCount: listed.historyCount - (dropped.length - droppedActive),
       }
     } catch (error) {
       mapOperationalGraphqlError(error, 'demand')

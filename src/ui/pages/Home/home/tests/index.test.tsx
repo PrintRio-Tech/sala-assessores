@@ -4,6 +4,8 @@ import { userEvent } from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
+import { demandService } from '@/application/composition'
+import { InMemoryDemandRepository } from '@/infrastructure/modules/Demand/demand.repository'
 import { HomePage } from '..'
 
 const mockNavigate = vi.fn()
@@ -117,6 +119,33 @@ describe('HomePage', () => {
     expect(screen.getByText('Crise Logística: Impacto nos Portos')).toBeInTheDocument()
   })
 
+  it('não mostra demanda proativa em continuar de onde parou', async () => {
+    const repo = new InMemoryDemandRepository()
+    await repo.create({
+      title: 'Release antecipado de resultados',
+      requestSummary: 'Envio de release.',
+      factContext: 'Material proativo.',
+      journalistId: 'j-carolina',
+      journalistName: 'Carolina Montenegro',
+      outletName: 'Valor Econômico',
+      contactMode: 'known',
+      contactName: 'Carolina Montenegro',
+      contactOutlet: 'Valor Econômico',
+      responsibleId: 'r-ana',
+      responsibleName: 'Ana Paula',
+      deadlineAt: new Date('2026-08-20T12:00:00.000Z'),
+      channel: 'E-mail',
+      origin: 'proactive',
+      priority: 'medium',
+      enrichment: { tags: [], topics: [], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null },
+    })
+    demandService.use(repo)
+    renderHomePage()
+
+    expect(await screen.findByText('TEC-889')).toBeInTheDocument()
+    expect(screen.queryByText('Release antecipado de resultados')).not.toBeInTheDocument()
+  })
+
   it('exibe uma única ocorrência visível de Nova demanda', () => {
     renderHomePage()
 
@@ -141,12 +170,13 @@ describe('HomePage', () => {
     expect(mockNavigate).not.toHaveBeenCalledWith('/demandas')
   })
 
-  it('exibe quatro ActionTiles de ações rápidas', () => {
+  it('exibe ActionTiles de ações rápidas incluindo Novo release', () => {
     renderHomePage()
 
     const actions = screen.getByRole('region', { name: 'Ações rápidas' })
     expect(within(actions).getByRole('heading', { name: /Ações rápidas/i, level: 2 })).toBeInTheDocument()
     expect(within(actions).getByRole('heading', { name: 'Nova demanda' })).toBeInTheDocument()
+    expect(within(actions).getByRole('heading', { name: 'Novo release' })).toBeInTheDocument()
     expect(within(actions).getByRole('heading', { name: 'Novo jornalista' })).toBeInTheDocument()
     expect(within(actions).getByRole('heading', { name: 'Ver demandas' })).toBeInTheDocument()
     expect(within(actions).getByRole('heading', { name: 'Ver relatórios' })).toBeInTheDocument()
@@ -164,6 +194,14 @@ describe('HomePage', () => {
 
     await user.click(demandItem)
     expect(mockNavigate).toHaveBeenCalledWith('/demandas/d-ceo')
+  })
+
+  it('navega para novo release pelo tile de release', async () => {
+    const user = userEvent.setup()
+    renderHomePage()
+
+    await user.click(screen.getByRole('button', { name: 'Comunicado oficial: Novo release' }))
+    expect(mockNavigate).toHaveBeenCalledWith('/releases/novo')
   })
 
   it('navega para jornalistas pelo tile de jornalista', async () => {

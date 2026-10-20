@@ -1,0 +1,68 @@
+@use '@print/ui/tokens' as *;
+@use '@print/ui/mixins' as *;
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  flex-shrink: 0;
+  padding: $space-4 $margin-mobile;
+
+  @include desktop {
+    padding: $space-4 $gutter;
+  }
+}
+
+.leading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $space-2;
+  min-width: 0;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-1;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: $on-surface-variant;
+  font-size: $body-md-size;
+  line-height: 1.4;
+  cursor: pointer;
+
+  &:hover {
+    color: $on-surface;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba($primary, 0.35);
+    outline-offset: 2px;
+    border-radius: $radius-sm;
+  }
+}
+
+.titleGroup {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  color: $on-surface;
+  text-wrap: balance;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  flex-shrink: 0;
+}

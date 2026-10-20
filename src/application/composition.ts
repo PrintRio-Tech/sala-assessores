@@ -6,19 +6,22 @@ import { GraphQLAuthRepository } from '@/infrastructure/modules/Auth/graphql-aut
 import { GraphQLDemandRepository } from '@/infrastructure/modules/Demand/graphql-demand.repository'
 import { GraphQLJournalistRepository } from '@/infrastructure/modules/Journalist/graphql-journalist.repository'
 import { GraphQLPressRoomReportRepository } from '@/infrastructure/modules/Report/graphql-press-room-report.repository'
+import { GraphQLReleaseRepository } from '@/infrastructure/modules/Release/graphql-release.repository'
 
 import {
   demandService,
   journalistService,
+  releaseService,
   reportService,
   resetInMemoryAdapters,
 } from './in-memory-adapters'
 
 demandService.use(new GraphQLDemandRepository())
 journalistService.use(new GraphQLJournalistRepository())
+releaseService.use(new GraphQLReleaseRepository())
 reportService.use(new GraphQLPressRoomReportRepository())
 
-export { demandService, journalistService, reportService, resetInMemoryAdapters }
+export { demandService, journalistService, releaseService, reportService, resetInMemoryAdapters }
 
 export const auth = {
   service: new AuthService(new GraphQLAuthRepository()),

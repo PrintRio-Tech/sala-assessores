@@ -81,6 +81,13 @@ describe('ListDemands', () => {
       responsibleId: 'r-bruno',
       responsibleName: 'Bruno Costa',
     }),
+    demand({
+      id: '4',
+      status: 'in_progress',
+      title: 'Release antecipado de resultados',
+      journalistName: 'Carolina Montenegro',
+      origin: 'proactive',
+    }),
   ]
 
   it('filtra por busca em título ou jornalista', async () => {
@@ -122,5 +129,17 @@ describe('ListDemands', () => {
     expect(result.items.map((d) => d.id)).toEqual(['2'])
     expect(result.activeCount).toBe(2)
     expect(result.historyCount).toBe(1)
+  })
+
+  it('omite demandas proativas da lista, da home e do continuar', async () => {
+    const useCase = new ListDemands(createRepo(items))
+
+    const active = await useCase.execute({ lifecycle: 'active' })
+    const all = await useCase.execute({ lifecycle: 'all' })
+
+    expect(active.items.map((d) => d.id)).toEqual(['1', '3'])
+    expect(all.items.map((d) => d.id)).toEqual(['1', '2', '3'])
+    expect(active.activeCount).toBe(2)
+    expect(all.items.some((d) => d.origin === 'proactive')).toBe(false)
   })
 })

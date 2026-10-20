@@ -1,0 +1,12 @@
+@use '@print/ui/tokens' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-4;
+  height: 100%;
+  padding: $space-8;
+  text-align: center;
+}

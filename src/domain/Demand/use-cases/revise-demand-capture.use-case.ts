@@ -1,4 +1,5 @@
 import {
+  DEFAULT_DEMAND_ORIGIN,
   formatDemandCalendarDay,
   parseDemandDeadline,
   type Demand,
@@ -43,10 +44,11 @@ export function applyDemandCaptureRevision<T extends DemandCaptureHost>(
   current: T,
   revision: DemandCaptureRevision,
 ): T {
-  const { priority, enrichment, ...capture } = revision
+  const { priority, enrichment, origin: _origin, ...capture } = revision
   return {
     ...current,
     ...capture,
+    origin: DEFAULT_DEMAND_ORIGIN,
     status: current.status,
     createdBy: current.createdBy,
     responsibleId: current.responsibleId,

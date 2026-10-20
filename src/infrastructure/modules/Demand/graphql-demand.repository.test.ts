@@ -97,6 +97,28 @@ describe('GraphQLDemandRepository', () => {
     expect(listed.activeCount).toBe(1)
   })
 
+  it('não lista demanda proativa devolvida pelo BFF como caso reativo', async () => {
+    const { interactions: _interactions, positioning: _positioning, outcome: _outcome, stateTransitions: _stateTransitions, ...listItem } = demandDto
+    request.mockResolvedValueOnce({
+      demands: {
+        items: [
+          listItem,
+          { ...listItem, id: 'd-proactive', title: 'Release antecipado de resultados', origin: 'proactive' },
+        ],
+        total: 2,
+        activeCount: 2,
+        historyCount: 0,
+      },
+    })
+
+    const listed = await repository.list({ lifecycle: 'active' })
+
+    expect(listed.items.map((item) => item.id)).toEqual(['d-1'])
+    expect(listed.total).toBe(1)
+    expect(listed.activeCount).toBe(1)
+    expect(listed.historyCount).toBe(0)
+  })
+
   it('lista responsáveis distintos pelo BFF', async () => {
     request.mockResolvedValueOnce({
       demandResponsibles: [{ id: 'user-1', name: 'Admin Imprensa' }],
@@ -131,7 +153,7 @@ describe('GraphQLDemandRepository', () => {
       responsibleName: 'Admin Imprensa',
       deadlineAt: new Date('2026-09-29T17:00:00.000Z'),
       channel: '',
-      origin: 'proactive',
+      origin: 'solicited',
       priority: 'high',
       enrichment: { tags: [], topics: [], relatedAreas: [], confirmedFacts: [], pendingFacts: [], nextStep: null },
     })
@@ -145,7 +167,7 @@ describe('GraphQLDemandRepository', () => {
           journalistId: 'j-1',
           contactName: undefined,
           deadlineAt: '2026-09-29T17:00:00.000Z',
-          origin: 'proactive',
+          origin: 'solicited',
           priority: 'high',
         }),
       },

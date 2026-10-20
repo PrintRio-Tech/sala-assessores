@@ -104,4 +104,16 @@ describe('applyDemandCaptureRevision', () => {
     expect(updated.responsibleId).toBe('r-ana')
     expect(updated.responsibleName).toBe('Ana Paula')
   })
+
+  it('grava sempre origem solicited, mesmo se a revisão pedir proativa', () => {
+    const updated = applyDemandCaptureRevision({
+      ...historyRecord,
+      origin: 'proactive' as const,
+    }, {
+      ...revision,
+      origin: 'proactive',
+    })
+
+    expect(updated.origin).toBe('solicited')
+  })
 })

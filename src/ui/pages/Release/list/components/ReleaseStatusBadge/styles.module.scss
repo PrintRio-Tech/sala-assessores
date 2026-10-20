@@ -1,0 +1,16 @@
+@use '@print/ui/tokens' as *;
+
+.statusInProgress {
+  background-color: $surface-container-high;
+  color: $on-surface-variant;
+}
+
+.statusPendingReview {
+  background-color: rgba($accent-gold, 0.25);
+  color: $on-tertiary-container;
+}
+
+.statusFinished {
+  background-color: rgba($accent-salvia, 0.4);
+  color: $primary;
+}

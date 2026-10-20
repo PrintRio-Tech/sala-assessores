@@ -123,6 +123,13 @@ export function HomePage() {
           />
           <ActionTile
             variant="outline"
+            eyebrow="Comunicado oficial"
+            title="Novo release"
+            icon={<DsIcon src={ICONS.nav.releases} size={28} />}
+            onClick={() => navigate(ROUTES.releaseCreate)}
+          />
+          <ActionTile
+            variant="outline"
             eyebrow="Cadastrar mídia"
             title="Novo jornalista"
             icon={<DsIcon src={ICONS.nav.journalists} size={28} />}

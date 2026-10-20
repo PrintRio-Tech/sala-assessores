@@ -21,7 +21,7 @@ export function demandCaptureToNewDemand(
     responsibleName: author.name,
     deadlineAt: parseDemandDeadline(input.requestedDeadline),
     channel: input.channel.trim(),
-    origin: input.origin ?? DEFAULT_DEMAND_ORIGIN,
+    origin: DEFAULT_DEMAND_ORIGIN,
     priority: input.priority ?? 'medium',
     enrichment: input.enrichment ?? EMPTY_DEMAND_ENRICHMENT,
   }

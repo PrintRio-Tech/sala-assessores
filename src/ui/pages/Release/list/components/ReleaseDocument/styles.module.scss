@@ -1,0 +1,83 @@
+@use '@print/ui/tokens' as *;
+@use '@print/ui/mixins' as *;
+
+.document {
+  width: 100%;
+  padding: $space-4 $space-5 $space-6;
+}
+
+.header {
+  margin-bottom: $space-5;
+}
+
+.meta {
+  margin-bottom: $space-3;
+  font-style: normal;
+}
+
+.title {
+  margin: 0 0 $space-2;
+  color: $primary;
+  word-break: break-word;
+  text-wrap: pretty;
+  @include headline-md;
+}
+
+.subtitle {
+  margin: 0 0 $space-4;
+  color: $on-surface-variant;
+  word-break: break-word;
+  text-wrap: pretty;
+  @include body-lg;
+}
+
+.byline {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding-block: $space-3;
+  border-block: 1px solid rgba($grafite, 0.05);
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: $radius-full;
+  background: $primary-container;
+  color: $on-primary;
+  font-size: $label-sm-size;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+}
+
+.author {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.authorName {
+  margin: 0;
+  font-style: normal;
+  font-weight: $font-weight-semibold;
+  color: $on-surface;
+}
+
+.recipients {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  margin: 0 0 $space-5;
+}
+
+.recipientsLabel {
+  margin: 0;
+}
+
+.body {
+  @include body-md;
+  color: $on-surface-variant;
+}

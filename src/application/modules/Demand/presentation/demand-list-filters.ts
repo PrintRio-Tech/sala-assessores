@@ -1,14 +1,15 @@
 import {
+  DEFAULT_DEMAND_ORIGIN,
+  EMPTY_DEMAND_ENRICHMENT,
   formatDemandCalendarDay,
   getDemandStatusFilterValues,
   sanitizeDemandListStatus,
+  type Demand,
   type DemandListLifecycle,
   type DemandListStatusFilter,
 } from '@/domain/Demand/demand.entity'
-import type { Demand } from '@/domain/Demand/demand.entity'
 import type { DemandCaptureRevision } from '@/domain/Demand/demand.repository'
 import type { DemandListItem } from '../hooks/use-demands'
-import { EMPTY_DEMAND_ENRICHMENT } from '@/domain/Demand/demand.entity'
 
 export { sanitizeDemandListStatus }
 export type { DemandCaptureRevision as NewDemandCapture }
@@ -57,7 +58,7 @@ export function toDemandCaptureRevision(demand: Demand): DemandCaptureRevision {
     journalistId: demand.journalistId,
     journalistName: demand.journalistName,
     outletName: demand.outletName,
-    origin: demand.origin,
+    origin: DEFAULT_DEMAND_ORIGIN,
     priority: demand.priority,
     enrichment: demand.enrichment ?? EMPTY_DEMAND_ENRICHMENT,
   }

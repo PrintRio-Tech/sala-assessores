@@ -116,4 +116,40 @@ describe('GetDemandById', () => {
       DemandNotFoundError,
     )
   })
+
+  it('não devolve demanda proativa como caso reativo', async () => {
+    const useCase = new GetDemandById({
+      async list() {
+        return { items: [], total: 0, activeCount: 0, historyCount: 0 }
+      },
+      async listResponsibles() {
+        return []
+      },
+      async getById() {
+        return { ...demand, origin: 'proactive' }
+      },
+      async create() {
+        throw new Error('not implemented')
+      },
+      async reviseCapture() {
+        return null
+      },
+      async remove() {},
+      async registerInteraction() {
+        return null
+      },
+      async createAttachmentUpload() {
+        throw new Error('not implemented')
+      },
+      async putAttachment() {},
+      async savePositioning() {
+        return null
+      },
+      async registerOutcome() {
+        return null
+      },
+    })
+
+    await expect(useCase.execute('d1')).rejects.toBeInstanceOf(DemandNotFoundError)
+  })
 })

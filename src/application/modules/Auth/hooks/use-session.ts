@@ -26,7 +26,7 @@ export function useSession() {
     isChecking,
     isUnavailable,
     session: session
-      ? { email: session.user.email, name: session.user.name?.trim() || null }
+      ? { id: session.user.id, email: session.user.email, name: session.user.name?.trim() || null }
       : null,
     logout: () => {
       queryClient.setQueryData(queryKeys.auth.session(), null)

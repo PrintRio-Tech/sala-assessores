@@ -1,5 +1,5 @@
 import { DemandNotFoundError } from '../errors/demand.errors'
-import type { Demand } from '../demand.entity'
+import { isSolicitedDemand, type Demand } from '../demand.entity'
 import type { DemandRepository } from '../demand.repository'
 
 export class GetDemandById {
@@ -11,7 +11,7 @@ export class GetDemandById {
 
   async execute(id: string): Promise<Demand> {
     const demand = await this.repo.getById(id)
-    if (!demand) {
+    if (!demand || !isSolicitedDemand(demand)) {
       throw new DemandNotFoundError()
     }
     return demand

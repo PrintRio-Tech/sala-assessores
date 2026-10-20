@@ -57,6 +57,7 @@ describe('useSession', () => {
     const { result } = renderHook(() => useSession(), { wrapper })
     await waitFor(() => expect(result.current.isAuthenticated).toBe(true))
     expect(result.current.session).toEqual({
+      id: 'user-1',
       email: MEMBER_EMAIL,
       name: 'Ana',
     })
@@ -92,6 +93,7 @@ describe('useSession', () => {
     const { result } = renderHook(() => useSession(), { wrapper })
     await waitFor(() => expect(result.current.isAuthenticated).toBe(true))
     expect(result.current.session).toEqual({
+      id: 'user-2',
       email: MEMBER_EMAIL,
       name: null,
     })

@@ -1,0 +1,121 @@
+@use '@print/ui/tokens' as *;
+@use '@print/ui/mixins' as *;
+@use '@print/ui/mixins' as *;
+
+.card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: $surface-bright;
+  border: $border-subtle;
+  border-bottom: none;
+  border-radius: $radius-xl $radius-xl 0 0;
+  box-shadow: $shadow-ambient;
+  overflow: hidden;
+
+  @include mobile {
+    display: none;
+  }
+}
+
+.mobileCard {
+  display: none;
+
+  @include mobile {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+    padding: $space-4;
+    background: $surface-bright;
+    border: $border-subtle;
+    border-radius: $radius-xl;
+    box-shadow: $shadow-ambient;
+  }
+}
+
+.header {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  padding: $space-5 $space-5 $space-4;
+  border-bottom: 1px solid rgba($grafite, 0.06);
+}
+
+.titleField {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: $primary;
+  touch-action: manipulation;
+  @include headline-md;
+
+  &::placeholder {
+    color: rgba($primary, 0.35);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba($primary, 0.25);
+    outline-offset: 4px;
+    border-radius: $radius-sm;
+  }
+
+  &[aria-invalid='true'] {
+    outline: 2px solid rgba($error, 0.35);
+    outline-offset: 4px;
+  }
+}
+
+.fieldError {
+  margin: calc(-1 * $space-2) 0 0;
+}
+
+.subtitleField {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: $on-surface-variant;
+  touch-action: manipulation;
+  @include body-lg;
+
+  &::placeholder {
+    color: rgba($on-surface-variant, 0.45);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba($primary, 0.25);
+    outline-offset: 4px;
+    border-radius: $radius-sm;
+  }
+
+  &[aria-invalid='true'] {
+    outline: 2px solid rgba($error, 0.35);
+    outline-offset: 4px;
+  }
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  padding: 0 $space-5;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}

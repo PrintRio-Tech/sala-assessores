@@ -1,0 +1,185 @@
+@use '@print/ui/tokens' as *;
+@use '@print/ui/mixins' as *;
+
+.card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  border: 1px solid rgba($primary, 0.05);
+  transition: box-shadow $duration-normal $ease-default;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  &:has(.openArea:hover),
+  &:has(.openArea:focus-visible) {
+    box-shadow: 0 8px 30px rgba($grafite, 0.08);
+
+    .title {
+      color: $accent-gold;
+    }
+
+    .arrow {
+      background-color: $primary;
+      color: $on-primary;
+      border-color: transparent;
+    }
+  }
+}
+
+.topRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $space-2;
+  min-width: 0;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-1;
+  min-width: 0;
+}
+
+.actions {
+  flex-shrink: 0;
+}
+
+.openArea {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+
+  @include focus-visible;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  color: $primary;
+  transition: color 0.15s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.subtitle {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.summary {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: $space-3;
+  padding-top: $space-2;
+  border-top: 1px solid rgba($primary, 0.08);
+}
+
+.footerFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: $space-3;
+  flex: 1 1 12rem;
+  min-width: 0;
+
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: $space-2;
+  }
+}
+
+.footerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $space-2;
+  margin-left: auto;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.footerField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.fieldLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.625rem;
+}
+
+.date {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-variant-numeric: tabular-nums;
+  color: $on-surface;
+}
+
+.arrow {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba($primary, 0.2);
+  border-radius: $radius-full;
+  color: $primary;
+  transition:
+    background-color $duration-normal $ease-default,
+    color $duration-normal $ease-default,
+    border-color $duration-normal $ease-default;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.workflow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}

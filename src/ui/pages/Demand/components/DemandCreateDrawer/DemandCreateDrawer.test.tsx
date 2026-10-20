@@ -126,6 +126,40 @@ describe('DemandCreateDrawer edit session', () => {
 })
 
 describe('DemandCreateDrawer capture fields', () => {
+  it('não oferece Origem nem Proativa e conclui sempre como solicitada', async () => {
+    const onCapture = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <DemandCreateDrawer
+        open
+        journalists={[journalist]}
+        onOpenChange={vi.fn()}
+        onCapture={onCapture}
+      />,
+    )
+
+    const drawer = await screen.findByRole('dialog', { name: /Nova demanda/ })
+    expect(within(drawer).queryByRole('combobox', { name: 'Origem' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Proativa' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Proativa')).not.toBeInTheDocument()
+
+    await user.click(within(drawer).getByRole('combobox', { name: 'Quem entrou em contato?' }))
+    await user.click(await screen.findByRole('option', { name: 'Carolina Montenegro' }))
+    await user.click(within(drawer).getByRole('combobox', { name: 'Canal de entrada' }))
+    await user.click(await screen.findByRole('option', { name: 'E-mail' }))
+    await user.click(within(drawer).getByRole('button', { name: 'Continuar' }))
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'Assunto' }), { target: { value: 'Pedido da redação' } })
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'O que aconteceu?' }), { target: { value: 'Fato recebido.' } })
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'O que foi pedido pela imprensa?' }), { target: { value: 'Nota.' } })
+    fireEvent.change(within(drawer).getByRole('textbox', { name: 'Prazo solicitado' }), { target: { value: '12/03/2026' } })
+    await user.click(within(drawer).getByRole('button', { name: 'Continuar' }))
+    await user.click(within(drawer).getByRole('button', { name: 'Concluir captura' }))
+
+    expect(onCapture).toHaveBeenCalledWith(expect.objectContaining({
+      origin: 'solicited',
+    }))
+  })
+
   it('organiza três decisões: contato com prioridade, pedido e classificação opcional, sem apuração', async () => {
     const onCapture = vi.fn()
     const user = userEvent.setup()

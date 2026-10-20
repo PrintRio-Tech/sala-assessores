@@ -10,7 +10,7 @@ import {
   TextInput,
   Textarea,
 } from '@print/ui'
-import type { NewDemandCapture, DemandOrigin, DemandPriority } from '@/application/modules/Demand/demand-types'
+import type { NewDemandCapture, DemandPriority } from '@/application/modules/Demand/demand-types'
 import { DEFAULT_DEMAND_ORIGIN } from '@/application/modules/Demand/demand-types'
 import { DEMAND_PRIORITY_OPTIONS } from '@/application/modules/Demand/presentation/demand-priority'
 import type { Journalist } from '@/application/modules/Journalist/hooks/use-journalists'
@@ -33,7 +33,6 @@ type FormValues = {
   tags: string[]
   topic: string
   area: string
-  origin: DemandOrigin
   priority: DemandPriority | ''
 }
 
@@ -52,14 +51,8 @@ const initialValues: FormValues = {
   tags: [],
   topic: '',
   area: '',
-  origin: DEFAULT_DEMAND_ORIGIN,
   priority: '',
 }
-
-const originOptions = [
-  { value: 'solicited', label: 'Solicitada' },
-  { value: 'proactive', label: 'Proativa' },
-]
 
 const channelOptions = [
   { value: 'email', label: 'E-mail' },
@@ -118,7 +111,6 @@ function captureToFormValues(capture: NewDemandCapture): FormValues {
     tags: capture.enrichment?.tags ?? [],
     topic: capture.enrichment?.topics[0] ?? '',
     area: capture.enrichment?.relatedAreas[0] ?? '',
-    origin: capture.origin ?? DEFAULT_DEMAND_ORIGIN,
     priority: capture.priority ?? '',
   }
 }
@@ -187,9 +179,8 @@ export function DemandCreateDrawer({
   const hasUnsavedChanges = sessionMode === 'edit'
     ? JSON.stringify(values) !== JSON.stringify(baseline)
     : values.contactMode === 'local'
-      || values.origin !== DEFAULT_DEMAND_ORIGIN
       || values.tags.length > 0
-      || Object.entries(values).some(([key, value]) => key !== 'contactMode' && key !== 'tags' && key !== 'origin' && typeof value === 'string' && value.trim().length > 0)
+      || Object.entries(values).some(([key, value]) => key !== 'contactMode' && key !== 'tags' && typeof value === 'string' && value.trim().length > 0)
   const selectedJournalist = journalists.find((journalist) => journalist.id === values.journalistId)
   const journalistOptions = useMemo(() => {
     const query = journalistQuery.trim().toLocaleLowerCase('pt-BR')
@@ -244,7 +235,7 @@ export function DemandCreateDrawer({
       journalistId: values.contactMode === 'known' ? values.journalistId : '',
       journalistName: contactName,
       outletName: contactOutlet,
-      origin: values.origin,
+      origin: DEFAULT_DEMAND_ORIGIN,
       priority: values.priority || null,
       enrichment: {
         tags: values.tags,
@@ -291,7 +282,6 @@ export function DemandCreateDrawer({
             </div>
           )}
           <SelectField label="Canal de entrada" name="channel" required value={values.channel} error={errors.channel} options={channelOptions} onValueChange={(value) => update('channel', value)} />
-          <SelectField label="Origem" name="origin" required value={values.origin} options={originOptions} onValueChange={(value) => update('origin', value as DemandOrigin)} />
           <SelectField label="Prioridade" name="priority" placeholder="Não informar" options={DEMAND_PRIORITY_OPTIONS} value={values.priority} onValueChange={(value) => update('priority', value as DemandPriority)} />
           {(selectedJournalist || (values.contactMode === 'local' && values.contactName.trim())) && (
             <div className={styles.journalistContext} role="region" aria-label="Contexto do contato">

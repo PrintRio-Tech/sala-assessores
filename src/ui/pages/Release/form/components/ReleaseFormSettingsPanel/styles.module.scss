@@ -1,0 +1,34 @@
+@use '@print/ui/tokens' as *;
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: $surface-bright;
+  border: $border-subtle;
+  border-bottom: none;
+  border-radius: $radius-xl $radius-xl 0 0;
+  box-shadow: $shadow-ambient;
+  overflow: hidden;
+}
+
+.header {
+  flex-shrink: 0;
+  padding: $space-3 $space-4;
+  border-bottom: 1px solid rgba($grafite, 0.06);
+}
+
+.title {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: $on-surface-variant;
+}
+
+.content {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: $space-4;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

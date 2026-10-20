@@ -5,6 +5,7 @@ import {
   InvalidDemandInputError,
 } from '@/domain/Demand/errors/demand.errors'
 import { InvalidJournalistError, JournalistNotFoundError } from '@/domain/Journalist/errors/journalist.errors'
+import { InvalidReleaseInputError, ReleaseImportTemplateError, ReleaseNotFoundError } from '@/domain/Release/errors/release.errors'
 
 type GraphqlErrorLike = {
   message?: string
@@ -34,19 +35,28 @@ function graphqlMessage(error: unknown, fallback: string) {
   return fallback
 }
 
-export function mapOperationalGraphqlError(error: unknown, surface: 'demand' | 'journalist'): never {
+export function mapOperationalGraphqlError(error: unknown, surface: 'demand' | 'journalist' | 'release'): never {
   const codes = graphqlCodes(error)
   const message = graphqlMessage(error, 'Falha ao falar com o BFF.')
 
   if (codes.includes('UNAUTHENTICATED')) throw new SessionExpiredError()
   if (codes.includes('FORBIDDEN')) throw new AuthForbiddenError()
   if (codes.includes('NOT_FOUND')) {
-    throw surface === 'journalist' ? new JournalistNotFoundError() : new DemandNotFoundError()
+    throw surface === 'journalist'
+      ? new JournalistNotFoundError()
+      : surface === 'release'
+        ? new ReleaseNotFoundError()
+        : new DemandNotFoundError()
   }
   if (codes.includes('CONFLICT')) {
     throw new InvalidJournalistError('Já existe um jornalista ativo com este e-mail.')
   }
   if (codes.includes('INVALID_INPUT')) {
+    if (surface === 'release') {
+      throw /modelo oficial/i.test(message)
+        ? new ReleaseImportTemplateError(message)
+        : new InvalidReleaseInputError(message)
+    }
     throw surface === 'journalist'
       ? new InvalidJournalistError(message)
       : new InvalidDemandInputError(message)

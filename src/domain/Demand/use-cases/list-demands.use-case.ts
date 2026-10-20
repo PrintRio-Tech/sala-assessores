@@ -1,6 +1,7 @@
 import {
   formatDemandCalendarDay,
   isActiveDemandStatus,
+  isSolicitedDemand,
   type Demand,
 } from '../demand.entity'
 import type {
@@ -27,6 +28,7 @@ export function selectDemandList(items: Demand[], params: DemandListParams = {})
   const search = params.search ?? ''
 
   const filteredByCommon = items.filter((demand) => {
+    if (!isSolicitedDemand(demand)) return false
     if (!matchesSearch(demand, search)) return false
     if (responsibleId !== 'all' && demand.responsibleId !== responsibleId) {
       return false

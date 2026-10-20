@@ -29,10 +29,16 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Configure GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "::error::Configure o secret NPM_TOKEN (read:packages em @printrio-tech)."
+            exit 1
+          fi
           printf '%s\n' \
             '@printrio-tech:registry=https://npm.pkg.github.com' \
-            '//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}' \
+            "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" \
             'always-auth=true' > .npmrc
 
       - name: Install

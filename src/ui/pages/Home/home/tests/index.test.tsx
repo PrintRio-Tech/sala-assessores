@@ -170,19 +170,22 @@ describe('HomePage', () => {
     expect(mockNavigate).not.toHaveBeenCalledWith('/demandas')
   })
 
-  it('exibe ActionTiles de ações rápidas incluindo Novo release', () => {
+  it('exibe 4 ActionTiles de ações rápidas numa linha, sem Ver demandas', () => {
     renderHomePage()
 
     const actions = screen.getByRole('region', { name: 'Ações rápidas' })
     expect(within(actions).getByRole('heading', { name: /Ações rápidas/i, level: 2 })).toBeInTheDocument()
-    expect(within(actions).getByRole('heading', { name: 'Nova demanda' })).toBeInTheDocument()
-    expect(within(actions).getByRole('heading', { name: 'Novo release' })).toBeInTheDocument()
-    expect(within(actions).getByRole('heading', { name: 'Novo jornalista' })).toBeInTheDocument()
-    expect(within(actions).getByRole('heading', { name: 'Ver demandas' })).toBeInTheDocument()
-    expect(within(actions).getByRole('heading', { name: 'Ver relatórios' })).toBeInTheDocument()
-    expect(within(actions).getByRole('button', { name: 'Cadastrar mídia: Novo jornalista' })).toBeInTheDocument()
-    expect(within(actions).getByRole('button', { name: 'Consultar casos: Ver demandas' })).toBeInTheDocument()
-    expect(within(actions).getByRole('button', { name: 'Resultados mensais: Ver relatórios' })).toBeInTheDocument()
+    expect(within(actions).queryByRole('heading', { name: 'Ver demandas' })).not.toBeInTheDocument()
+    expect(within(actions).queryByRole('button', { name: 'Consultar casos: Ver demandas' })).not.toBeInTheDocument()
+
+    const tiles = within(actions).getAllByRole('button')
+    expect(tiles).toHaveLength(4)
+    expect(tiles.map((tile) => tile.getAttribute('aria-label'))).toEqual([
+      'Iniciar registro: Nova demanda',
+      'Comunicado oficial: Novo release',
+      'Cadastrar mídia: Novo jornalista',
+      'Resultados mensais: Ver relatórios',
+    ])
   })
 
   it('navega para demanda ao clicar em item da lista', async () => {
@@ -210,14 +213,6 @@ describe('HomePage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Cadastrar mídia: Novo jornalista' }))
     expect(mockNavigate).toHaveBeenCalledWith('/jornalistas')
-  })
-
-  it('navega para demandas pelo tile de demandas', async () => {
-    const user = userEvent.setup()
-    renderHomePage()
-
-    await user.click(screen.getByRole('button', { name: 'Consultar casos: Ver demandas' }))
-    expect(mockNavigate).toHaveBeenCalledWith('/demandas')
   })
 
   it('navega para relatórios pelo tile de relatórios', async () => {

@@ -71,10 +71,14 @@ export function VerifyPage() {
     return () => window.clearInterval(id)
   }, [cooldownActive])
 
+  const submitCode = (codeToVerify: string) => {
+    if (codeToVerify.length !== 6 || isPending) return
+    verify({ code: codeToVerify, email })
+  }
+
   const handleVerify = (event: FormEvent) => {
     event.preventDefault()
-    if (code.length !== 6) return
-    verify({ code, email })
+    submitCode(code)
   }
 
   const handleResend = () => {
@@ -111,6 +115,7 @@ export function VerifyPage() {
           length={6}
           value={code}
           onChange={setCode}
+          onComplete={submitCode}
           disabled={isPending}
           autoFocus
         />

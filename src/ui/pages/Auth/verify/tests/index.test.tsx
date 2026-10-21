@@ -56,6 +56,20 @@ describe('VerifyPage', () => {
     expect(screen.getByRole('button', { name: /entrar na plataforma/i })).toBeInTheDocument()
   })
 
+  it('preencher 6 dígitos válidos dispara verify sem clicar no submit', async () => {
+    const user = userEvent.setup()
+    await auth.service.requestMagicLink(FAKE_MEMBER_EMAIL)
+    renderVerify()
+
+    await typeOtp(user, fake.issuedCodeFor(FAKE_MEMBER_EMAIL)!)
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/')
+    })
+    expect(auth.service.hasStoredToken()).toBe(true)
+    expect(screen.getByRole('button', { name: /entrar na plataforma/i })).toBeInTheDocument()
+  })
+
   it('rejeita qualquer 6 dígitos e autentica só o OTP emitido', async () => {
     const user = userEvent.setup()
     await auth.service.requestMagicLink(FAKE_MEMBER_EMAIL)

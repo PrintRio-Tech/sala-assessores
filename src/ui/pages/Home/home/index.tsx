@@ -136,13 +136,6 @@ export function HomePage() {
             onClick={() => navigate(ROUTES.journalists)}
           />
           <ActionTile
-            variant="outline"
-            eyebrow="Consultar casos"
-            title="Ver demandas"
-            icon={<DsIcon src={ICONS.nav.activities} size={28} />}
-            onClick={() => navigate(ROUTES.demands)}
-          />
-          <ActionTile
             variant="muted"
             eyebrow="Resultados mensais"
             title="Ver relatórios"
